@@ -88,17 +88,16 @@ class GenericCSVData(feed.CSVDataBase):
         super(GenericCSVData, self).start()
 
         self._dtstr = False
-        if isinstance(self.p.dtformat, string_types):
-            self._dtstr = True
-        elif isinstance(self.p.dtformat, integer_types):
-            idt = int(self.p.dtformat)
-            if idt == 1:
-                self._dtconvert = lambda x: datetime.utcfromtimestamp(int(x))
-            elif idt == 2:
-                self._dtconvert = lambda x: datetime.utcfromtimestamp(float(x))
-
-        else:  # assume callable
-            self._dtconvert = self.p.dtformat
+        #if isinstance(self.p.dtformat, string_types):
+        #    self._dtstr = True
+        #elif isinstance(self.p.dtformat, integer_types):
+        #    idt = int(self.p.dtformat)
+        #    if idt == 1:
+        #        self._dtconvert = lambda x: datetime.utcfromtimestamp(int(x))
+        #    elif idt == 2:
+        #        self._dtconvert = lambda x: datetime.utcfromtimestamp(float(x))
+        #else:  # assume callable
+        #    self._dtconvert = self.p.dtformat
 
     def _loadline(self, linetokens):
         # Datetime needs special treatment
@@ -113,7 +112,8 @@ class GenericCSVData(feed.CSVDataBase):
 
             dt = datetime.strptime(dtfield, dtformat)
         else:
-            dt = self._dtconvert(dtfield)
+            #dt = self._dtconvert(dtfield)
+            dt = datetime.utcfromtimestamp(int(dtfield[:-3]))
 
         if self.p.timeframe >= TimeFrame.Days:
             # check if the expected end of session is larger than parsed
