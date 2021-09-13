@@ -25,6 +25,7 @@ import datetime
 import collections
 import itertools
 import multiprocessing
+import gc
 
 import backtrader as bt
 from .utils.py3 import (map, range, zip, with_metaclass, string_types,
@@ -1144,6 +1145,10 @@ class Cerebro(with_metaclass(MetaParams, object)):
                 self.runstrats.append(r)
                 for cb in self.optcbs:
                     cb(r)  # callback receives finished strategy
+                    # Force GC to run
+                    gc.collect()
+                # Force GC to run
+                gc.collect()
 
             pool.close()
 
