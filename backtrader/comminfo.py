@@ -22,6 +22,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import datetime
+import math
 
 from .utils.py3 import with_metaclass
 from .metabase import MetaParams
@@ -106,6 +107,14 @@ class CommInfoBase(with_metaclass(MetaParams)):
 
         Amount of leverage for the asset with regards to the needed cash
 
+      - ``inverse`` (def: ``False``)
+
+        True for inverse Perpetual Contract, False otherwise
+
+      - ``precision`` (def: ``16.0``)
+
+        Truncate the return of getsize, getvalue and getvaluesize up to decimal points.
+
     Attributes:
 
       - ``_stocklike``: Final value to use for Stock-like/Futures-like behavior
@@ -128,10 +137,13 @@ class CommInfoBase(with_metaclass(MetaParams)):
         ('interest_long', False),
         ('leverage', 1.0),
         ('automargin', False),
+        ('inverse', False),
+        ('precision', 16),
     )
 
     def __init__(self):
         super(CommInfoBase, self).__init__()
+        assert isinstance(self.p.precision, int)
 
         self._stocklike = self.p.stocklike
         self._commtype = self.p.commtype
@@ -177,64 +189,104 @@ class CommInfoBase(with_metaclass(MetaParams)):
           - Use param ``automargin`` * ``price`` if ``automargin > 0``
         '''
         if not self.p.automargin:
-            return self.p.margin
+            return self.__truncate(self.p.margin)
 
-        elif self.p.automargin < 0:
-            return price * self.p.mult
+        if self.p.inverse == False:
+            if self.p.automargin < 0:
+                return self.__truncate(price * self.p.mult)
 
-        return price * self.p.automargin  # int/float expected
+            return self.__truncate(price * self.p.automargin)  # int/float expected
+        else:
+            if self.p.automargin < 0:
+                return self.__truncate(price / self.p.mult)
+
+            return self.__truncate(price / self.p.automargin)  # int/float expected
 
     def get_leverage(self):
 
         '''Returns the level of leverage allowed for this comission scheme'''
-        return self.p.leverage
+        return self.__truncate(self.p.leverage)
 
     def getsize(self, price, cash):
         '''Returns the needed size to meet a cash operation at a given price'''
-        if not self._stocklike:
-            return int(self.p.leverage * (cash // self.get_margin(price)))
+        if self.p.inverse == False:
+            if not self._stocklike:
+                return int(self.p.leverage * (cash // self.get_margin(price)))
 
-        return int(self.p.leverage * (cash // price))
+            return int(self.p.leverage * (cash // price))
+        else:
+            if not self._stocklike:
+                return int(self.p.leverage * cash * self.get_margin(price))
+
+            return int(self.p.leverage * cash * price)
 
     def getoperationcost(self, size, price):
         '''Returns the needed amount of cash an operation would cost'''
-        if not self._stocklike:
-            return abs(size) * self.get_margin(price)
+        if self.p.inverse == False:
+            if not self._stocklike:
+                return self.__truncate(abs(size) * self.get_margin(price))
 
-        return abs(size) * price
+            return self.__truncate(abs(size) * price)
+        else:
+            if not self._stocklike:
+                return self.__truncate(abs(size) / self.get_margin(price))
+
+            return self.__truncate(abs(size) / price)
 
     def getvaluesize(self, size, price):
         '''Returns the value of size for given a price. For future-like
         objects it is fixed at size * margin'''
-        if not self._stocklike:
-            return abs(size) * self.get_margin(price)
+        if self.p.inverse == False:
+            if not self._stocklike:
+                return self.__truncate(abs(size) * self.get_margin(price))
 
-        return size * price
+            return self.__truncate(size * price)
+        else:
+            if not self._stocklike:
+                return self.__truncate(abs(size) / self.get_margin(price))
+
+            return self.__truncate(size / price)
 
     def getvalue(self, position, price):
         '''Returns the value of a position given a price. For future-like
         objects it is fixed at size * margin'''
-        if not self._stocklike:
-            return abs(position.size) * self.get_margin(price)
+        if self.p.inverse == False:
+            if not self._stocklike:
+                return self.__truncate(abs(position.size) * self.get_margin(price))
 
-        size = position.size
-        if size >= 0:
-            return size * price
+            size = position.size
+            if size >= 0:
+                return self.__truncate(size * price)
 
-        # With stocks, a short position is worth more as the price goes down
-        value = position.price * size  # original value
-        value += (position.price - price) * size  # increased value
-        return value
+            # With stocks, a short position is worth more as the price goes down
+            value = position.price * size  # original value
+            value += (position.price - price) * size  # increased value
+            return self.__truncate(value)
+        else:
+            if not self._stocklike:
+                return self.__truncate(abs(position.size) / self.get_margin(price))
+
+            size = position.size
+            if size >= 0:
+                return self.__truncate(size / price)
+
+            # With stocks, a short position is worth more as the price goes down
+            value = size/ position.price  # original value
+            value += size / (position.price - price)  # increased value
+            return self.__truncate(value)
 
     def _getcommission(self, size, price, pseudoexec):
         '''Calculates the commission of an operation at a given price
 
         pseudoexec: if True the operation has not yet been executed
         '''
-        if self._commtype == self.COMM_PERC:
-            return abs(size) * self.p.commission * price
-
-        return abs(size) * self.p.commission
+        if self.p.inverse == False:
+            if self._commtype == self.COMM_PERC:
+                return self.__truncate(abs(size) * self.p.commission * price)
+        else:
+            if self._commtype == self.COMM_PERC:
+                return self.__truncate(abs(size) * self.p.commission / price)
+        return self.__truncate(abs(size) * self.p.commission)
 
     def getcommission(self, size, price):
         '''Calculates the commission of an operation at a given price
@@ -246,12 +298,19 @@ class CommInfoBase(with_metaclass(MetaParams)):
 
     def profitandloss(self, size, price, newprice):
         '''Return actual profit and loss a position has'''
-        return size * (newprice - price) * self.p.mult
+        if self.p.inverse == False:
+            return self.__truncate(size * (newprice - price) * self.p.mult)
+        else:
+            return self.__truncate(size / ((newprice - price) * self.p.mult))
 
     def cashadjust(self, size, price, newprice):
         '''Calculates cash adjustment for a given price difference'''
-        if not self._stocklike:
-            return size * (newprice - price) * self.p.mult
+        if self.p.inverse == False:
+            if not self._stocklike:
+                return self.__truncate(size * (newprice - price) * self.p.mult)
+        else:
+            if not self._stocklike:
+                return self.__truncate(size / ((newprice - price) * self.p.mult))
 
         return 0.0
 
@@ -302,7 +361,10 @@ class CommInfoBase(with_metaclass(MetaParams)):
         ``dt0`` and ``dt1`` are not used in the default implementation and are
         provided as extra input for overridden methods
         '''
-        return days * self._creditrate * abs(size) * price
+        return self.__truncate(days * self._creditrate * abs(size) * price)
+
+    def __truncate(self, f):
+        return math.floor(f * 10 ** self.p.precision) / 10 ** self.p.precision
 
 
 class CommissionInfo(CommInfoBase):
