@@ -103,7 +103,7 @@ class Plot_OldSync(with_metaclass(MetaParams, object)):
 
     def drawtag(self, ax, x, y, facecolor, edgecolor, alpha=0.9, **kwargs):
 
-        txt = ax.text(x, y, '%.2f' % y, va='center', ha='left',
+        txt = ax.text(x, y, '%.8f' % y, va='center', ha='left',
                       fontsize=self.pinf.sch.subtxtsize,
                       bbox=dict(boxstyle=tag_box_style,
                                 facecolor=facecolor,
@@ -444,7 +444,7 @@ class Plot_OldSync(with_metaclass(MetaParams, object)):
             if self.pinf.sch.linevalues and ind.plotinfo.plotlinevalues:
                 plotlinevalue = lineplotinfo._get('_plotvalue', True)
                 if plotlinevalue and not math.isnan(lplot[-1]):
-                    label += ' %.2f' % lplot[-1]
+                    label += ' %.3f' % lplot[-1]
 
             plotkwargs = dict()
             linekwargs = lineplotinfo._getkwargs(skip_=True)
@@ -693,7 +693,7 @@ class Plot_OldSync(with_metaclass(MetaParams, object)):
         plinevalues = getattr(data.plotinfo, 'plotlinevalues', True)
         if self.pinf.sch.style.startswith('line'):
             if self.pinf.sch.linevalues and plinevalues:
-                datalabel += ' C:%.2f' % closes[-1]
+                datalabel += ' C:%.8f' % closes[-1]
 
             if axdatamaster is None:
                 color = self.pinf.sch.loc
