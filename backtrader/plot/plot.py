@@ -444,7 +444,7 @@ class Plot_OldSync(with_metaclass(MetaParams, object)):
             if self.pinf.sch.linevalues and ind.plotinfo.plotlinevalues:
                 plotlinevalue = lineplotinfo._get('_plotvalue', True)
                 if plotlinevalue and not math.isnan(lplot[-1]):
-                    label += ' %.3f' % lplot[-1]
+                    label += ' %.8f' % lplot[-1]
 
             plotkwargs = dict()
             linekwargs = lineplotinfo._getkwargs(skip_=True)
