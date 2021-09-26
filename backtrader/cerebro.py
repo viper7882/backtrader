@@ -42,6 +42,7 @@ from .strategy import Strategy, SignalStrategy
 from .tradingcal import (TradingCalendarBase, TradingCalendar,
                          PandasMarketCalendar)
 from .timer import Timer
+from copy import copy
 
 # Defined here to make it pickable. Ideally it could be defined inside Cerebro
 
@@ -785,6 +786,10 @@ class Cerebro(with_metaclass(MetaParams, object)):
         self.adddata(d, name=dname)
 
         return d
+
+    def clone(self):
+        obj = copy(self)
+        return obj
 
     def rolloverdata(self, *args, **kwargs):
         '''Chains several data feeds into one
