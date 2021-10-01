@@ -404,6 +404,9 @@ class Cerebro(with_metaclass(MetaParams, object)):
         '''
         self._ohistory.append((orders, notify))
 
+    def get_orders(self):
+        return self._broker.get_orders()
+
     def notify_timer(self, timer, when, *args, **kwargs):
         '''Receives a timer notification where ``timer`` is the timer which was
         returned by ``add_timer``, and ``when`` is the calling time. ``args``
