@@ -634,6 +634,9 @@ class BackBroker(bt.BrokerBase):
         o = next(oiter, None)
         self._userhist.append([o, oiter, notify])
 
+    def get_orders(self):
+        return self.orders
+
     def set_fund_history(self, fund):
         # iterable with the following pro item
         # [datetime, share_value, net asset value]
