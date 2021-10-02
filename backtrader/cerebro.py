@@ -749,11 +749,6 @@ class Cerebro(with_metaclass(MetaParams, object)):
         '''
         pass
 
-    def cleardatas(self):
-        self.datas.clear()
-        self.feeds.clear()
-        self.strats.clear()
-
     def adddata(self, data, name=None):
         '''
         Adds a ``Data Feed`` instance to the mix.
