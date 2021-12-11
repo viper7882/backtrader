@@ -344,7 +344,9 @@ class LineIterator(with_metaclass(MetaLineIterator, LineSeries)):
         '''
 
         # Called once for 1st full calculation - defaults to regular next
+        self.pre_process_next()
         self.next()
+        self.post_process_next()
 
     def next(self):
         '''

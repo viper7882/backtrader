@@ -212,7 +212,7 @@ class BackBroker(bt.BrokerBase):
           This parameter controls the start value for measuring the performance
           in a fund-like way, i.e.: cash can be added and deducted increasing
           the amount of shares. Performance is not measured using the net
-          asset value of the porftoflio but using the value of the fund
+          asset value of the portfolio but using the value of the fund
 
         - ``fundmode`` (default: ``False``)
 
@@ -402,8 +402,13 @@ class BackBroker(bt.BrokerBase):
             self._bracketize(order, cancel=True)
         return True
 
-    def get_value(self, datas=None, mkt=False, lever=False):
-        '''Returns the portfolio value of the given datas (if datas is ``None``, then
+    def get_value(self, datas=None, mkt=False, lever=True):
+        '''
+        params: lever default value has been changed from False to True because backtrader is calling
+        broker.getvalue() without lever parameter. In reality, the return value should include leverage
+        instead of without leverage.
+
+        Returns the portfolio value of the given datas (if datas is ``None``, then
         the total portfolio value will be returned (alias: ``getvalue``)
         '''
         if datas is None:
@@ -416,8 +421,8 @@ class BackBroker(bt.BrokerBase):
 
     getvalue = get_value
 
-    def get_value_lever(self, datas=None, mkt=False):
-        return self.get_value(datas=datas, mkt=mkt)
+    def get_value_lever(self, datas=None, mkt=False, lever=True):
+        return self.get_value(datas=datas, mkt=mkt, lever=True)
 
     def _get_value(self, datas=None, lever=False):
         pos_value = 0.0

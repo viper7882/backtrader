@@ -95,7 +95,7 @@ class Transactions(bt.Analyzer):
             if pos is not None:
                 size, price = pos.size, pos.price
                 if size:
-                    entries.append([size, price, i, dname, -size * price])
+                    entries.append([size, price, i, dname, abs(size) * price])
 
         if entries:
             self.rets[self.strategy.datetime.datetime()] = entries
