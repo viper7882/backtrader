@@ -352,6 +352,12 @@ class LineIterator(with_metaclass(MetaLineIterator, LineSeries)):
         self.next()
         self.post_process_next()
 
+    def pre_process_next(self):
+        pass
+
+    def post_process_next(self):
+        pass
+
     def next(self):
         '''
         This method will be called for all remaining data points when the
