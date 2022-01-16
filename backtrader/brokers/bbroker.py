@@ -608,7 +608,7 @@ class BackBroker(bt.BrokerBase):
 
         else:  # not cancel -> parent exec'd
             pc.popleft()  # remove parent
-            for o in pc:  # activate childnre
+            for o in pc:  # activate children
                 self._toactivate.append(o)
 
     def _ococheck(self, order):

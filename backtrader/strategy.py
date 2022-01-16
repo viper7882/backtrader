@@ -1451,7 +1451,7 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
 
     def getsizer(self):
         '''
-        Returns the sizer which is in used if automatic statke calculation is
+        Returns the sizer which is in used if automatic stake calculation is
         used
 
         Also available as ``sizer``

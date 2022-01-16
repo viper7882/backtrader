@@ -758,6 +758,8 @@ class Cerebro(with_metaclass(MetaParams, object)):
         '''
         if name is not None:
             data._name = name
+        else:
+            print("WARNING: No name has been assigned for adddata datafeed in cerebro")
 
         data._id = next(self._dataid)
         data.setenvironment(self)
