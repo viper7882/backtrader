@@ -70,28 +70,34 @@ class MetaStrategy(StrategyBase.__class__):
 
         # Find the owner and store it
         _obj.env = _obj.cerebro = cerebro = findowner(_obj, bt.Cerebro)
-        _obj._id = cerebro._next_stid()
+
+        # INFO: If not run from cerebro, cerebro would be None
+        if _obj.cerebro:
+            _obj._id = cerebro._next_stid()
 
         return _obj, args, kwargs
 
     def dopreinit(cls, _obj, *args, **kwargs):
         _obj, args, kwargs = \
             super(MetaStrategy, cls).dopreinit(_obj, *args, **kwargs)
-        _obj.broker = _obj.env.broker
-        _obj._sizer = bt.sizers.FixedSize()
-        _obj._orders = list()
-        _obj._orderspending = list()
-        _obj._trades = collections.defaultdict(AutoDictList)
-        _obj._tradespending = list()
 
-        _obj.stats = _obj.observers = ItemCollection()
-        _obj.analyzers = ItemCollection()
-        _obj._alnames = collections.defaultdict(itertools.count)
-        _obj.writers = list()
+        # INFO: If not run from cerebro, cerebro would be None
+        if _obj.cerebro:
+            _obj.broker = _obj.env.broker
+            _obj._sizer = bt.sizers.FixedSize()
+            _obj._orders = list()
+            _obj._orderspending = list()
+            _obj._trades = collections.defaultdict(AutoDictList)
+            _obj._tradespending = list()
 
-        _obj._slave_analyzers = list()
+            _obj.stats = _obj.observers = ItemCollection()
+            _obj.analyzers = ItemCollection()
+            _obj._alnames = collections.defaultdict(itertools.count)
+            _obj.writers = list()
 
-        _obj._tradehistoryon = False
+            _obj._slave_analyzers = list()
+
+            _obj._tradehistoryon = False
 
         return _obj, args, kwargs
 
@@ -99,7 +105,9 @@ class MetaStrategy(StrategyBase.__class__):
         _obj, args, kwargs = \
             super(MetaStrategy, cls).dopostinit(_obj, *args, **kwargs)
 
-        _obj._sizer.set(_obj, _obj.broker)
+        # INFO: If not run from cerebro, cerebro would be None
+        if _obj.cerebro:
+            _obj._sizer.set(_obj, _obj.broker)
 
         return _obj, args, kwargs
 

@@ -118,7 +118,7 @@ class MetaLineIterator(LineSeries.__class__):
         # A data could be an indicator and it could take x bars until
         # something is produced
         _obj._minperiod = \
-            max([x._minperiod for x in _obj.datas] or [_obj._minperiod])
+            max([x._minperiod for x in _obj.datas if x is not None] or [_obj._minperiod])
 
         # The lines carry at least the same minperiod as
         # that provided by the datas
