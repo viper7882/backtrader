@@ -945,8 +945,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
     broker = property(getbroker, setbroker)
 
     def plot(self, plotter=None, numfigs=1, iplot=True, start=None, end=None,
-             width=16, height=9, dpi=300, tight=True, use=None,
-             **kwargs):
+             width=16, height=9, dpi=300, tight=True, use=None, **kwargs):
         '''
         Plots the strategies inside cerebro
 
@@ -995,6 +994,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
         # for i, x in enumerate(self._plotfillers2)}
 
         figs = []
+        bufs = []
         for stratlist in self.runstrats:
             for si, strat in enumerate(stratlist):
                 rfig = plotter.plot(strat, figid=si * 100,
@@ -1004,9 +1004,10 @@ class Cerebro(with_metaclass(MetaParams, object)):
 
                 figs.append(rfig)
 
-            plotter.show()
+            buf = plotter.show()
+            bufs.append(buf)
 
-        return figs
+        return figs, bufs
 
     def __call__(self, iterstrat):
         '''

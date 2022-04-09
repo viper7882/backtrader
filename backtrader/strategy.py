@@ -1152,7 +1152,7 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
         kargs['transmit'] = limitexec is None and stopexec is None
         o = self.buy(**kargs)
 
-        if stopexec is not None:
+        if stopexec is not None and stopprice is not None:
             # low side / stop
             kargs = dict(data=data, price=stopprice, exectype=stopexec,
                          valid=valid, tradeid=tradeid)
@@ -1165,7 +1165,7 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
         else:
             ostop = None
 
-        if limitexec is not None:
+        if limitexec is not None and limitprice is not None:
             # high side / limit
             kargs = dict(data=data, price=limitprice, exectype=limitexec,
                          valid=valid, tradeid=tradeid)
@@ -1224,7 +1224,7 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
         kargs['transmit'] = limitexec is None and stopexec is None
         o = self.sell(**kargs)
 
-        if stopexec is not None:
+        if stopexec is not None and stopprice is not None:
             # high side / stop
             kargs = dict(data=data, price=stopprice, exectype=stopexec,
                          valid=valid, tradeid=tradeid)
@@ -1237,7 +1237,7 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
         else:
             ostop = None
 
-        if limitexec is not None:
+        if limitexec is not None and limitprice is not None:
             # low side / limit
             kargs = dict(data=data, price=limitprice, exectype=limitexec,
                          valid=valid, tradeid=tradeid)
