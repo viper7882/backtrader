@@ -239,23 +239,22 @@ class OrderBase(with_metaclass(MetaParams, object)):
     # Volume Restrictions for orders
     V_None = range(1)
 
-    (Market, Close, Limit, Stop, StopLimit, StopTrail, StopTrailLimit,
-     Historical) = range(8)
     ExecTypes = ['Market', 'Close', 'Limit', 'Stop', 'StopLimit', 'StopTrail',
                  'StopTrailLimit', 'Historical']
+    (Market, Close, Limit, Stop, StopLimit, StopTrail, StopTrailLimit,
+     Historical) = range(len(ExecTypes))
 
     OrdTypes = ['Buy', 'Sell']
-    Buy, Sell = range(2)
-
-    Created, Submitted, Accepted, Partial, Completed, \
-        Canceled, Expired, Margin, Rejected = range(9)
-
-    Cancelled = Canceled  # alias
+    Buy, Sell = range(len(OrdTypes))
 
     Status = [
         'Created', 'Submitted', 'Accepted', 'Partial', 'Completed',
         'Canceled', 'Expired', 'Margin', 'Rejected',
     ]
+    Created, Submitted, Accepted, Partial, Completed, \
+        Canceled, Expired, Margin, Rejected = range(len(Status))
+
+    Cancelled = Canceled  # alias
 
     refbasis = itertools.count(1)  # for a unique identifier per order
 

@@ -116,7 +116,7 @@ class BackBroker(bt.BrokerBase):
               will be ``-1``.
 
               In order to get the bar volume (for example) do: ``volume =
-              order.data.voluume[ago]``
+              order.data.volume[ago]``
 
           The callable must return the *executed size* (a value >= 0)
 
@@ -1139,7 +1139,7 @@ class BackBroker(bt.BrokerBase):
                     d = self.cerebro.datasbyname[dataidx]
 
                 if not len(d):
-                    break  # may start later as oter data feeds
+                    break  # may start later as other data feeds
 
                 dt = uhorder[0]  # date/datetime instance
                 if isinstance(dt, string_types):
