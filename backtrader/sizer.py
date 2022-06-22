@@ -25,6 +25,7 @@ from .utils.py3 import with_metaclass
 
 from .metabase import MetaParams
 
+import inspect
 
 class Sizer(with_metaclass(MetaParams, object)):
     '''This is the base class for *Sizers*. Any *sizer* should subclass this
@@ -49,7 +50,13 @@ class Sizer(with_metaclass(MetaParams, object)):
 
     def getsizing(self, data, isbuy):
         comminfo = self.broker.getcommissioninfo(data)
-        return self._getsizing(comminfo, self.broker.getcash(), data, isbuy)
+        cash = self.broker.getcash(force=True)
+        # print("{} Line: {}: DEBUG: cash: {}".format(
+        #     inspect.getframeinfo(inspect.currentframe()).function,
+        #     inspect.getframeinfo(inspect.currentframe()).lineno,
+        #     cash,
+        # ))
+        return self._getsizing(comminfo, cash, data, isbuy)
 
     def _getsizing(self, comminfo, cash, data, isbuy):
         '''This method has to be overriden by subclasses of Sizer to provide
