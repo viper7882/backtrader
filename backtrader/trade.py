@@ -163,7 +163,7 @@ class Trade(object):
         )
 
     def __init__(self, data=None, tradeid=0, historyon=False,
-                 size=0, price=0.0, value=0.0, commission=0.0):
+                 size=0.0, price=0.0, value=0.0, commission=0.0):
 
         self.ref = next(self.refbasis)
         self.data = data
@@ -287,8 +287,11 @@ class Trade(object):
 
         if abs(self.size) > abs(oldsize):
             # position increased (be it positive or negative)
-            # update the average price
-            self.price = (oldsize * self.price + size * price) / self.size
+            if abs(oldsize) == 0.0:
+                self.price = price
+            else:
+                # update the average price
+                self.price = (oldsize * self.price + size * price) / self.size
             pnl = 0.0
 
         else:  # abs(self.size) < abs(oldsize)
