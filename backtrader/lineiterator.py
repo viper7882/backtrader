@@ -22,8 +22,11 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import collections
+import inspect
 import operator
 import sys
+
+from pprint import pprint
 
 from .utils.py3 import map, range, zip, with_metaclass, string_types
 from .utils import DotDict
@@ -33,6 +36,85 @@ from .linebuffer import LineActions, LineNum
 from .lineseries import LineSeries, LineSeriesMaker
 from .dataseries import DataSeries
 from . import metabase
+
+
+# Refer to https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes
+DEFAULT_DATE_FORMAT = "%Y-%m-%d"
+TIME_FORMAT_WITH_MS_PRECISION = "%H:%M:%S.%f"
+DATE_TIME_FORMAT_WITH_MS_PRECISION = DEFAULT_DATE_FORMAT + " " + TIME_FORMAT_WITH_MS_PRECISION
+MONTHLY_DATE_FORMAT = "%Y-%m"
+TIME_FORMAT_WITH_S_PRECISION = "%H:%M:%S"
+DATE_TIME_FORMAT_WITH_S_PRECISION = DEFAULT_DATE_FORMAT + " " + TIME_FORMAT_WITH_S_PRECISION
+
+def dump_datas(function, lineno, datas, data_source_name, filtered_data_by_name=None, ohlcv=False):
+    datetime_format = DATE_TIME_FORMAT_WITH_S_PRECISION
+
+    print("{} Line: {}: DEBUG: len of {}.datas: {}".format(
+            function, lineno, data_source_name, len(datas),
+        ))
+
+    subscribed_keys = ['_opstage', 'close[0]', 'datetime.datetime(0)', 'lines.datetime.idx', ]
+    if ohlcv:
+        subscribed_keys.remove('datetime.datetime(0)')
+        subscribed_keys.remove('close[0]')
+        subscribed_keys += ['datetime.datetime(0)', 'open[0]', 'high[0]', 'low[0]', 'close[0]', 'volume[0]', ]
+
+    for data in datas:
+        if filtered_data_by_name is not None:
+            if data._name != filtered_data_by_name:
+                continue
+
+        msg = "{} Line: {}: INFO: {}.data._name: {}, ".format(
+            function, lineno, data_source_name, data._name,
+        )
+
+        for subscribed_key in subscribed_keys:
+            # INFO: Special handling for datetime.datetime(0)
+            if subscribed_key == 'datetime.datetime(0)':
+                if data.datetime.idx >= 0:
+                    data_dt = data.datetime.datetime(0)
+                    if data_dt is not None:
+                        msg += "{}: {}, len={}, ".format(
+                            subscribed_key, data_dt.strftime(datetime_format), len(data.datetime))
+                    else:
+                        msg += "{}: {}, len=0, ".format(subscribed_key, NA)
+                else:
+                    msg += "{}: {}, ".format(subscribed_key, NA)
+            elif subscribed_key == 'lines.datetime._minperiod':
+                msg += "{}: {}, ".format(subscribed_key, data.lines.datetime._minperiod)
+            elif subscribed_key == 'lines.datetime.idx':
+                msg += "{}: {}, ".format(subscribed_key, data.lines.datetime.idx)
+            elif subscribed_key == 'close[0]':
+                if data.close.idx >= 0:
+                    msg += "{}: {}, ".format(subscribed_key, data.close[0])
+                else:
+                    msg += "{}: {}, ".format(subscribed_key, NA)
+            elif subscribed_key == 'open[0]':
+                if data.close.idx >= 0:
+                    msg += "{}: {}, ".format(subscribed_key, data.open[0])
+                else:
+                    msg += "{}: {}, ".format(subscribed_key, NA)
+            elif subscribed_key == 'high[0]':
+                if data.close.idx >= 0:
+                    msg += "{}: {}, ".format(subscribed_key, data.high[0])
+                else:
+                    msg += "{}: {}, ".format(subscribed_key, NA)
+            elif subscribed_key == 'low[0]':
+                if data.close.idx >= 0:
+                    msg += "{}: {}, ".format(subscribed_key, data.low[0])
+                else:
+                    msg += "{}: {}, ".format(subscribed_key, NA)
+            elif subscribed_key == 'volume[0]':
+                if data.close.idx >= 0:
+                    msg += "{}: {}, ".format(subscribed_key, data.volume[0])
+                else:
+                    msg += "{}: {}, ".format(subscribed_key, NA)
+
+            if subscribed_key in dir(data):
+                msg += "{}: {}, ".format(subscribed_key, getattr(data, subscribed_key))
+
+        # INFO: Strip ", " from the string
+        print(msg[:-2])
 
 
 class MetaLineIterator(LineSeries.__class__):
@@ -256,24 +338,77 @@ class LineIterator(with_metaclass(MetaLineIterator, LineSeries)):
     bind2lines = bindlines
     bind2line = bind2lines
 
-    def _next(self):
+    def _next(self, debug=False):
         clock_len = self._clk_update()
 
         for indicator in self._lineiterators[LineIterator.IndType]:
+            # if type(indicator).__name__ == 'ATR_Percent':
+            # if type(indicator).__name__ == 'ATR_EMA':
+            #     print("{} Line: {}: {}: BEFORE array:".format(
+            #         inspect.getframeinfo(inspect.currentframe()).function,
+            #         inspect.getframeinfo(inspect.currentframe()).lineno,
+            #         type(indicator).__name__,
+            #     ))
+            #     pprint(indicator.array)
+            #     dump_datas(
+            #         inspect.getframeinfo(inspect.currentframe()).function,
+            #         inspect.getframeinfo(inspect.currentframe()).lineno,
+            #         indicator.datas,
+            #         type(indicator).__name__,
+            #         filtered_data_by_name="1m_Long",
+            #     )
+            #     pass
+
             indicator._next()
+
+            # if type(indicator).__name__ == 'ATR_Percent':
+            # if type(indicator).__name__ == 'ATR_EMA':
+            #     print("{} Line: {}: {}: AFTER array:".format(
+            #         inspect.getframeinfo(inspect.currentframe()).function,
+            #         inspect.getframeinfo(inspect.currentframe()).lineno,
+            #         type(indicator).__name__,
+            #     ))
+            #     pprint(indicator.array)
+            #     dump_datas(
+            #         inspect.getframeinfo(inspect.currentframe()).function,
+            #         inspect.getframeinfo(inspect.currentframe()).lineno,
+            #         indicator.datas,
+            #         type(indicator).__name__,
+            #         filtered_data_by_name="1m_Long",
+            #     )
+            #     pass
 
         self._notify()
 
         if self._ltype == LineIterator.StratType:
             # supporting datas with different lengths
             minperstatus = self._getminperstatus()
+
             if minperstatus < 0:
+                # if debug:
+                #     print("{} Line: {}: DEBUG: minperstatus: {} < 0, run strategy.next()".format(
+                #         inspect.getframeinfo(inspect.currentframe()).function,
+                #         inspect.getframeinfo(inspect.currentframe()).lineno,
+                #         minperstatus,
+                #     ))
                 self.pre_process_next()
                 self.next()
                 self.post_process_next()
             elif minperstatus == 0:
+                # if debug:
+                #     print("{} Line: {}: DEBUG: minperstatus: {} == 0, run strategy.nextstart()".format(
+                #         inspect.getframeinfo(inspect.currentframe()).function,
+                #         inspect.getframeinfo(inspect.currentframe()).lineno,
+                #         minperstatus,
+                #     ))
                 self.nextstart()  # only called for the 1st value
             else:
+                # if debug:
+                #     print("{} Line: {}: DEBUG: else minperstatus: {}, run strategy.prenext()".format(
+                #         inspect.getframeinfo(inspect.currentframe()).function,
+                #         inspect.getframeinfo(inspect.currentframe()).lineno,
+                #         minperstatus,
+                #     ))
                 self.prenext()
         else:
             # assume indicators and others operate on same length datas

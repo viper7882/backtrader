@@ -34,6 +34,7 @@ from __future__ import (absolute_import, division, print_function,
 import array
 import collections
 import datetime
+import inspect
 from itertools import islice
 import math
 
@@ -219,7 +220,16 @@ class LineBuffer(LineSingle):
             the slice
             value (variable): value to be set
         '''
-        self.array[self.idx + ago] = value
+        try:
+            self.array[self.idx + ago] = value
+        except Exception as err:
+            print(err.__class__.__name__ + ':', err)
+            print("{} Line: {}: INFO: self.idx:{}, ago:{}, value:{}".format(
+                inspect.getframeinfo(inspect.currentframe()).function,
+                inspect.getframeinfo(inspect.currentframe()).lineno,
+                self.idx, ago, value,
+            ))
+
         for binding in self.bindings:
             binding[ago] = value
 

@@ -30,12 +30,15 @@ import os.path
 import backtrader as bt
 from backtrader import (date2num, num2date, time2num, TimeFrame, dataseries,
                         metabase)
+from time import time as timer
 
 from backtrader.utils.py3 import with_metaclass, zip, range, string_types
 from backtrader.utils import tzparse
 from .dataseries import SimpleFilterWrapper
 from .resamplerfilter import Resampler, Replayer
 from .tradingcal import PandasMarketCalendar
+
+from .utils.wecoz import print_timestamp_checkpoint
 
 
 class MetaAbstractDataBase(dataseries.OHLCDateTime.__class__):
@@ -398,7 +401,7 @@ class AbstractDataBase(with_metaclass(MetaAbstractDataBase,
                 self._tick_fill()
 
     def next(self, datamaster=None, ticks=True):
-
+        start = timer()
         if len(self) >= self.buflen():
             if ticks:
                 self._tick_nullify()
@@ -407,15 +410,51 @@ class AbstractDataBase(with_metaclass(MetaAbstractDataBase,
             ret = self.load()
             if not ret:
                 # if load cannot produce bars - forward the result
+                # if self._name == "1m_Long":
+                #     print("{} Line: {}: DEBUG: {}: len(self): {} >= self.buflen(): {}, ret: {}".format(
+                #         inspect.getframeinfo(inspect.currentframe()).function,
+                #         inspect.getframeinfo(inspect.currentframe()).lineno,
+                #         self._name, len(self), self.buflen(), ret,
+                #     ))
+                # print_timestamp_checkpoint(
+                #     inspect.getframeinfo(inspect.currentframe()).function,
+                #     inspect.getframeinfo(inspect.currentframe()).lineno,
+                #     "feed next CP1",
+                #     start,
+                # )
                 return ret
 
             if datamaster is None:
                 # bar is there and no master ... return load's result
                 if ticks:
                     self._tick_fill()
+                # if self._name == "1m_Long":
+                #     print("{} Line: {}: DEBUG: {}: no master, len(self): {} >= self.buflen(): {}, ret: {}".format(
+                #         inspect.getframeinfo(inspect.currentframe()).function,
+                #         inspect.getframeinfo(inspect.currentframe()).lineno,
+                #         self._name, len(self), self.buflen(), ret,
+                #     ))
+                # print_timestamp_checkpoint(
+                #     inspect.getframeinfo(inspect.currentframe()).function,
+                #     inspect.getframeinfo(inspect.currentframe()).lineno,
+                #     "feed next CP2",
+                #     start,
+                # )
                 return ret
         else:
+            # if self._name == "1m_Long":
+            #     print("{} Line: {}: DEBUG: {}: len(self): {} < self.buflen(): {}, advance()".format(
+            #         inspect.getframeinfo(inspect.currentframe()).function,
+            #         inspect.getframeinfo(inspect.currentframe()).lineno,
+            #         self._name, len(self), self.buflen(),
+            #     ))
             self.advance(ticks=ticks)
+            # print_timestamp_checkpoint(
+            #     inspect.getframeinfo(inspect.currentframe()).function,
+            #     inspect.getframeinfo(inspect.currentframe()).lineno,
+            #     "feed next CP3",
+            #     start,
+            # )
 
         # a bar is "loaded" or was preloaded - index has been moved to it
         if datamaster is not None:
@@ -423,6 +462,13 @@ class AbstractDataBase(with_metaclass(MetaAbstractDataBase,
             if self.lines.datetime[0] > datamaster.lines.datetime[0]:
                 # can't deliver new bar, too early, go back
                 self.rewind()
+
+                # print_timestamp_checkpoint(
+                #     inspect.getframeinfo(inspect.currentframe()).function,
+                #     inspect.getframeinfo(inspect.currentframe()).lineno,
+                #     "feed next CP4",
+                #     start,
+                # )
             else:
                 if ticks:
                     self._tick_fill()
@@ -432,6 +478,12 @@ class AbstractDataBase(with_metaclass(MetaAbstractDataBase,
                 self._tick_fill()
 
         # tell the world there is a bar (either the new or the previous
+        # print_timestamp_checkpoint(
+        #     inspect.getframeinfo(inspect.currentframe()).function,
+        #     inspect.getframeinfo(inspect.currentframe()).lineno,
+        #     "feed next CP5",
+        #     start,
+        # )
         return True
 
     def preload(self):
@@ -468,15 +520,57 @@ class AbstractDataBase(with_metaclass(MetaAbstractDataBase,
             ff.check(self, _forcedata=forcedata, *fargs, **fkwargs)
 
     def load(self):
+        start = timer()
         while True:
             # move data pointer forward for new bar
             self.forward()
 
+            # print_timestamp_checkpoint(
+            #     inspect.getframeinfo(inspect.currentframe()).function,
+            #     inspect.getframeinfo(inspect.currentframe()).lineno,
+            #     "feed load CP1",
+            #     start,
+            # )
+
             if self._fromstack():  # bar is available
+                # if self._name == "1m_Long":
+                #     print("{} Line: {}: DEBUG: {}: self._fromstack(), return True".format(
+                #         inspect.getframeinfo(inspect.currentframe()).function,
+                #         inspect.getframeinfo(inspect.currentframe()).lineno,
+                #         self._name,
+                #     ))
+                # print_timestamp_checkpoint(
+                #     inspect.getframeinfo(inspect.currentframe()).function,
+                #     inspect.getframeinfo(inspect.currentframe()).lineno,
+                #     "feed load CP2",
+                #     start,
+                # )
                 return True
 
+            # print_timestamp_checkpoint(
+            #     inspect.getframeinfo(inspect.currentframe()).function,
+            #     inspect.getframeinfo(inspect.currentframe()).lineno,
+            #     "feed load CP1",
+            #     start,
+            # )
+
             if not self._fromstack(stash=True):
+                # print_timestamp_checkpoint(
+                #     inspect.getframeinfo(inspect.currentframe()).function,
+                #     inspect.getframeinfo(inspect.currentframe()).lineno,
+                #     "feed load CP2",
+                #     start,
+                # )
+
                 _loadret = self._load()
+
+                # print_timestamp_checkpoint(
+                #     inspect.getframeinfo(inspect.currentframe()).function,
+                #     inspect.getframeinfo(inspect.currentframe()).lineno,
+                #     "feed load CP3",
+                #     start,
+                # )
+
                 if not _loadret:  # no bar use force to make sure in exactbars
                     # the pointer is undone this covers especially (but not
                     # uniquely) the case in which the last bar has been seen
@@ -487,10 +581,38 @@ class AbstractDataBase(with_metaclass(MetaAbstractDataBase,
                     # return the actual returned value which may be None to
                     # signal no bar is available, but the data feed is not
                     # done. False means game over
+                    # if self._name == "1m_Long":
+                    #     print("{} Line: {}: DEBUG: {}: not _loadret, _loadret: {}".format(
+                    #         inspect.getframeinfo(inspect.currentframe()).function,
+                    #         inspect.getframeinfo(inspect.currentframe()).lineno,
+                    #         self._name, _loadret,
+                    #     ))
+                    # print_timestamp_checkpoint(
+                    #     inspect.getframeinfo(inspect.currentframe()).function,
+                    #     inspect.getframeinfo(inspect.currentframe()).lineno,
+                    #     "feed load CP4",
+                    #     start,
+                    # )
                     return _loadret
+
+            # print_timestamp_checkpoint(
+            #     inspect.getframeinfo(inspect.currentframe()).function,
+            #     inspect.getframeinfo(inspect.currentframe()).lineno,
+            #     "feed load CP5",
+            #     start,
+            # )
 
             # Get a reference to current loaded time
             dt = self.lines.datetime[0]
+
+            # if self._name == "1m_Long":
+            #     print("{} Line: {}: DEBUG: {}: fromdate: {}, dt: {}".format(
+            #         inspect.getframeinfo(inspect.currentframe()).function,
+            #         inspect.getframeinfo(inspect.currentframe()).lineno,
+            #         self._name,
+            #         num2date(self.fromdate).isoformat().replace("T", " "),
+            #         num2date(dt).isoformat().replace("T", " "),
+            #     ))
 
             # A bar has been loaded, adapt the time
             if self._tzinput:
@@ -501,15 +623,68 @@ class AbstractDataBase(with_metaclass(MetaAbstractDataBase,
                 dtime = self._tzinput.localize(dtime)  # pytz compatible-ized
                 self.lines.datetime[0] = dt = date2num(dtime)  # keep UTC val
 
+                # if self._name == "1m_Long":
+                #     print("{} Line: {}: DEBUG: {}: adapted new dt: {}".format(
+                #         inspect.getframeinfo(inspect.currentframe()).function,
+                #         inspect.getframeinfo(inspect.currentframe()).lineno,
+                #         self._name, num2date(dt).isoformat().replace("T", " "),
+                #     ))
+                # print_timestamp_checkpoint(
+                #     inspect.getframeinfo(inspect.currentframe()).function,
+                #     inspect.getframeinfo(inspect.currentframe()).lineno,
+                #     "feed load CP6",
+                #     start,
+                # )
+
+            # print_timestamp_checkpoint(
+            #     inspect.getframeinfo(inspect.currentframe()).function,
+            #     inspect.getframeinfo(inspect.currentframe()).lineno,
+            #     "feed load CP7",
+            #     start,
+            # )
+
             # Check standard date from/to filters
             if dt < self.fromdate:
                 # discard loaded bar and carry on
                 self.backwards()
+                # if self._name == "1m_Long":
+                #     print("{} Line: {}: DEBUG: {}: dt: {} < self.fromdate: {}, continue".format(
+                #         inspect.getframeinfo(inspect.currentframe()).function,
+                #         inspect.getframeinfo(inspect.currentframe()).lineno,
+                #         self._name, num2date(dt).isoformat().replace("T", " "),
+                #         num2date(self.fromdate).isoformat().replace("T", " "),
+                #     ))
+                # print_timestamp_checkpoint(
+                #     inspect.getframeinfo(inspect.currentframe()).function,
+                #     inspect.getframeinfo(inspect.currentframe()).lineno,
+                #     "feed load CP8",
+                #     start,
+                # )
                 continue
             if dt > self.todate:
                 # discard loaded bar and break out
                 self.backwards(force=True)
+                # if self._name == "1m_Long":
+                #     print("{} Line: {}: DEBUG: {}: dt: {} > self.todate: {}, break".format(
+                #         inspect.getframeinfo(inspect.currentframe()).function,
+                #         inspect.getframeinfo(inspect.currentframe()).lineno,
+                #         self._name, num2date(dt).isoformat().replace("T", " "),
+                #         num2date(self.todate).isoformat().replace("T", " "),
+                #     ))
+                # print_timestamp_checkpoint(
+                #     inspect.getframeinfo(inspect.currentframe()).function,
+                #     inspect.getframeinfo(inspect.currentframe()).lineno,
+                #     "feed load CP9",
+                #     start,
+                # )
                 break
+
+            # print_timestamp_checkpoint(
+            #     inspect.getframeinfo(inspect.currentframe()).function,
+            #     inspect.getframeinfo(inspect.currentframe()).lineno,
+            #     "feed load CP10",
+            #     start,
+            # )
 
             # Pass through filters
             retff = False
@@ -522,16 +697,75 @@ class AbstractDataBase(with_metaclass(MetaAbstractDataBase,
                 else:
                     retff = ff(self, *fargs, **fkwargs)
 
-                if retff:  # bar removed from systemn
+                if retff:  # bar removed from system
+                    # if self._name == "1m_Long":
+                    #     print("{} Line: {}: DEBUG: {}: dt: {}, bar removed from system, break".format(
+                    #         inspect.getframeinfo(inspect.currentframe()).function,
+                    #         inspect.getframeinfo(inspect.currentframe()).lineno,
+                    #         self._name, num2date(dt).isoformat().replace("T", " "),
+                    #     ))
+                    # print_timestamp_checkpoint(
+                    #     inspect.getframeinfo(inspect.currentframe()).function,
+                    #     inspect.getframeinfo(inspect.currentframe()).lineno,
+                    #     "feed load CP11",
+                    #     start,
+                    # )
+
                     break  # out of the inner loop
 
+            # print_timestamp_checkpoint(
+            #     inspect.getframeinfo(inspect.currentframe()).function,
+            #     inspect.getframeinfo(inspect.currentframe()).lineno,
+            #     "feed load CP12",
+            #     start,
+            # )
+
             if retff:  # bar removed from system - loop to get new bar
+                # if self._name == "1m_Long":
+                #     print("{} Line: {}: DEBUG: {}: dt: {}, bar removed from system, continue".format(
+                #         inspect.getframeinfo(inspect.currentframe()).function,
+                #         inspect.getframeinfo(inspect.currentframe()).lineno,
+                #         self._name, num2date(dt).isoformat().replace("T", " "),
+                #     ))
+                # print_timestamp_checkpoint(
+                #     inspect.getframeinfo(inspect.currentframe()).function,
+                #     inspect.getframeinfo(inspect.currentframe()).lineno,
+                #     "feed load CP13",
+                #     start,
+                # )
+
                 continue  # in the greater loop
 
             # Checks let the bar through ... notify it
+            # if self._name == "1m_Long":
+            #     print("{} Line: {}: DEBUG: {}: dt: {}, let the bar through, return True".format(
+            #         inspect.getframeinfo(inspect.currentframe()).function,
+            #         inspect.getframeinfo(inspect.currentframe()).lineno,
+            #         self._name, num2date(dt).isoformat().replace("T", " "),
+            #     ))
+            # print_timestamp_checkpoint(
+            #     inspect.getframeinfo(inspect.currentframe()).function,
+            #     inspect.getframeinfo(inspect.currentframe()).lineno,
+            #     "feed load CP14",
+            #     start,
+            # )
+
             return True
 
         # Out of the loop ... no more bars or past todate
+        # if self._name == "1m_Long":
+        #     print("{} Line: {}: DEBUG: {}: no more bars or past todate, return False".format(
+        #         inspect.getframeinfo(inspect.currentframe()).function,
+        #         inspect.getframeinfo(inspect.currentframe()).lineno,
+        #         self._name,
+        #     ))
+        # print_timestamp_checkpoint(
+        #     inspect.getframeinfo(inspect.currentframe()).function,
+        #     inspect.getframeinfo(inspect.currentframe()).lineno,
+        #     "feed load CP15",
+        #     start,
+        # )
+
         return False
 
     def _load(self):
@@ -696,6 +930,7 @@ class CSVDataBase(with_metaclass(MetaCSVDataBase, DataBase)):
         self.f = None
 
     def _load(self):
+
         if self.f is None:
             return False
 
@@ -707,7 +942,8 @@ class CSVDataBase(with_metaclass(MetaCSVDataBase, DataBase)):
 
         line = line.rstrip('\n')
         linetokens = line.split(self.separator)
-        return self._loadline(linetokens)
+        ret_value = self._loadline(linetokens)
+        return ret_value
 
     def _getnextline(self):
         if self.f is None:
@@ -787,6 +1023,7 @@ class DataClone(AbstractDataBase):
             # data is preloaded, we are preloading too, can move
             # forward until have full bar or data source is exhausted
             self.data.advance()
+
             if len(self.data) > self.data.buflen():
                 return False
 

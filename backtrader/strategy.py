@@ -351,8 +351,8 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
         else:
             self.prenext_open()
 
-    def _next(self):
-        super(Strategy, self)._next()
+    def _next(self, debug=False):
+        super(Strategy, self)._next(debug=debug)
 
         minperstatus = self._getminperstatus()
         self._next_analyzers(minperstatus)
@@ -955,7 +955,7 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
              parent=None, transmit=True,
              **kwargs):
         '''
-        To create a selll (short) order and send it to the broker
+        To create a sell (short) order and send it to the broker
 
         See the documentation for ``buy`` for an explanation of the parameters
 
