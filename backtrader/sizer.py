@@ -51,12 +51,16 @@ class Sizer(with_metaclass(MetaParams, object)):
     def getsizing(self, data, isbuy):
         comminfo = self.broker.getcommissioninfo(data)
         cash = self.broker.getcash(force=True)
-        # print("{} Line: {}: DEBUG: cash: {}".format(
+        value = self.broker.getvalue()
+        bigger_cash = cash
+        if value > cash:
+            bigger_cash = value
+        # print("{} Line: {}: DEBUG: cash: {}, value: {}".format(
         #     inspect.getframeinfo(inspect.currentframe()).function,
         #     inspect.getframeinfo(inspect.currentframe()).lineno,
-        #     cash,
+        #     cash, value,
         # ))
-        return self._getsizing(comminfo, cash, data, isbuy)
+        return self._getsizing(comminfo, bigger_cash, data, isbuy)
 
     def _getsizing(self, comminfo, cash, data, isbuy):
         '''This method has to be overriden by subclasses of Sizer to provide
