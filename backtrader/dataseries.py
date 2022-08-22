@@ -31,11 +31,11 @@ from .utils import AutoOrderedDict, OrderedDict, date2num
 
 
 class TimeFrame(object):
-    (Ticks, MicroSeconds, Seconds, Minutes,
-     Days, Weeks, Months, Years, NoTimeFrame) = range(1, 10)
-
-    Names = ['', 'Ticks', 'MicroSeconds', 'Seconds', 'Minutes',
+    Names = ['', 'Ticks', 'MicroSeconds', 'Seconds', 'Minutes', 'Hours',
              'Days', 'Weeks', 'Months', 'Years', 'NoTimeFrame']
+
+    (Ticks, MicroSeconds, Seconds, Minutes, Hours,
+     Days, Weeks, Months, Years, NoTimeFrame) = range(1, len(Names))
 
     names = Names  # support old naming convention
 

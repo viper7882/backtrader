@@ -286,7 +286,7 @@ class Plot_OldSync(with_metaclass(MetaParams, object)):
                 fmtdata = '%Y-%m-%d'
             elif tframe == TimeFrame.Days:
                 fmtdata = '%Y-%m-%d'
-            elif tframe == TimeFrame.Minutes:
+            elif tframe == TimeFrame.Hours or tframe == TimeFrame.Minutes:
                 fmtdata = '%Y-%m-%d %H:%M'
             elif tframe == TimeFrame.Seconds:
                 fmtdata = '%Y-%m-%d %H:%M:%S'

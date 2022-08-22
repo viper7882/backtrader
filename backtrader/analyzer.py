@@ -406,7 +406,12 @@ class TimeFrameAnalyzerBase(with_metaclass(MetaTimeFrameAnalyzerBase,
         point *= self.compression
 
         # Get hours, minutes, seconds and microseconds
-        if self.timeframe == TimeFrame.Minutes:
+        if self.timeframe == TimeFrame.Hours:
+            ph = point
+            pm = 0
+            ps = 0
+            pus = 0
+        elif self.timeframe == TimeFrame.Minutes:
             ph, pm = divmod(point, 60)
             ps = 0
             pus = 0
@@ -430,6 +435,7 @@ class TimeFrameAnalyzerBase(with_metaclass(MetaTimeFrameAnalyzerBase,
         # pus -= self.timeframe == TimeFrame.MicroSeconds
 
         tadjust = datetime.timedelta(
+            hours=self.timeframe == TimeFrame.Hours,
             minutes=self.timeframe == TimeFrame.Minutes,
             seconds=self.timeframe == TimeFrame.Seconds,
             microseconds=self.timeframe == TimeFrame.MicroSeconds)

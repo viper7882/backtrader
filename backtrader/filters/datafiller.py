@@ -102,6 +102,7 @@ class DataFiller(AbstractDataBase):
 
     # Minimum delta unit in between bars
     _tdeltas = {
+        TimeFrame.Hours: timedelta(minutes=60),
         TimeFrame.Minutes: timedelta(seconds=60),
         TimeFrame.Seconds: timedelta(seconds=1),
         TimeFrame.MicroSeconds: timedelta(microseconds=1),

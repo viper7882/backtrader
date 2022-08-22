@@ -163,6 +163,7 @@ class VCData(with_metaclass(MetaVCData, DataBase)):
         TimeFrame.MicroSeconds: timedelta(days=1),
         TimeFrame.Seconds: timedelta(days=1),
         TimeFrame.Minutes: timedelta(days=2),
+        TimeFrame.Hours: timedelta(days=2),
         TimeFrame.Days: timedelta(days=365),
         TimeFrame.Weeks: timedelta(days=365*2),
         TimeFrame.Months: timedelta(days=365*5),

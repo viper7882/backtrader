@@ -30,6 +30,7 @@ TIMEFRAMES = dict(
     (
         (bt.TimeFrame.Seconds, 's'),
         (bt.TimeFrame.Minutes, 'm'),
+        (bt.TimeFrame.Hours, 'h'),
         (bt.TimeFrame.Days, 'd'),
         (bt.TimeFrame.Weeks, 'w'),
         (bt.TimeFrame.Months, 'm'),

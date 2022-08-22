@@ -1115,8 +1115,8 @@ class IBStore(with_metaclass(MetaSingleton, object)):
         'secs': (TimeFrame.Seconds, 1),
         'min': (TimeFrame.Minutes, 1),
         'mins': (TimeFrame.Minutes, 1),
-        'hour': (TimeFrame.Minutes, 60),
-        'hours': (TimeFrame.Minutes, 60),
+        'hour': (TimeFrame.Hours, 1),
+        'hours': (TimeFrame.Hours, 1),
         'day': (TimeFrame.Days, 1),
         'W': (TimeFrame.Weeks, 1),
         'M': (TimeFrame.Months, 1),
@@ -1149,28 +1149,30 @@ class IBStore(with_metaclass(MetaSingleton, object)):
     def tfcomp_to_size(self, timeframe, compression):
         if timeframe == TimeFrame.Months:
             return '{} M'.format(compression)
-
-        if timeframe == TimeFrame.Weeks:
+        elif timeframe == TimeFrame.Weeks:
             return '{} W'.format(compression)
-
-        if timeframe == TimeFrame.Days:
+        elif timeframe == TimeFrame.Days:
             if not compression % 7:
                 return '{} W'.format(compression // 7)
 
             return '{} day'.format(compression)
+        elif timeframe == TimeFrame.Hours:
+            if not compression % 24:
+                days = compression // 24
+                return ('{} day'.format(days)) + ('s' * (days > 1))
 
-        if timeframe == TimeFrame.Minutes:
+            return ('{} hour'.format(compression)) + ('s' * (compression > 1))
+        elif timeframe == TimeFrame.Minutes:
             if not compression % 60:
                 hours = compression // 60
                 return ('{} hour'.format(hours)) + ('s' * (hours > 1))
 
             return ('{} min'.format(compression)) + ('s' * (compression > 1))
-
-        if timeframe == TimeFrame.Seconds:
+        elif timeframe == TimeFrame.Seconds:
             return '{} secs'.format(compression)
-
-        # Microseconds or ticks
-        return None
+        else:
+            # Microseconds or ticks
+            return None
 
     def dt_plus_duration(self, dt, duration):
         size, dim = duration.split()

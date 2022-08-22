@@ -383,7 +383,12 @@ class _BaseResampler(with_metaclass(metabase.MetaParams, object)):
 
         # Get hours, minutes, seconds and microseconds
         extradays = 0
-        if self.p.timeframe == TimeFrame.Minutes:
+        if self.p.timeframe == TimeFrame.Hours:
+            ph = point
+            pm = 0
+            ps = 0
+            pus = 0
+        elif self.p.timeframe == TimeFrame.Minutes:
             ph, pm = divmod(point, 60)
             ps = 0
             pus = 0
@@ -536,7 +541,7 @@ class Resampler(_BaseResampler):
                 tframe = self.p.timeframe
                 if tframe == TimeFrame.Ticks:  # Ticks is already the lowest
                     dodeliver = True
-                elif tframe == TimeFrame.Minutes:
+                elif tframe == TimeFrame.Hours or tframe == TimeFrame.Minutes:
                     dtnum = self._calcadjtime(greater=True)
                     dodeliver = dtnum <= forcedata.datetime[0]
                 elif tframe == TimeFrame.Days:
@@ -712,6 +717,10 @@ class ResamplerMinutes(Resampler):
     params = (('timeframe', TimeFrame.Minutes),)
 
 
+class ResamplerHours(Resampler):
+    params = (('timeframe', TimeFrame.Hours),)
+
+
 class ResamplerDaily(Resampler):
     params = (('timeframe', TimeFrame.Days),)
 
@@ -738,6 +747,10 @@ class ReplayerSeconds(Replayer):
 
 class ReplayerMinutes(Replayer):
     params = (('timeframe', TimeFrame.Minutes),)
+
+
+class ReplayerHours(Replayer):
+    params = (('timeframe', TimeFrame.Hours),)
 
 
 class ReplayerDaily(Replayer):

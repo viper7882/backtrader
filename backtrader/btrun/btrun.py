@@ -63,6 +63,7 @@ TIMEFRAMES = dict(
     microseconds=bt.TimeFrame.MicroSeconds,
     seconds=bt.TimeFrame.Seconds,
     minutes=bt.TimeFrame.Minutes,
+    hours=bt.TimeFrame.Hours,
     days=bt.TimeFrame.Days,
     weeks=bt.TimeFrame.Weeks,
     months=bt.TimeFrame.Months,
