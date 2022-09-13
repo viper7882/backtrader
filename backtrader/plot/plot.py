@@ -114,7 +114,7 @@ class Plot_OldSync(with_metaclass(MetaParams, object)):
                       **kwargs)
 
     def plot(self, strategy, figid=0, numfigs=1, iplot=True,
-             start=None, end=None, **kwargs):
+             start=None, end=None, backend=None, **kwargs):
         # pfillers={}):
         if not strategy.datas:
             return
@@ -125,6 +125,9 @@ class Plot_OldSync(with_metaclass(MetaParams, object)):
         if iplot:
             if 'ipykernel' in sys.modules:
                 matplotlib.use('nbagg')
+
+        if backend:
+            matplotlib.use(backend)
 
         # this import must not happen before matplotlib.use
         import matplotlib.pyplot as mpyplot

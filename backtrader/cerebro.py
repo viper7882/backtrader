@@ -945,7 +945,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
     broker = property(getbroker, setbroker)
 
     def plot(self, plotter=None, numfigs=1, iplot=True, start=None, end=None,
-             width=16, height=9, dpi=300, tight=True, use=None, **kwargs):
+             width=16, height=9, dpi=300, tight=True, backend=None, **kwargs):
         '''
         Plots the strategies inside cerebro
 
@@ -958,7 +958,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
         ``iplot``: if ``True`` and running in a ``notebook`` the charts will be
         displayed inline
 
-        ``use``: set it to the name of the desired matplotlib backend. It will
+        ``backend``: set it to the name of the desired matplotlib backend. It will
         take precedence over ``iplot``
 
         ``start``: An index to the datetime line array of the strategy or a
@@ -999,7 +999,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
             for si, strat in enumerate(stratlist):
                 rfig = plotter.plot(strat, figid=si * 100,
                                     numfigs=numfigs, iplot=iplot,
-                                    start=start, end=end, use=use)
+                                    start=start, end=end, backend=backend)
                 # pfillers=pfillers2)
 
                 figs.append(rfig)

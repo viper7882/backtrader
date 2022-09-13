@@ -77,7 +77,7 @@ tab10_index = [3, 0, 2, 1, 2, 4, 5, 6, 7, 8, 9]
 class PlotScheme(object):
     def __init__(self):
         # to have a tight packing on the chart wether only the x axis or also
-        # the y axis have (see matplotlib)
+        # the y-axis have (see matplotlib)
         self.ytight = False
 
         # y-margin (top/bottom) for the subcharts. This will not overrule the
@@ -95,7 +95,7 @@ class PlotScheme(object):
 
         # How many "subparts" takes a minor chart (indicators/observers) in the
         # overall chart. This is proportional to the total number of subcharts
-        # Together with rowsmajor, this defines a proportion ratio betwen data
+        # Together with rowsmajor, this defines a proportion ratio between data
         # charts and indicators/observers charts
         self.rowsminor = 1
 
@@ -115,8 +115,6 @@ class PlotScheme(object):
         self.barup = '0.75'
         # Default color for a bearish bar/candle
         self.bardown = 'red'
-        # Level of transparency to apply to bars/cancles (NOT USED)
-        self.bartrans = 1.0
 
         # Wether the candlesticks have to be filled or be transparent
         self.barupfill = True
@@ -147,14 +145,10 @@ class PlotScheme(object):
         # Transparency to apply to the volume when overlaying
         self.voltrans = 0.50
 
-        # Transparency for text labels (NOT USED CURRENTLY)
-        self.subtxttrans = 0.66
         # Default font text size for labels on the chart
         self.subtxtsize = 9
 
-        # Transparency for the legend (NOT USED CURRENTLY)
-        self.legendtrans = 0.25
-        # Wether indicators have a leged displaey in their charts
+        # Whether indicators have a legend display in their charts
         self.legendind = True
         # Location of the legend for indicators (see matplotlib)
         self.legendindloc = 'upper left'
@@ -178,7 +172,7 @@ class PlotScheme(object):
         # Default color scheme: Tableau 10
         self.lcolors = tableau10
 
-        # strftime Format string for the display of ticks on the x axis
+        # strftime Format string for the display of ticks on the x-axis
         self.fmt_x_ticks = '%Y-%m-%d %H:%M'
 
         # strftime Format string for the display of data points values
