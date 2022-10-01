@@ -183,6 +183,8 @@ class AbstractDataBase(with_metaclass(MetaAbstractDataBase,
         if self.p.fromdate is None:
             self.fromdate = float('-inf')
         else:
+            # Validate assumption made
+            assert isinstance(self.p.fromdate, datetime.datetime)
             self.fromdate = self.date2num(self.p.fromdate)
 
         if self.p.todate is None:
