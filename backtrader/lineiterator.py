@@ -384,6 +384,12 @@ class LineIterator(with_metaclass(MetaLineIterator, LineSeries)):
             # supporting datas with different lengths
             minperstatus = self._getminperstatus()
 
+            # print("{} Line: {}: INFO: minperstatus: {}".format(
+            #     inspect.getframeinfo(inspect.currentframe()).function,
+            #     inspect.getframeinfo(inspect.currentframe()).lineno,
+            #     minperstatus,
+            # ))
+
             if minperstatus < 0:
                 # if debug:
                 #     print("{} Line: {}: DEBUG: minperstatus: {} < 0, run strategy.next()".format(
@@ -395,6 +401,7 @@ class LineIterator(with_metaclass(MetaLineIterator, LineSeries)):
                 self.next()
                 self.post_process_next()
             elif minperstatus == 0:
+                # minperstatus = self._getminperstatus()
                 # if debug:
                 #     print("{} Line: {}: DEBUG: minperstatus: {} == 0, run strategy.nextstart()".format(
                 #         inspect.getframeinfo(inspect.currentframe()).function,
@@ -403,6 +410,7 @@ class LineIterator(with_metaclass(MetaLineIterator, LineSeries)):
                 #     ))
                 self.nextstart()  # only called for the 1st value
             else:
+                # minperstatus = self._getminperstatus()
                 # if debug:
                 #     print("{} Line: {}: DEBUG: else minperstatus: {}, run strategy.prenext()".format(
                 #         inspect.getframeinfo(inspect.currentframe()).function,
