@@ -258,7 +258,7 @@ class LineBuffer(LineSingle):
         ''' Moves the logical index foward and enlarges the buffer as much as needed
 
         Keyword Args:
-            value (variable): value to be set in new positins
+            value (variable): value to be set in new positions
             size (int): How many extra positions to enlarge the buffer
         '''
         self.idx += size
