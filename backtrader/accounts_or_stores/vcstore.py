@@ -155,7 +155,7 @@ class RTEventSink(object):
         pass
 
     def OnServerShutDown(self):
-        self.store._vcrt_connection(self.store._RT_SHUTDOWN)
+        self.account_or_store._vcrt_connection(self.account_or_store._RT_SHUTDOWN)
 
     def OnInternalEvent(self, p1, p2, p3):
         if p1 != 1:  # Apparently "Connection Event"
@@ -167,7 +167,7 @@ class RTEventSink(object):
         self.lastconn = p2  # keep new notification code
 
         # p2 should be 0 (disconn), 1 (conn)
-        self.store._vcrt_connection(self.store._RT_BASEMSG - p2)
+        self.account_or_store._vcrt_connection(self.account_or_store._RT_BASEMSG - p2)
 
 
 class MetaSingleton(MetaParams):
@@ -191,8 +191,8 @@ class VCStore(with_metaclass(MetaSingleton, object)):
     like ``VCData`` and ``VCBroker``
 
     '''
-    BrokerCls = None  # broker class will autoregister
-    DataCls = None  # data class will auto register
+    Broker_or_Exchange_Cls = None  # broker_or_exchange class will autoregister
+    Datafeed_Cls = None  # data class will auto register
 
     # 32 bit max unsigned int for openinterest correction
     MAXUINT = 0xffffffff // 2
@@ -212,14 +212,14 @@ class VCStore(with_metaclass(MetaSingleton, object)):
     _RT_COMTYPES = -0xffe2
 
     @classmethod
-    def getdata(cls, *args, **kwargs):
-        '''Returns ``DataCls`` with args, kwargs'''
-        return cls.DataCls(*args, **kwargs)
+    def instantiate_datafeed(cls, *args, **kwargs):
+        '''Returns ``Datafeed_Cls`` with args, kwargs'''
+        return cls.Datafeed_Cls(*args, **kwargs)
 
     @classmethod
-    def getbroker(cls, *args, **kwargs):
-        '''Returns broker with *args, **kwargs from registered ``BrokerCls``'''
-        return cls.BrokerCls(*args, **kwargs)
+    def get_broker_or_exchange(cls, *args, **kwargs):
+        '''Returns broker_or_exchange with *args, **kwargs from registered ``Broker_or_Exchange_Cls``'''
+        return cls.Broker_or_Exchange_Cls(*args, **kwargs)
 
     # DLLs to parse if found for TypeLibs
     VC64_DLLS = ('VCDataSource64.dll', 'VCRealTimeLib64.dll',
@@ -378,7 +378,7 @@ class VCStore(with_metaclass(MetaSingleton, object)):
         self.notifs.append(None)  # Mark current end of notifs
         return [x for x in iter(self.notifs.popleft, None)]  # popleft til None
 
-    def start(self, data=None, broker=None):
+    def start(self, datafeed=None, broker_or_exchange=None):
         if not self._connected:
             return
 
@@ -388,8 +388,8 @@ class VCStore(with_metaclass(MetaSingleton, object)):
             t.daemon = True  # Do not stop a general exit
             t.start()
 
-        if broker is not None:
-            t = threading.Thread(target=self._t_broker, args=(broker,))
+        if broker_or_exchange is not None:
+            t = threading.Thread(target=self._t_broker, args=(broker_or_exchange,))
             t.daemon = True
             t.start()
 
@@ -435,28 +435,28 @@ class VCStore(with_metaclass(MetaSingleton, object)):
         vctimeframe, _ = self._tftable[timeframe]
         return vctimeframe == self.vcdsmod.CT_Ticks
 
-    def _getq(self, data):
+    def _getq(self, datafeed):
         q = queue.Queue()
         self._dqs.append(q)
-        self._qdatas[q] = data
+        self._qdatas[q] = datafeed
         return q
 
     def _delq(self, q):
         self._dqs.remove(q)
         self._qdatas.pop(q)
 
-    def _rtdata(self, data, symbol):
-        kwargs = dict(data=data, symbol=symbol)
+    def _rtdata(self, datafeed, symbol):
+        kwargs = dict(datafeed=datafeed, symbol=symbol)
         t = threading.Thread(target=self._t_rtdata, kwargs=kwargs)
         t.daemon = True
         t.start()
 
     # Broker functions
-    def _t_rtdata(self, data, symbol):
+    def _t_rtdata(self, datafeed, symbol):
         self.comtypes.CoInitialize()  # running in another thread
         vcrt = self.CreateObject(self.vcrtmod.RealTime)
-        conn = self.GetEvents(vcrt, data)
-        data._vcrt = vcrt
+        conn = self.GetEvents(vcrt, datafeed)
+        datafeed._vcrt = vcrt
         vcrt.RequestSymbolFeed(symbol, False)  # no limits
         PumpEvents()
         del conn  # ensure events go away
@@ -479,7 +479,7 @@ class VCStore(with_metaclass(MetaSingleton, object)):
     def _canceldirectdata(self, q):
         self._delq(q)
 
-    def _directdata(self, data,
+    def _directdata(self, datafeed,
                     symbol, timeframe, compression, d1, d2=None,
                     historical=False):
 
@@ -487,7 +487,7 @@ class VCStore(with_metaclass(MetaSingleton, object)):
         timeframe, compression = self._tf2ct(timeframe, compression)
         kwargs = locals().copy()  # make a copy of the args
         kwargs.pop('self')
-        kwargs['q'] = q = self._getq(data)
+        kwargs['q'] = q = self._getq(datafeed)
 
         t = threading.Thread(target=self._t_directdata, kwargs=kwargs)
         t.daemon = True
@@ -496,7 +496,7 @@ class VCStore(with_metaclass(MetaSingleton, object)):
         # use the queue to synchronize until symbolinfo has been gotten
         return q  # tell the caller where to expect the hist data
 
-    def _t_directdata(self, data,
+    def _t_directdata(self, datafeed,
                       symbol, timeframe, compression, d1, d2, q,
                       historical):
 
@@ -515,19 +515,19 @@ class VCStore(with_metaclass(MetaSingleton, object)):
         else:
             serie = vcds.NewDataSerie(symbol, timeframe, compression, d1)
 
-        data._setserie(serie)
+        datafeed._setserie(serie)
 
         # processing of bars can continue
-        data.OnNewDataSerieBar(serie, forcepush=historical)
+        datafeed.OnNewDataSerieBar(serie, forcepush=historical)
         if historical:  # push the last bar
             q.put(None)        # Signal end of transmission
             dsconn = None
         else:
-            dsconn = self.GetEvents(vcds, data)  # finally connect the events
+            dsconn = self.GetEvents(vcds, datafeed)  # finally connect the events
             pass
 
         # pump events in this thread - call ping
-        PumpEvents(timeout=data._getpingtmout, cb=data.ping)
+        PumpEvents(timeout=datafeed._getpingtmout, cb=datafeed.ping)
         if dsconn is not None:
             del dsconn  # Docs recommend deleting the connection
 
@@ -536,10 +536,10 @@ class VCStore(with_metaclass(MetaSingleton, object)):
         self.comtypes.CoUninitialize()  # Terminate com threading
 
     # Broker functions
-    def _t_broker(self, broker):
+    def _t_broker(self, broker_or_exchange):
         self.comtypes.CoInitialize()  # running in another thread
         trader = self.CreateObject(self.vcctmod.Trader)
-        conn = self.GetEvents(trader, broker(trader))
+        conn = self.GetEvents(trader, broker_or_exchange(trader))
         PumpEvents()
         del conn  # ensure events go away
         self.comtypes.CoUninitialize()

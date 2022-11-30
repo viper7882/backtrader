@@ -40,34 +40,34 @@ class Sizer(with_metaclass(MetaParams, object)):
 
            position = self.strategy.getposition(data)
 
-      - ``broker``: will be set by the strategy in which the sizer is working
+      - ``broker_or_exchange``: will be set by the strategy in which the sizer is working
 
         Gives access to information some complex sizers may need like portfolio
         value, ..
     '''
     strategy = None
-    broker = None
+    broker_or_exchange = None
 
-    def getsizing(self, data, isbuy):
-        comminfo = self.broker.getcommissioninfo(data)
-        cash = self.broker.getcash(force=True)
-        return self._getsizing(comminfo, cash, data, isbuy)
+    def getsizing(self, datafeeds, is_buy):
+        commission_info = self.broker_or_exchange.get_commission_info(datafeeds)
+        cash = self.broker_or_exchange.get_cash(force=True)
+        return self._getsizing(commission_info, cash, datafeeds, is_buy)
 
-    def _getsizing(self, comminfo, cash, data, isbuy):
+    def _getsizing(self, commission_info, cash, datafeeds, is_buy):
         '''This method has to be overriden by subclasses of Sizer to provide
         the sizing functionality
 
         Params:
-          - ``comminfo``: The CommissionInfo instance that contains
+          - ``commission_info``: The CommissionInfo instance that contains
             information about the commission for the data and allows
             calculation of position value, operation cost, commision for the
             operation
 
-          - ``cash``: current available cash in the *broker*
+          - ``cash``: current available cash in the *broker_or_exchange*
 
           - ``data``: target of the operation
 
-          - ``isbuy``: will be ``True`` for *buy* operations and ``False``
+          - ``is_buy``: will be ``True`` for *buy* operations and ``False``
             for *sell* operations
 
         The method has to return the actual size (an int) to be executed. If
@@ -78,9 +78,9 @@ class Sizer(with_metaclass(MetaParams, object)):
         '''
         raise NotImplementedError
 
-    def set(self, strategy, broker):
+    def set(self, strategy, broker_or_exchange):
         self.strategy = strategy
-        self.broker = broker
+        self.broker_or_exchange = broker_or_exchange
 
 
 SizerBase = Sizer  # alias for old naming

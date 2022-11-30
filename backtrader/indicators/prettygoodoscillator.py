@@ -53,8 +53,8 @@ class PrettyGoodOscillator(Indicator):
     params = (('period', 14), ('_movav', MovAv.Simple),)
 
     def __init__(self):
-        movav = self.p._movav(self.data, period=self.p.period)
-        atr = ATR(self.data, period=self.p.period)
+        movav = self.p._movav(self.datafeed, period=self.p.period)
+        atr = ATR(self.datafeed, period=self.p.period)
 
-        self.lines.pgo = (self.data - movav) / atr
+        self.lines.pgo = (self.datafeed - movav) / atr
         super(PrettyGoodOscillator, self).__init__()

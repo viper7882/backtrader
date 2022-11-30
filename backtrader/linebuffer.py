@@ -121,7 +121,7 @@ class LineBuffer(LineSingle):
 
     def qbuffer(self, savemem=0, extrasize=0):
         self.mode = self.QBuffer
-        self.maxlen = self._minperiod
+        self.maxlen = self._min_period
         self.extrasize = extrasize
         self.lenmark = self.maxlen - (not self.extrasize)
         self.reset()
@@ -317,7 +317,7 @@ class LineBuffer(LineSingle):
         self.bindings.append(binding)
         # record in the binding when the period is starting (never sooner
         # than self)
-        binding.updateminperiod(self._minperiod)
+        binding.updateminperiod(self._min_period)
 
     def plot(self, idx=0, size=None):
         ''' Returns a slice of the array relative to the real zero of the buffer
@@ -553,18 +553,18 @@ class MetaLineActions(LineBuffer.__class__):
             _obj._clock = args[0]
 
         # Keep a reference to the datas for buffer adjustment purposes
-        _obj._datas = [x for x in args if isinstance(x, LineRoot)]
+        _obj._datafeeds = [x for x in args if isinstance(x, LineRoot)]
 
         # Do not produce anything until the operation lines produce something
-        _minperiods = [x._minperiod for x in args if isinstance(x, LineSingle)]
+        _min_periods = [x._min_period for x in args if isinstance(x, LineSingle)]
 
         mlines = [x.lines[0] for x in args if isinstance(x, LineMultiple)]
-        _minperiods += [x._minperiod for x in mlines]
+        _min_periods += [x._min_period for x in mlines]
 
-        _minperiod = max(_minperiods or [1])
+        _min_period = max(_min_periods or [1])
 
-        # update own minperiod if needed
-        _obj.updateminperiod(_minperiod)
+        # update own min period if needed
+        _obj.updateminperiod(_min_period)
 
         return _obj, args, kwargs
 
@@ -573,7 +573,7 @@ class MetaLineActions(LineBuffer.__class__):
             super(MetaLineActions, cls).dopostinit(_obj, *args, **kwargs)
 
         # register with _owner to be kicked later
-        _obj._owner.addindicator(_obj)
+        _obj._owner.add_indicator(_obj)
 
         return _obj, args, kwargs
 
@@ -606,8 +606,8 @@ class LineActions(with_metaclass(MetaLineActions, LineBuffer)):
 
     def qbuffer(self, savemem=0):
         super(LineActions, self).qbuffer(savemem=savemem)
-        for data in self._datas:
-            data.minbuffer(size=self._minperiod)
+        for datafeed in self._datafeeds:
+            datafeed.minbuffer(size=self._min_period)
 
     @staticmethod
     def arrayize(obj):
@@ -624,9 +624,9 @@ class LineActions(with_metaclass(MetaLineActions, LineBuffer)):
         if clock_len > len(self):
             self.forward()
 
-        if clock_len > self._minperiod:
+        if clock_len > self._min_period:
             self.next()
-        elif clock_len == self._minperiod:
+        elif clock_len == self._min_period:
             # only called for the 1st value
             self.nextstart()
         else:
@@ -636,9 +636,9 @@ class LineActions(with_metaclass(MetaLineActions, LineBuffer)):
         self.forward(size=self._clock.buflen())
         self.home()
 
-        self.preonce(0, self._minperiod - 1)
-        self.oncestart(self._minperiod - 1, self._minperiod)
-        self.once(self._minperiod, self.buflen())
+        self.preonce(0, self._min_period - 1)
+        self.oncestart(self._min_period - 1, self._min_period)
+        self.once(self._min_period, self.buflen())
 
         self.oncebinding()
 
@@ -666,8 +666,8 @@ class _LineDelay(LineActions):
 
         # Need to add the delay to the period. "ago" is 0 based and therefore
         # we need to pass and extra 1 which is the minimum defined period for
-        # any data (which will be substracted inside addminperiod)
-        self.addminperiod(abs(ago) + 1)
+        # any data (which will be subtracted inside add_min_period)
+        self.add_min_period(abs(ago) + 1)
 
     def next(self):
         self[0] = self.a[self.ago]
@@ -694,10 +694,10 @@ class _LineForward(LineActions):
 
         # Need to add the delay to the period. "ago" is 0 based and therefore
         # we need to pass and extra 1 which is the minimum defined period for
-        # any data (which will be substracted inside addminperiod)
-        # self.addminperiod(abs(ago) + 1)
-        if ago > self.a._minperiod:
-            self.addminperiod(ago - self.a._minperiod + 1)
+        # any data (which will be substracted inside add_min_period)
+        # self.add_min_period(abs(ago) + 1)
+        if ago > self.a._min_period:
+            self.add_min_period(ago - self.a._min_period + 1)
 
     def next(self):
         self[-self.ago] = self.a[0]

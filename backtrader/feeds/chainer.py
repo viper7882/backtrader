@@ -47,9 +47,9 @@ class MetaChainer(bt.DataBase.__class__):
 
 
 class Chainer(bt.with_metaclass(MetaChainer, bt.DataBase)):
-    '''Class that chains datas'''
+    '''Class that chains datafeeds'''
 
-    def islive(self):
+    def is_live(self):
         '''Returns ``True`` to notify ``Cerebro`` that preloading and runonce
         should be deactivated'''
         return True

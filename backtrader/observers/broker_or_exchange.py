@@ -25,7 +25,7 @@ from .. import Observer
 
 
 class Cash(Observer):
-    '''This observer keeps track of the current amount of cash in the broker
+    '''This observer keeps track of the current amount of cash in the broker_or_exchange
 
     Params: None
     '''
@@ -36,20 +36,20 @@ class Cash(Observer):
     plotinfo = dict(plot=True, subplot=True)
 
     def next(self):
-        self.lines[0][0] = self._owner.broker.getcash()
+        self.lines[0][0] = self._owner.broker_or_exchange.get_cash()
 
 
 class Value(Observer):
-    '''This observer keeps track of the current portfolio value in the broker
+    '''This observer keeps track of the current portfolio value in the broker_or_exchange
     including the cash
 
     Params:
 
       - ``fund`` (default: ``None``)
 
-        If ``None`` the actual mode of the broker (fundmode - True/False) will
+        If ``None`` the actual mode of the broker_or_exchange (fundmode - True/False) will
         be autodetected to decide if the returns are based on the total net
-        asset value or on the fund value. See ``set_fundmode`` in the broker
+        asset value or on the fund value. See ``set_fundmode`` in the broker_or_exchange
         documentation
 
         Set it to ``True`` or ``False`` for a specific behavior
@@ -67,20 +67,20 @@ class Value(Observer):
 
     def start(self):
         if self.p.fund is None:
-            self._fundmode = self._owner.broker.fundmode
+            self._fundmode = self._owner.broker_or_exchange.fundmode
         else:
             self._fundmode = self.p.fund
 
     def next(self):
         if not self._fundmode:
-            self.lines[0][0] = self._owner.broker.getvalue()
+            self.lines[0][0] = self._owner.broker_or_exchange.get_value()
         else:
-            self.lines[0][0] = self._owner.broker.fundvalue
+            self.lines[0][0] = self._owner.broker_or_exchange.fundvalue
 
 
-class Broker(Observer):
+class Broker_or_Exchange(Observer):
     '''This observer keeps track of the current cash amount and portfolio value in
-    the broker (including the cash)
+    the broker_or_exchange (including the cash)
 
     Params: None
     '''
@@ -97,7 +97,7 @@ class Broker(Observer):
 
     def start(self):
         if self.p.fund is None:
-            self._fundmode = self._owner.broker.fundmode
+            self._fundmode = self._owner.broker_or_exchange.fundmode
         else:
             self._fundmode = self.p.fund
 
@@ -107,10 +107,10 @@ class Broker(Observer):
 
     def next(self):
         if not self._fundmode:
-            self.lines.value[0] = value = self._owner.broker.getvalue()
-            self.lines.cash[0] = self._owner.broker.getcash()
+            self.lines.value[0] = value = self._owner.broker_or_exchange.get_value()
+            self.lines.cash[0] = self._owner.broker_or_exchange.get_cash()
         else:
-            self.lines.value[0] = self._owner.broker.fundvalue
+            self.lines.value[0] = self._owner.broker_or_exchange.fundvalue
 
 
 class FundValue(Observer):
@@ -126,7 +126,7 @@ class FundValue(Observer):
     plotinfo = dict(plot=True, subplot=True)
 
     def next(self):
-        self.lines.fundval[0] = self._owner.broker.fundvalue
+        self.lines.fundval[0] = self._owner.broker_or_exchange.fundvalue
 
 
 class FundShares(Observer):
@@ -141,4 +141,4 @@ class FundShares(Observer):
     plotinfo = dict(plot=True, subplot=True)
 
     def next(self):
-        self.lines.fundshares[0] = self._owner.broker.fundshares
+        self.lines.fundshares[0] = self._owner.broker_or_exchange.fundshares

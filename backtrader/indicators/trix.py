@@ -58,7 +58,7 @@ class Trix(Indicator):
 
     def __init__(self):
 
-        ema1 = self.p._movav(self.data, period=self.p.period)
+        ema1 = self.p._movav(self.datafeed, period=self.p.period)
         ema2 = self.p._movav(ema1, period=self.p.period)
         ema3 = self.p._movav(ema2, period=self.p.period)
 

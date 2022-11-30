@@ -59,7 +59,7 @@ class CommodityChannelIndex(Indicator):
         self.plotinfo.plotyhlines = [0.0, self.p.upperband, self.p.lowerband]
 
     def __init__(self):
-        tp = (self.data.high + self.data.low + self.data.close) / 3.0
+        tp = (self.datafeed.high + self.datafeed.low + self.datafeed.close) / 3.0
         tpmean = self.p.movav(tp, period=self.p.period)
 
         dev = tp - tpmean

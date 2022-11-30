@@ -64,8 +64,8 @@ class AdaptiveMovingAverage(MovingAverageBase):
     def __init__(self):
         # Before super to ensure mixins (right-hand side in subclassing)
         # can see the assignment operation and operate on the line
-        direction = self.data - self.data(-self.p.period)
-        volatility = SumN(abs(self.data - self.data(-1)), period=self.p.period)
+        direction = self.datafeed - self.datafeed(-self.p.period)
+        volatility = SumN(abs(self.datafeed - self.datafeed(-1)), period=self.p.period)
 
         er = abs(direction / volatility)  # efficiency ratio
 
@@ -74,7 +74,7 @@ class AdaptiveMovingAverage(MovingAverageBase):
 
         sc = pow((er * (fast - slow)) + slow, 2)  # scalable constant
 
-        self.lines[0] = ExponentialSmoothingDynamic(self.data,
+        self.lines[0] = ExponentialSmoothingDynamic(self.datafeed,
                                                     period=self.p.period,
                                                     alpha=sc)
 

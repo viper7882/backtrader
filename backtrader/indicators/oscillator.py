@@ -39,7 +39,7 @@ class OscillatorMixIn(Indicator):
 
     Formula:
       - XXX calculates lines[0]
-      - osc = self.data - XXX.lines[0]
+      - osc = self.datafeed - XXX.lines[0]
     '''
     plotlines = dict(_0=dict(_name='osc'))
 
@@ -51,7 +51,7 @@ class OscillatorMixIn(Indicator):
             pass
 
     def __init__(self):
-        self.lines[0] = self.data - self.lines[0]
+        self.lines[0] = self.datafeed - self.lines[0]
         super(OscillatorMixIn, self).__init__()
 
 
@@ -72,8 +72,8 @@ class Oscillator(Indicator):
         2nd data around the 1st data
 
     Formula:
-      - 1 data -> osc = data.data - data
-      - 2 datas -> osc = data0 - data1
+      - 1 data -> osc = data.datafeed - data
+      - 2 datas -> osc = datafeed0 - datafeed1
     '''
     lines = ('osc',)
 
@@ -90,12 +90,12 @@ class Oscillator(Indicator):
     def __init__(self):
         super(Oscillator, self).__init__()
 
-        if len(self.datas) > 1:
-            datasrc = self.data
-            self.dataosc = self.data1
+        if len(self.datafeeds) > 1:
+            datasrc = self.datafeed
+            self.dataosc = self.datafeed1
         else:
-            datasrc = self.data.data
-            self.dataosc = self.data
+            datasrc = self.datafeed.datafeed
+            self.dataosc = self.datafeed
 
         self.lines[0] = datasrc - self.dataosc
 
@@ -104,7 +104,7 @@ class Oscillator(Indicator):
 
 for movav in MovingAverage._movavs[1:]:
     _newclsdoc = '''
-    Oscillation of a %s around its data
+    Oscillation of a %s around its datafeed
     '''
     # Skip aliases - they will be created automatically
     if getattr(movav, 'aliased', ''):

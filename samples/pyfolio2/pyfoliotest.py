@@ -95,7 +95,7 @@ def runstrat(args=None):
     args = parse_args(args)
 
     cerebro = bt.Cerebro()
-    cerebro.broker.set_cash(args.cash)
+    cerebro.broker_or_exchange.set_cash(args.cash)
 
     dkwargs = dict()
     if args.fromdate:
@@ -114,18 +114,18 @@ def runstrat(args=None):
 
     # data0 = bt.feeds.BacktraderCSVData(dataname=args.data0, **dkwargs)
     data0 = bt.feeds.VCData(dataname=args.data0, historical=True, **dkwargs)
-    cerebro.adddata(data0, name='Data0')
+    cerebro.add_datafeed(data0, name='Data0')
 
-    cerebro.addstrategy(St, short=args.short, printdata=args.printdata)
-    cerebro.addsizer(bt.sizers.FixedSize, stake=args.stake)
+    cerebro.add_strategy(St, short=args.short, printdata=args.printdata)
+    cerebro.add_sizer(bt.sizers.FixedSize, stake=args.stake)
 
     # Own analyzerset
-    cerebro.addanalyzer(bt.analyzers.TimeReturn, timeframe=bt.TimeFrame.Years)
-    cerebro.addanalyzer(bt.analyzers.SharpeRatio, timeframe=bt.TimeFrame.Years)
-    cerebro.addanalyzer(bt.analyzers.SQN,)
+    cerebro.add_analyzer(bt.analyzers.TimeReturn, timeframe=bt.TimeFrame.Years)
+    cerebro.add_analyzer(bt.analyzers.SharpeRatio, timeframe=bt.TimeFrame.Years)
+    cerebro.add_analyzer(bt.analyzers.SQN,)
 
     if args.pyfolio:
-        cerebro.addanalyzer(bt.analyzers.PyFolio, _name='pyfolio',
+        cerebro.add_analyzer(bt.analyzers.PyFolio, _name='pyfolio',
                             timeframe=_TFRAMES[args.pftimeframe])
 
     if args.printout:

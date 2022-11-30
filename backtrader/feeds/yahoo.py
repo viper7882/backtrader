@@ -127,7 +127,7 @@ class YahooFinanceCSVData(feed.CSVDataBase):
 
         dttxt = linetokens[next(i)]
         dt = date(int(dttxt[0:4]), int(dttxt[5:7]), int(dttxt[8:10]))
-        dtnum = date2num(datetime.combine(dt, self.p.sessionend))
+        dtnum = date2num(datetime.combine(dt, self.p.session_end))
 
         self.lines.datetime[0] = dtnum
         o = float(linetokens[next(i)])
@@ -190,7 +190,7 @@ class YahooLegacyCSV(YahooFinanceCSVData):
 
 
 class YahooFinanceCSV(feed.CSVFeedBase):
-    DataCls = YahooFinanceCSVData
+    Datafeed_Cls = YahooFinanceCSVData
 
 
 class YahooFinanceData(YahooFinanceCSVData):
@@ -254,7 +254,7 @@ class YahooFinanceData(YahooFinanceCSVData):
         try:
             import requests
         except ImportError:
-            msg = ('The new Yahoo data feed requires to have the requests '
+            msg = ('The new Yahoo datafeed requires to have the requests '
                    'module installed. Please use pip install requests or '
                    'the method of your choice')
             raise Exception(msg)
@@ -362,6 +362,6 @@ class YahooFinanceData(YahooFinanceCSVData):
 
 
 class YahooFinance(feed.CSVFeedBase):
-    DataCls = YahooFinanceData
+    Datafeed_Cls = YahooFinanceData
 
-    params = DataCls.params._gettuple()
+    params = Datafeed_Cls.params._gettuple()

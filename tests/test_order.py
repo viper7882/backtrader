@@ -35,7 +35,7 @@ class FakeCommInfo(object):
     def getoperationcost(self, size, price):
         return 0.0
 
-    def getcommission(self, size, price):
+    def get_commission_rate(self, size, price):
         return 0.0
 
 
@@ -61,15 +61,15 @@ def _execute(position, order, size, price, partial):
     pprice_orig = position.price
     psize, pprice, opened, closed = position.update(size, price)
 
-    comminfo = order.comminfo
-    closedvalue = comminfo.getoperationcost(closed, pprice_orig)
-    closedcomm = comminfo.getcommission(closed, price)
+    comm_info = order.comm_info
+    closedvalue = comm_info.getoperationcost(closed, pprice_orig)
+    closedcomm = comm_info.get_commission_rate(closed, price)
 
-    openedvalue = comminfo.getoperationcost(opened, price)
-    openedcomm = comminfo.getcommission(opened, price)
+    openedvalue = comm_info.get_operation_cost(opened, price)
+    openedcomm = comm_info.get_commission_rate(opened, price)
 
-    pnl = comminfo.profitandloss(-closed, pprice_orig, price)
-    margin = comminfo.getvaluesize(size, price)
+    pnl = comm_info.profit_and_loss(-closed, pprice_orig, price)
+    margin = comm_info.get_value_size(size, price)
 
     order.execute(order.data.datetime[0],
                   size, price,
@@ -86,12 +86,12 @@ def _execute(position, order, size, price, partial):
 
 def test_run(main=False):
     position = Position()
-    comminfo = FakeCommInfo()
+    comm_info = FakeCommInfo()
     order = bt.BuyOrder(data=FakeData(),
                         size=100, price=1.0,
                         exectype=bt.Order.Market,
                         simulated=True)
-    order.addcomminfo(comminfo)
+    order.addcomminfo(comm_info)
 
     ### Test that partially updating order will maintain correct iterpending sequence
     ### (Orders are cloned for each notification. The pending bits should be reported

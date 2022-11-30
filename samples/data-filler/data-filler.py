@@ -67,22 +67,22 @@ def runstrategy():
         data.addfilter(btfilters.SessionFiller, fill_vol=args.fvol)
 
     # Add the data to cerebro
-    cerebro.adddata(data)
+    cerebro.add_datafeed(data)
 
     if args.relvol:
         # Calculate backward period - tend tstart are in same day
         # + 1 to include last moment of the interval dstart <-> dtend
         td = ((dtend - dtstart).seconds // 60) + 1
-        cerebro.addindicator(RelativeVolume,
+        cerebro.add_indicator(RelativeVolume,
                              period=td,
                              volisnan=math.isnan(args.fvol))
 
     # Add an empty strategy
-    cerebro.addstrategy(bt.Strategy)
+    cerebro.add_strategy(bt.Strategy)
 
     # Add a writer with CSV
     if args.writer:
-        cerebro.addwriter(bt.WriterFile, csv=args.wrcsv)
+        cerebro.add_writer(bt.WriterFile, csv=args.wrcsv)
 
     # And run it - no trading - disable stdstats
     cerebro.run(stdstats=False)

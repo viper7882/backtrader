@@ -49,10 +49,10 @@ def runstrategy():
         )
 
     # Add the 1st data to cerebro
-    cerebro.adddata(data)
+    cerebro.add_datafeed(data)
 
     # Add an empty strategy
-    cerebro.addstrategy(bt.Strategy)
+    cerebro.add_strategy(bt.Strategy)
 
     # Get the session times to pass them to the indicator
     prestart = datetime.datetime.strptime(args.prestart, '%H:%M').time()
@@ -60,12 +60,12 @@ def runstrategy():
     end = datetime.datetime.strptime(args.end, '%H:%M').time()
 
     # Add the Relative volume indicator
-    cerebro.addindicator(RelativeVolumeByBar,
+    cerebro.add_indicator(RelativeVolumeByBar,
                          prestart=prestart, start=start, end=end)
 
     # Add a writer with CSV
     if args.writer:
-        cerebro.addwriter(bt.WriterFile, csv=args.wrcsv)
+        cerebro.add_writer(bt.WriterFile, csv=args.wrcsv)
 
     # And run it
     cerebro.run(stdstats=False)

@@ -59,13 +59,13 @@ class TestStrategy(bt.Strategy):
         print('Strategy Created')
         print('--------------------------------------------------')
 
-    def notify_data(self, data, status, *args, **kwargs):
+    def datafeed_notification(self, data, status, *args, **kwargs):
         print('*' * 5, 'DATA NOTIF:', data._getstatusname(status), *args)
         if status == data.LIVE:
             self.counttostop = self.p.stopafter
             self.datastatus = 1
 
-    def notify_store(self, msg, *args, **kwargs):
+    def notify_account_store(self, msg, *args, **kwargs):
         print('*' * 5, 'STORE NOTIF:', msg)
 
     def notify_order(self, order):
@@ -98,7 +98,7 @@ class TestStrategy(bt.Strategy):
         txt.append('{}'.format(self.sma[0]))
         print(', '.join(txt))
 
-        if len(self.datas) > 1:
+        if len(self.datafeeds) > 1:
             txt = list()
             txt.append('%04d' % len(self))
             dtfmt = '%Y-%m-%dT%H:%M:%S.%f'
@@ -115,7 +115,7 @@ class TestStrategy(bt.Strategy):
         if self.counttostop:  # stop after x live lines
             self.counttostop -= 1
             if not self.counttostop:
-                self.env.runstop()
+                self.env.stop_running()
                 return
 
         if not self.p.trade:
@@ -166,11 +166,11 @@ def runstrategy():
     if args.broker:
         brokerargs = dict(account=args.account, **storekwargs)
         if not args.nostore:
-            broker = vcstore.getbroker(**brokerargs)
+            broker = vcstore.get_broker_or_exchange(**brokerargs)
         else:
             broker = bt.brokers.VCBroker(**brokerargs)
 
-        cerebro.setbroker(broker)
+        cerebro.set_broker_or_exchange(broker)
 
     timeframe = bt.TimeFrame.TFrame(args.timeframe)
     if args.resample or args.replay:
@@ -218,21 +218,21 @@ def runstrategy():
     )
 
     if args.replay:
-        cerebro.replaydata(data0, **rekwargs)
+        cerebro.replay_datafeed(data0, **rekwargs)
 
         if data1 is not None:
-            cerebro.replaydata(data1, **rekwargs)
+            cerebro.replay_datafeed(data1, **rekwargs)
 
     elif args.resample:
-        cerebro.resampledata(data0, **rekwargs)
+        cerebro.resample_datafeed(data0, **rekwargs)
 
         if data1 is not None:
-            cerebro.resampledata(data1, **rekwargs)
+            cerebro.resample_datafeed(data1, **rekwargs)
 
     else:
-        cerebro.adddata(data0)
+        cerebro.add_datafeed(data0)
         if data1 is not None:
-            cerebro.adddata(data1)
+            cerebro.add_datafeed(data1)
 
     if args.valid is None:
         valid = None
@@ -246,7 +246,7 @@ def runstrategy():
             valid = datetime.timedelta(seconds=args.valid)
 
     # Add the strategy
-    cerebro.addstrategy(TestStrategy,
+    cerebro.add_strategy(TestStrategy,
                         smaperiod=args.smaperiod,
                         trade=args.trade,
                         exectype=bt.Order.ExecType(args.exectype),

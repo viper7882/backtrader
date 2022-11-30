@@ -65,9 +65,9 @@ class VChartCSVData(feed.CSVDataBase):
             mm, ss = divmod(mmss, 100)
         else:
             # put it at the end of the session parameter
-            hh = self.p.sessionend.hour
-            mm = self.p.sessionend.minute
-            ss = self.p.sessionend.second
+            hh = self.p.session_end.hour
+            mm = self.p.session_end.minute
+            ss = self.p.session_end.second
 
         dtnum = date2num(datetime.datetime(y, m, d, hh, mm, ss))
 
@@ -83,4 +83,4 @@ class VChartCSVData(feed.CSVDataBase):
 
 
 class VChartCSV(feed.CSVFeedBase):
-    DataCls = VChartCSVData
+    Datafeed_Cls = VChartCSVData

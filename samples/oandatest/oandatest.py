@@ -29,8 +29,8 @@ import backtrader as bt
 from backtrader.utils import flushfile  # win32 quick stdout flushing
 
 StoreCls = bt.stores.OandaStore
-DataCls = bt.feeds.OandaData
-# BrokerCls = bt.brokers.OandaBroker
+Datafeed_Cls = bt.feeds.OandaData
+# Broker_or_Exchange_Cls = bt.brokers.OandaBroker
 
 
 class TestStrategy(bt.Strategy):
@@ -62,13 +62,13 @@ class TestStrategy(bt.Strategy):
         print('Strategy Created')
         print('--------------------------------------------------')
 
-    def notify_data(self, data, status, *args, **kwargs):
+    def datafeed_notification(self, data, status, *args, **kwargs):
         print('*' * 5, 'DATA NOTIF:', data._getstatusname(status), *args)
         if status == data.LIVE:
             self.counttostop = self.p.stopafter
             self.datastatus = 1
 
-    def notify_store(self, msg, *args, **kwargs):
+    def notify_account_store(self, msg, *args, **kwargs):
         print('*' * 5, 'STORE NOTIF:', msg)
 
     def notify_order(self, order):
@@ -103,7 +103,7 @@ class TestStrategy(bt.Strategy):
         txt.append('{:f}'.format(self.sma[0]))
         print(', '.join(txt))
 
-        if len(self.datas) > 1 and len(self.data1):
+        if len(self.datafeeds) > 1 and len(self.data1):
             txt = list()
             txt.append('Data1')
             txt.append('%04d' % len(self.data1))
@@ -122,7 +122,7 @@ class TestStrategy(bt.Strategy):
         if self.counttostop:  # stop after x live lines
             self.counttostop -= 1
             if not self.counttostop:
-                self.env.runstop()
+                self.env.stop_running()
                 return
 
         if not self.p.trade:
@@ -205,11 +205,11 @@ def runstrategy():
 
     if args.broker:
         if args.no_store:
-            broker = BrokerCls(**storekwargs)
+            broker = Broker_or_Exchange_Cls(**storekwargs)
         else:
-            broker = store.getbroker()
+            broker = store.get_broker_or_exchange()
 
-        cerebro.setbroker(broker)
+        cerebro.set_broker_or_exchange(broker)
 
     timeframe = bt.TimeFrame.TFrame(args.timeframe)
     # Manage data1 parameters
@@ -232,7 +232,7 @@ def runstrategy():
         dtformat = '%Y-%m-%d' + ('T%H:%M:%S' * ('T' in args.fromdate))
         fromdate = datetime.datetime.strptime(args.fromdate, dtformat)
 
-    DataFactory = DataCls if args.no_store else store.getdata
+    DataFactory = Datafeed_Cls if args.no_store else store.getdata
 
     datakwargs = dict(
         timeframe=datatf, compression=datacomp,
@@ -269,32 +269,32 @@ def runstrategy():
     )
 
     if args.replay:
-        cerebro.replaydata(data0, **rekwargs)
+        cerebro.replay_datafeed(data0, **rekwargs)
 
         if data1 is not None:
             rekwargs['timeframe'] = tf1
             rekwargs['compression'] = cp1
-            cerebro.replaydata(data1, **rekwargs)
+            cerebro.replay_datafeed(data1, **rekwargs)
 
     elif args.resample:
-        cerebro.resampledata(data0, **rekwargs)
+        cerebro.resample_datafeed(data0, **rekwargs)
 
         if data1 is not None:
             rekwargs['timeframe'] = tf1
             rekwargs['compression'] = cp1
-            cerebro.resampledata(data1, **rekwargs)
+            cerebro.resample_datafeed(data1, **rekwargs)
 
     else:
-        cerebro.adddata(data0)
+        cerebro.add_datafeed(data0)
         if data1 is not None:
-            cerebro.adddata(data1)
+            cerebro.add_datafeed(data1)
 
     if args.valid is None:
         valid = None
     else:
         valid = datetime.timedelta(seconds=args.valid)
     # Add the strategy
-    cerebro.addstrategy(TestStrategy,
+    cerebro.add_strategy(TestStrategy,
                         smaperiod=args.smaperiod,
                         trade=args.trade,
                         exectype=bt.Order.ExecType(args.exectype),

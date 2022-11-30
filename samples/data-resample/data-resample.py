@@ -34,7 +34,7 @@ def runstrat():
     cerebro = bt.Cerebro(stdstats=False)
 
     # Add a strategy
-    cerebro.addstrategy(bt.Strategy)
+    cerebro.add_strategy(bt.Strategy)
 
     # Load the Data
     datapath = args.dataname or '../../datas/2006-day-001.txt'
@@ -56,10 +56,10 @@ def runstrat():
             compression=args.compression)
 
         # Add the resample data instead of the original
-        cerebro.adddata(data)
+        cerebro.add_datafeed(data)
     else:
         # New resampler
-        cerebro.resampledata(
+        cerebro.resample_datafeed(
             data,
             timeframe=tframes[args.timeframe],
             compression=args.compression)

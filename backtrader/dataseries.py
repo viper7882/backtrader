@@ -125,9 +125,9 @@ class SimpleFilterWrapper(object):
     The wrapper takes the return value and executes the bar removal
     if needed be
     '''
-    def __init__(self, data, ffilter, *args, **kwargs):
+    def __init__(self, datafeed, ffilter, *args, **kwargs):
         if inspect.isclass(ffilter):
-            ffilter = ffilter(data, *args, **kwargs)
+            ffilter = ffilter(datafeed, *args, **kwargs)
             args = []
             kwargs = {}
 
@@ -135,9 +135,9 @@ class SimpleFilterWrapper(object):
         self.args = args
         self.kwargs = kwargs
 
-    def __call__(self, data):
-        if self.ffilter(data, *self.args, **self.kwargs):
-            data.backwards()
+    def __call__(self, datafeed):
+        if self.ffilter(datafeed, *self.args, **self.kwargs):
+            datafeed.backwards()
             return True
 
         return False
@@ -184,7 +184,7 @@ class _Bar(AutoOrderedDict):
         o = self.open
         return o == o  # False if NaN, True in other cases
 
-    def bupdate(self, data, reopen=False):
+    def bupdate(self, datafeed, reopen=False):
         '''Updates a bar with the values from data
 
         Returns True if the update was the 1st on a bar (just opened)
@@ -194,18 +194,18 @@ class _Bar(AutoOrderedDict):
         if reopen:
             self.bstart()
 
-        self.datetime = data.datetime[0]
+        self.datetime = datafeed.datetime[0]
 
-        self.high = max(self.high, data.high[0])
-        self.low = min(self.low, data.low[0])
-        self.close = data.close[0]
+        self.high = max(self.high, datafeed.high[0])
+        self.low = min(self.low, datafeed.low[0])
+        self.close = datafeed.close[0]
 
-        self.volume += data.volume[0]
-        self.openinterest = data.openinterest[0]
+        self.volume += datafeed.volume[0]
+        self.openinterest = datafeed.openinterest[0]
 
         o = self.open
         if reopen or not o == o:
-            self.open = data.open[0]
+            self.open = datafeed.open[0]
             return True  # just opened the bar
 
         return False

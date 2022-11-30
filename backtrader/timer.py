@@ -62,18 +62,18 @@ class Timer(with_metaclass(MetaParams, object)):
         self.args = args
         self.kwargs = kwargs
 
-    def start(self, data):
+    def start(self, datafeeds):
         # write down the 'reset when' value
         if not isinstance(self.p.when, integer_types):  # expect time/datetime
             self._rstwhen = self.p.when
             self._tzdata = self.p.tzdata
         else:
-            self._tzdata = data if self.p.tzdata is None else self.p.tzdata
+            self._tzdata = datafeeds if self.p.tzdata is None else self.p.tzdata
 
             if self.p.when == SESSION_START:
                 self._rstwhen = self._tzdata.p.sessionstart
             elif self.p.when == SESSION_END:
-                self._rstwhen = self._tzdata.p.sessionend
+                self._rstwhen = self._tzdata.p.session_end
 
         self._isdata = isinstance(self._tzdata, AbstractDataBase)
         self._reset_when()

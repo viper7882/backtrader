@@ -96,26 +96,26 @@ def runstrat(args=None):
 
     # Data feed
     data0 = bt.feeds.BacktraderCSVData(dataname=args.data0, **kwargs)
-    cerebro.adddata(data0)
+    cerebro.add_datafeed(data0)
 
-    d1 = cerebro.resampledata(data0,
+    d1 = cerebro.resample_datafeed(data0,
                               timeframe=getattr(bt.TimeFrame, args.timeframe))
     # d1.plotinfo.plotmaster = data0
     # d1.plotinfo.sameaxis = False
 
     if args.pandascal:
-        cerebro.addcalendar(args.pandascal)
+        cerebro.add_calendar(args.pandascal)
     elif args.owncal:
-        cerebro.addcalendar(NYSE_2016())  # or NYSE_2016() to pass an instance
+        cerebro.add_calendar(NYSE_2016())  # or NYSE_2016() to pass an instance
 
     # Broker
     cerebro.broker = bt.brokers.BackBroker(**eval('dict(' + args.broker + ')'))
 
     # Sizer
-    cerebro.addsizer(bt.sizers.FixedSize, **eval('dict(' + args.sizer + ')'))
+    cerebro.add_sizer(bt.sizers.FixedSize, **eval('dict(' + args.sizer + ')'))
 
     # Strategy
-    cerebro.addstrategy(St, **eval('dict(' + args.strat + ')'))
+    cerebro.add_strategy(St, **eval('dict(' + args.strat + ')'))
 
     # Execute
     cerebro.run(**eval('dict(' + args.cerebro + ')'))

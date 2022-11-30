@@ -55,8 +55,8 @@ class BollingerBands(Indicator):
         return plabels
 
     def __init__(self):
-        self.lines.mid = ma = self.p.movav(self.data, period=self.p.period)
-        stddev = self.p.devfactor * StdDev(self.data, ma, period=self.p.period,
+        self.lines.mid = ma = self.p.movav(self.datafeed, period=self.p.period)
+        stddev = self.p.devfactor * StdDev(self.datafeed, ma, period=self.p.period,
                                            movav=self.p.movav)
         self.lines.top = ma + stddev
         self.lines.bot = ma - stddev
@@ -73,4 +73,4 @@ class BollingerBandsPct(BollingerBands):
 
     def __init__(self):
         super(BollingerBandsPct, self).__init__()
-        self.l.pctb = (self.data - self.l.bot) / (self.l.top - self.l.bot)
+        self.l.pctb = (self.datafeed - self.l.bot) / (self.l.top - self.l.bot)

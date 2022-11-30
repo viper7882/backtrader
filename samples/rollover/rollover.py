@@ -107,14 +107,14 @@ def runstrat(args=None):
 
     if not args.no_cerebro:
         if args.rollover:
-            cerebro.rolloverdata(name='FESX', *ffeeds, **rollkwargs)
+            cerebro.roll_over_datafeed(name='FESX', *ffeeds, **rollkwargs)
         else:
-            cerebro.chaindata(name='FESX', *ffeeds)
+            cerebro.chain_datafeed(name='FESX', *ffeeds)
     else:
         drollover = bt.feeds.RollOver(*ffeeds, dataname='FESX', **rollkwargs)
-        cerebro.adddata(drollover)
+        cerebro.add_datafeed(drollover)
 
-    cerebro.addstrategy(TheStrategy)
+    cerebro.add_strategy(TheStrategy)
     cerebro.run(stdstats=False)
 
     if args.plot:

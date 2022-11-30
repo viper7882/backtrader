@@ -105,11 +105,11 @@ def runstrat():
     cerebro = bt.Cerebro()
 
     data = bt.feeds.BacktraderCSVData(dataname='../../datas/2006-day-001.txt')
-    cerebro.adddata(data)
+    cerebro.add_datafeed(data)
 
-    cerebro.addobserver(OrderObserver)
+    cerebro.add_system_wide_observer(OrderObserver)
 
-    cerebro.addstrategy(MyStrategy)
+    cerebro.add_strategy(MyStrategy)
     cerebro.run()
 
     cerebro.plot()

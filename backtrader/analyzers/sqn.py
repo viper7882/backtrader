@@ -62,20 +62,20 @@ class SQN(Analyzer):
 
     def start(self):
         super(SQN, self).start()
-        self.pnl = list()
+        self.profit_and_loss_amount = list()
         self.count = 0
 
     def notify_trade(self, trade):
         if trade.status == trade.Closed:
-            self.pnl.append(trade.pnlcomm)
+            self.profit_and_loss_amount.append(trade.pnlcomm)
             self.count += 1
 
     def stop(self):
         if self.count > 1:
-            pnl_av = average(self.pnl)
-            pnl_stddev = standarddev(self.pnl)
+            pnl_av = average(self.profit_and_loss_amount)
+            pnl_stddev = standarddev(self.profit_and_loss_amount)
             try:
-                sqn = math.sqrt(len(self.pnl)) * pnl_av / pnl_stddev
+                sqn = math.sqrt(len(self.profit_and_loss_amount)) * pnl_av / pnl_stddev
             except ZeroDivisionError:
                 sqn = None
         else:

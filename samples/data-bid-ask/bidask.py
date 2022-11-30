@@ -88,9 +88,9 @@ def runstrategy():
     cerebro = bt.Cerebro()  # Create a cerebro
 
     data = BidAskCSV(dataname=args.data, dtformat=args.dtformat)
-    cerebro.adddata(data)  # Add the 1st data to cerebro
+    cerebro.add_datafeed(data)  # Add the 1st data to cerebro
     # Add the strategy to cerebro
-    cerebro.addstrategy(St, sma=args.sma, period=args.period)
+    cerebro.add_strategy(St, sma=args.sma, period=args.period)
     cerebro.run()
 
 

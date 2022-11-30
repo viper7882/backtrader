@@ -82,7 +82,7 @@ class SlipTestStrategy(bt.SignalStrategy):
         if self.p.printdata:
             self.log("-------------------------", nodate=True)
             self.log(
-                "Starting portfolio value: %.2f" % self.broker.getvalue(), nodate=True
+                "Starting portfolio value: %.2f" % self.broker_or_exchange.getvalue(), nodate=True
             )
 
         self.tstart = time_clock()
@@ -96,8 +96,8 @@ class SlipTestStrategy(bt.SignalStrategy):
         tused = time_clock() - self.tstart
         if self.p.printdata:
             self.log("Time used: %s" % str(tused))
-            self.log("Final portfolio value: %.2f" % self.broker.getvalue())
-            self.log("Final cash value: %.2f" % self.broker.getcash())
+            self.log("Final portfolio value: %.2f" % self.broker_or_exchange.getvalue())
+            self.log("Final cash value: %.2f" % self.broker_or_exchange.get_cash())
             self.log("-------------------------")
         else:
             pass
@@ -134,9 +134,9 @@ def test_run(main=False):
     else:
         strat_kwargs = dict(printdata=False, printops=False)
 
-    cerebro.addstrategy(SlipTestStrategy, **strat_kwargs)
+    cerebro.add_strategy(SlipTestStrategy, **strat_kwargs)
 
-    cerebro.broker.setcash(10000.0)
+    cerebro.broker_or_exchange.setcash(10000.0)
 
     modpath = os.path.dirname(os.path.abspath(__file__))
     dataspath = "../datas"
@@ -148,7 +148,7 @@ def test_run(main=False):
         timeframe=bt.TimeFrame.Days,
         compression=1,
     )
-    cerebro.adddata(data0)
+    cerebro.add_datafeed(data0)
 
     # Slippage/expected sell executed price
     expected_results = (
@@ -160,7 +160,7 @@ def test_run(main=False):
     )
 
     for expected_result in expected_results:
-        cerebro.broker.set_slippage_fixed(expected_result[0])
+        cerebro.broker_or_exchange.set_slippage_fixed(expected_result[0])
         strat = cerebro.run()
         if main:
             print(

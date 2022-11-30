@@ -130,16 +130,16 @@ def runstrategy():
     todate = datetime.datetime.strptime(args.todate, '%Y-%m-%d')
 
     # Create the 1st data
-    data = btfeeds.BacktraderCSVData(
+    datafeed = btfeeds.BacktraderCSVData(
         dataname=args.data,
         fromdate=fromdate,
         todate=todate)
 
     # Add the 1st data to cerebro
-    cerebro.adddata(data)
+    cerebro.add_datafeed(datafeed)
 
     # Add the strategy
-    cerebro.addstrategy(MultiTradeStrategy,
+    cerebro.add_strategy(MultiTradeStrategy,
                         period=args.period,
                         onlylong=args.onlylong,
                         stake=args.stake,
@@ -147,15 +147,15 @@ def runstrategy():
                         mtrade=args.mtrade)
 
     # Add the commission - only stocks like a for each operation
-    cerebro.broker.setcash(args.cash)
+    cerebro.broker_or_exchange.setcash(args.cash)
 
     # Add the commission - only stocks like a for each operation
-    cerebro.broker.setcommission(commission=args.comm,
+    cerebro.broker_or_exchange.set_commission(commission=args.comm,
                                  mult=args.mult,
                                  margin=args.margin)
 
     # Add the MultiTradeObserver
-    cerebro.addobserver(mtradeobserver.MTradeObserver)
+    cerebro.add_system_wide_observer(mtradeobserver.MTradeObserver)
 
     # And run it
     cerebro.run()
@@ -168,9 +168,9 @@ def runstrategy():
 def parse_args():
     parser = argparse.ArgumentParser(description='MultiTrades')
 
-    parser.add_argument('--data', '-d',
+    parser.add_argument('--datafeed', '-d',
                         default='../../datas/2006-day-001.txt',
-                        help='data to add to the system')
+                        help='datafeed to add to the system')
 
     parser.add_argument('--fromdate', '-f',
                         default='2006-01-01',

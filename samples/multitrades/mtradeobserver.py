@@ -38,7 +38,7 @@ class MTradeObserver(bt.observer.Observer):
     )
 
     def next(self):
-        for trade in self._owner._tradespending:
+        for trade in self._owner._trades_pending:
 
             if trade.data is not self.data:
                 continue

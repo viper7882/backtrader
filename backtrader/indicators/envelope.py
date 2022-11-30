@@ -69,7 +69,7 @@ class _EnvelopeBase(Indicator):
     plotlines = dict(src=dict(_plotskip=True))
 
     def __init__(self):
-        self.lines.src = self.data
+        self.lines.src = self.datafeed
         super(_EnvelopeBase, self).__init__()
 
 

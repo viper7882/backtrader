@@ -32,9 +32,9 @@ class GrossLeverage(bt.Analyzer):
 
       - ``fund`` (default: ``None``)
 
-        If ``None`` the actual mode of the broker (fundmode - True/False) will
+        If ``None`` the actual mode of the broker_or_exchange (fundmode - True/False) will
         be autodetected to decide if the returns are based on the total net
-        asset value or on the fund value. See ``set_fundmode`` in the broker
+        asset value or on the fund value. See ``set_fundmode`` in the broker_or_exchange
         documentation
 
         Set it to ``True`` or ``False`` for a specific behavior
@@ -53,7 +53,7 @@ class GrossLeverage(bt.Analyzer):
 
     def start(self):
         if self.p.fund is None:
-            self._fundmode = self.strategy.broker.fundmode
+            self._fundmode = self.strategy.broker_or_exchange.fundmode
         else:
             self._fundmode = self.p.fund
 
@@ -68,4 +68,4 @@ class GrossLeverage(bt.Analyzer):
         # Updates the leverage for "dtkey" (see base class) for each cycle
         # 0.0 if 100% in cash, 1.0 if no short selling and fully invested
         lev = (self._value - self._cash) / self._value
-        self.rets[self.data0.datetime.datetime()] = lev
+        self.rets[self.datafeed0.datetime.datetime()] = lev

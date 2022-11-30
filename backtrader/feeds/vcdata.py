@@ -31,7 +31,7 @@ from backtrader.metabase import MetaParams
 from backtrader.utils.py3 import (integer_types, queue, string_types,
                                   with_metaclass)
 
-from backtrader.stores import vcstore
+from backtrader.accounts_or_stores import vcstore
 
 
 class MetaVCData(DataBase.__class__):
@@ -41,7 +41,7 @@ class MetaVCData(DataBase.__class__):
         super(MetaVCData, cls).__init__(name, bases, dct)
 
         # Register with the store
-        vcstore.VCStore.DataCls = cls
+        vcstore.VCStore.Datafeed_Cls = cls
 
 
 class VCData(with_metaclass(MetaVCData, DataBase)):
@@ -239,7 +239,7 @@ class VCData(with_metaclass(MetaVCData, DataBase)):
         # contractdetails there, import ok, timezone found, return it
         return tz
 
-    def islive(self):
+    def is_live(self):
         '''Returns ``True`` to notify ``Cerebro`` that preloading and runonce
         should be deactivated'''
         return True
@@ -266,7 +266,7 @@ class VCData(with_metaclass(MetaVCData, DataBase)):
         '''Receives an environment (cerebro) and passes it over to the store it
         belongs to'''
         super(VCData, self).setenvironment(env)
-        env.addstore(self.store)
+        env.add_account_store(self.store)
 
     def start(self):
         '''Starts the VC connecction and gets the real contract and
@@ -287,7 +287,7 @@ class VCData(with_metaclass(MetaVCData, DataBase)):
         self._mktoff1 = None
         self._mktoffdiff = None
 
-        if not self.store.connected():
+        if not self.account_or_store.connected():
             # Not connected -> go away
             self.put_notification(self.DISCONNECTED)
             self._state = self._ST_NOTFOUND
@@ -296,7 +296,7 @@ class VCData(with_metaclass(MetaVCData, DataBase)):
         self.put_notification(self.CONNECTED)
         # get real contract details with real conId (contractId)
         self.qrt = queue.Queue()  # to await a ping
-        self.store._rtdata(self, self._dataname)
+        self.account_or_store._rtdata(self, self._dataname)
         symfound = self.qrt.get()
         if not symfound:
             # Kill any further action and signal it
@@ -314,8 +314,8 @@ class VCData(with_metaclass(MetaVCData, DataBase)):
             # been modified by a resampling filter
             self._tf, self._comp = self._timeframe, self._compression,
 
-        self._ticking = self.store._ticking(self._tf)
-        self._syminfo = syminfo = self.store._symboldata(self._dataname)
+        self._ticking = self.account_or_store._ticking(self._tf)
+        self._syminfo = syminfo = self.account_or_store._symboldata(self._dataname)
 
         # For most markets:
         # mktoffset == mktoff1 and substracting this value from reported times
@@ -351,7 +351,7 @@ class VCData(with_metaclass(MetaVCData, DataBase)):
             self.put_notification(self.DELAYED)
 
             # Now request the data and get a comms queue for it
-            self.q = self.store._directdata(
+            self.q = self.account_or_store._directdata(
                 self,
                 self._dataname,
                 self._tf, self._comp,
@@ -364,13 +364,13 @@ class VCData(with_metaclass(MetaVCData, DataBase)):
         '''Stops and tells the store to stop'''
         super(VCData, self).stop()
         if self.q:
-            self.store._canceldirectdata(self.q)
+            self.account_or_store._canceldirectdata(self.q)
 
     def _setserie(self, serie):
         # Accepts a serie (COM Object) to use in ping events
         self._serie = serie
 
-    def haslivedata(self):
+    def has_live_data(self):
         return self._laststatus == self.LIVE and self.q
 
     def _load(self):
@@ -388,25 +388,25 @@ class VCData(with_metaclass(MetaVCData, DataBase)):
             if msg is None:
                 return False  # end of stream
 
-            if msg == self.store._RT_SHUTDOWN:
+            if msg == self.account_or_store._RT_SHUTDOWN:
                 self.put_notification(self.DISCONNECTED)
                 return False  # VC has exited
 
-            if msg == self.store._RT_DISCONNECTED:
+            if msg == self.account_or_store._RT_DISCONNECTED:
                 self.put_notification(self.CONNBROKEN)
                 continue
 
-            if msg == self.store._RT_CONNECTED:
+            if msg == self.account_or_store._RT_CONNECTED:
                 self.put_notification(self.CONNECTED)
                 self.put_notification(self.DELAYED)
                 continue
 
-            if msg == self.store._RT_LIVE:
+            if msg == self.account_or_store._RT_LIVE:
                 if self._laststatus != self.LIVE:
                     self.put_notification(self.LIVE)
                 continue
 
-            if msg == self.store._RT_DELAYED:
+            if msg == self.account_or_store._RT_DELAYED:
                 if self._laststatus != self.DELAYED:
                     self.put_notification(self.DELAYED)
                 continue
@@ -454,7 +454,7 @@ class VCData(with_metaclass(MetaVCData, DataBase)):
         if ssize - self.idx > 1:
             # More than 1 bar on-board -> delay in place
             if self._laststatus != self.DELAYED:
-                self.q.put(self.store._RT_DELAYED)
+                self.q.put(self.account_or_store._RT_DELAYED)
 
         # return everything if original tf is ticks or force pushing
         ssize += forcepush or self._ticking
@@ -471,7 +471,7 @@ class VCData(with_metaclass(MetaVCData, DataBase)):
             if dtnow < dt:
                 # A bar is there, not deliverable yet - LIVE
                 if self._laststatus != self.LIVE:
-                    self.q.put(self.store._RT_LIVE)
+                    self.q.put(self.account_or_store._RT_LIVE)
 
                 # Adjust ping timeout to the bar boundary (plus mini leeway)
                 self._pingtmout = (dt - dtnow).total_seconds() + 0.5
@@ -525,7 +525,7 @@ class VCData(with_metaclass(MetaVCData, DataBase)):
             self.lastconn = p2  # keep new notification code
 
             # p2 should be 0 (disconn), 1 (conn)
-            self.store._vcrt_connection(self.store._RT_BASEMSG - p2)
+            self.account_or_store._vcrt_connection(self.account_or_store._RT_BASEMSG - p2)
 
     def OnNewTicks(self, ArrayTicks):
         # Process the COM Event for New Ticks. This is only used temporarily
@@ -549,16 +549,16 @@ class VCData(with_metaclass(MetaVCData, DataBase)):
         for tick in aticks:
             ticks[tick.Field] = tick
 
-        if self.store.vcrtmod.Field_Description in ticks:
+        if self.account_or_store.vcrtmod.Field_Description in ticks:
             if self._newticks:
                 self._newticks = False
-                hasdate = bool(ticks.get(self.store.vcrtmod.Field_Date, False))
+                hasdate = bool(ticks.get(self.account_or_store.vcrtmod.Field_Date, False))
                 self.qrt.put(hasdate)
                 return
 
         else:
             try:
-                tick = ticks[self.store.vcrtmod.Field_Time]
+                tick = ticks[self.account_or_store.vcrtmod.Field_Time]
             except KeyError:
                 return
 
@@ -583,7 +583,7 @@ class VCData(with_metaclass(MetaVCData, DataBase)):
         for tick in ticks:
             print('-' * 40)
             print('tick.SymbolCode', tick.SymbolCode.encode('ascii', 'ignore'))
-            fname = self.store.vcrtfields.get(tick.Field, tick.Field)
+            fname = self.account_or_store.vcrtfields.get(tick.Field, tick.Field)
             print('  tick.Field   : {} ({})'.format(fname, tick.Field))
             print('  tick.FieldEx :', tick.FieldEx)
             tdate = tick.Date

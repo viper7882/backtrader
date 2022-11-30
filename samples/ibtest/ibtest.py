@@ -63,13 +63,13 @@ class TestStrategy(bt.Strategy):
         print('Strategy Created')
         print('--------------------------------------------------')
 
-    def notify_data(self, data, status, *args, **kwargs):
+    def datafeed_notification(self, data, status, *args, **kwargs):
         print('*' * 5, 'DATA NOTIF:', data._getstatusname(status), *args)
         if status == data.LIVE:
             self.counttostop = self.p.stopafter
             self.datastatus = 1
 
-    def notify_store(self, msg, *args, **kwargs):
+    def notify_account_store(self, msg, *args, **kwargs):
         print('*' * 5, 'STORE NOTIF:', msg)
 
     def notify_order(self, order):
@@ -104,7 +104,7 @@ class TestStrategy(bt.Strategy):
         txt.append('{}'.format(self.sma[0]))
         print(', '.join(txt))
 
-        if len(self.datas) > 1 and len(self.data1):
+        if len(self.datafeeds) > 1 and len(self.data1):
             txt = list()
             txt.append('Data1')
             txt.append('%04d' % len(self.data1))
@@ -123,7 +123,7 @@ class TestStrategy(bt.Strategy):
         if self.counttostop:  # stop after x live lines
             self.counttostop -= 1
             if not self.counttostop:
-                self.env.runstop()
+                self.env.stop_running()
                 return
 
         if not self.p.trade:
@@ -144,7 +144,7 @@ class TestStrategy(bt.Strategy):
             if self.p.bracket:
                 # low side
                 self.sell(size=self.p.stake,
-                          exectype=bt.Order.Stop,
+                          exectype=bt.Order.StopMarket,
                           price=round(price * 0.90, 2),
                           valid=self.p.valid,
                           transmit=False,
@@ -226,11 +226,11 @@ def runstrategy():
 
     if args.broker:
         if args.usestore:
-            broker = ibstore.getbroker()
+            broker = ibstore.get_broker_or_exchange()
         else:
             broker = bt.brokers.IBBroker(**storekwargs)
 
-        cerebro.setbroker(broker)
+        cerebro.set_broker_or_exchange(broker)
 
     timeframe = bt.TimeFrame.TFrame(args.timeframe)
     # Manage data1 parameters
@@ -290,32 +290,32 @@ def runstrategy():
     )
 
     if args.replay:
-        cerebro.replaydata(data0, **rekwargs)
+        cerebro.replay_datafeed(data0, **rekwargs)
 
         if data1 is not None:
             rekwargs['timeframe'] = tf1
             rekwargs['compression'] = cp1
-            cerebro.replaydata(data1, **rekwargs)
+            cerebro.replay_datafeed(data1, **rekwargs)
 
     elif args.resample:
-        cerebro.resampledata(data0, **rekwargs)
+        cerebro.resample_datafeed(data0, **rekwargs)
 
         if data1 is not None:
             rekwargs['timeframe'] = tf1
             rekwargs['compression'] = cp1
-            cerebro.resampledata(data1, **rekwargs)
+            cerebro.resample_datafeed(data1, **rekwargs)
 
     else:
-        cerebro.adddata(data0)
+        cerebro.add_datafeed(data0)
         if data1 is not None:
-            cerebro.adddata(data1)
+            cerebro.add_datafeed(data1)
 
     if args.valid is None:
         valid = None
     else:
         valid = datetime.timedelta(seconds=args.valid)
     # Add the strategy
-    cerebro.addstrategy(TestStrategy,
+    cerebro.add_strategy(TestStrategy,
                         smaperiod=args.smaperiod,
                         trade=args.trade,
                         exectype=bt.Order.ExecType(args.exectype),

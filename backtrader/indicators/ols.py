@@ -32,7 +32,7 @@ __all__ = ['OLS_Slope_InterceptN', 'OLS_TransformationN', 'OLS_BetaN',
 class OLS_Slope_InterceptN(PeriodN):
     '''
     Calculates a linear regression using ``statsmodel.OLS`` (Ordinary least
-    squares) of data1 on data0
+    squares) of datafeed1 on datafeed0
 
     Uses ``pandas`` and ``statsmodels``
     '''
@@ -48,8 +48,8 @@ class OLS_Slope_InterceptN(PeriodN):
     )
 
     def next(self):
-        p0 = pd.Series(self.data0.get(size=self.p.period))
-        p1 = pd.Series(self.data1.get(size=self.p.period))
+        p0 = pd.Series(self.datafeed0.get(size=self.p.period))
+        p1 = pd.Series(self.datafeed1.get(size=self.p.period))
         p1 = sm.add_constant(p1)
         intercept, slope = sm.OLS(p0, p1).fit().params
 
@@ -59,7 +59,7 @@ class OLS_Slope_InterceptN(PeriodN):
 
 class OLS_TransformationN(PeriodN):
     '''
-    Calculates the ``zscore`` for data0 and data1. Although it doesn't directly
+    Calculates the ``zscore`` for datafeed0 and datafeed1. Although it doesn't directly
     uses any external package it relies on ``OLS_SlopeInterceptN`` which uses
     ``pandas`` and ``statsmodels``
     '''
@@ -68,19 +68,19 @@ class OLS_TransformationN(PeriodN):
     params = (('period', 10),)
 
     def __init__(self):
-        slint = OLS_Slope_InterceptN(*self.datas)
+        slint = OLS_Slope_InterceptN(*self.datafeeds)
 
-        spread = self.data0 - (slint.slope * self.data1 + slint.intercept)
+        spread = self.datafeed0 - (slint.slope * self.datafeed1 + slint.intercept)
         self.l.spread = spread
 
-        self.l.spread_mean = bt.ind.SMA(spread, period=self.p.period)
-        self.l.spread_std = bt.ind.StdDev(spread, period=self.p.period)
+        self.l.spread_mean = bt.indicators.SMA(spread, period=self.p.period)
+        self.l.spread_std = bt.indicators.StdDev(spread, period=self.p.period)
         self.l.zscore = (spread - self.l.spread_mean) / self.l.spread_std
 
 
 class OLS_BetaN(PeriodN):
     '''
-    Calculates a regression of data1 on data0 using ``statsmodels.api.ols``
+    Calculates a regression of datafeed1 on datafeed0 using ``statsmodels.api.ols``
 
     Uses ``pandas`` and ``statsmodels``
     '''
@@ -95,7 +95,7 @@ class OLS_BetaN(PeriodN):
     params = (('period', 10),)
 
     def next(self):
-        y, x = (pd.Series(d.get(size=self.p.period)) for d in self.datas)
+        y, x = (pd.Series(d.get(size=self.p.period)) for d in self.datafeeds)
         x = smapi.add_constant(x, prepend = True)
         x.columns=('const', 'x')
         r_beta = smapi.OLS(y,x).fit()
@@ -124,7 +124,7 @@ class CointN(PeriodN):
     )
 
     def next(self):
-        x, y = (pd.Series(d.get(size=self.p.period)) for d in self.datas)
+        x, y = (pd.Series(d.get(size=self.p.period)) for d in self.datafeeds)
         score, pvalue, _ = coint(x, y, trend=self.p.trend)
         self.lines.score[0] = score
         self.lines.pvalue[0] = pvalue

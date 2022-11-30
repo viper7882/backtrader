@@ -124,8 +124,8 @@ class GenericCSVData(feed.CSVDataBase):
 
             dtnum = date2num(dtin)  # utc'ize
 
-            dteos = datetime.combine(dt.date(), self.p.sessionend)
-            dteosnum = self.date2num(dteos)  # utc'ize
+            eos_dt = datetime.combine(dt.date(), self.p.session_end)
+            dteosnum = self.date2num(eos_dt)  # utc'ize
 
             if dteosnum > dtnum:
                 self.lines.datetime[0] = dteosnum
@@ -159,4 +159,4 @@ class GenericCSVData(feed.CSVDataBase):
 
 
 class GenericCSV(feed.CSVFeedBase):
-    DataCls = GenericCSVData
+    Datafeed_Cls = GenericCSVData

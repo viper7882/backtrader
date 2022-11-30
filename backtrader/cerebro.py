@@ -33,7 +33,7 @@ from .utils.py3 import (map, range, zip, with_metaclass, string_types,
 
 from . import linebuffer
 from . import indicator
-from .brokers import BackBroker
+from .brokers_or_exchanges import BackBroker
 from .metabase import MetaParams
 from . import observers
 from .writer import WriterFile
@@ -69,7 +69,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
 
       - ``live`` (default: ``False``)
 
-        If no data has reported itself as *live* (via the data's ``islive``
+        If no data has reported itself as *live* (via the data's ``is_live``
         method but the end user still want to run in ``live`` mode, this
         parameter can be set to true
 
@@ -85,13 +85,13 @@ class Cerebro(with_metaclass(MetaParams, object)):
 
       - ``stdstats`` (default: ``True``)
 
-        If True default Observers will be added: Broker (Cash and Value),
-        Trades and BuySell
+        If True default Observers will be added: Broker_or_Exchange (Cash and Value),
+        Trades and Buy_and_Sell
 
       - ``oldbuysell`` (default: ``False``)
 
         If ``stdstats`` is ``True`` and observers are getting automatically
-        added, this switch controls the main behavior of the ``BuySell``
+        added, this switch controls the main behavior of the ``Buy_and_Sell``
         observer
 
         - ``False``: use the modern behavior in which the buy / sell signals
@@ -150,7 +150,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
             memory
 
             If in the ``__init__`` something like
-            ``a = self.data.close - self.data.high`` is defined, then ``a``
+            ``a = self.datafeed.close - self.datafeed.high`` is defined, then ``a``
             will not keep all data in memory
 
             - This allows to keep ``plotting`` and ``preloading`` active.
@@ -162,10 +162,10 @@ class Cerebro(with_metaclass(MetaParams, object)):
         Experimental option to implement a cache of lines objects and reduce
         the amount of them. Example from UltimateOscillator::
 
-          bp = self.data.close - TrueLow(self.data)
-          tr = TrueRange(self.data)  # -> creates another TrueLow(self.data)
+          bp = self.datafeed.close - TrueLow(self.datafeed)
+          tr = TrueRange(self.datafeed)  # -> creates another TrueLow(self.datafeed)
 
-        If this is ``True`` the 2nd ``TrueLow(self.data)`` inside ``TrueRange``
+        If this is ``True`` the 2nd ``TrueLow(self.datafeed)`` inside ``TrueRange``
         matches the signature of the one in the ``bp`` calculation. It will be
         reused.
 
@@ -217,7 +217,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
         (same or different timeframes) has been changed to allow datas of
         different lengths.
 
-        If the old behavior with data0 as the master of the system is wished,
+        If the old behavior with datafeed0 as the master of the system is wished,
         set this parameter to true
 
       - ``tz`` (default: ``None``)
@@ -234,31 +234,31 @@ class Cerebro(with_metaclass(MetaParams, object)):
 
           - ``integer``. Use, for the strategy, the same timezone as the
             corresponding ``data`` in the ``self.datas`` iterable (``0`` would
-            use the timezone from ``data0``)
+            use the timezone from ``datafeed0``)
 
       - ``cheat_on_open`` (default: ``False``)
 
         The ``next_open`` method of strategies will be called. This happens
-        before ``next`` and before the broker has had a chance to evaluate
+        before ``next`` and before the broker_or_exchange has had a chance to evaluate
         orders. The indicators have not yet been recalculated. This allows
         issuing an orde which takes into account the indicators of the previous
         day but uses the ``open`` price for stake calculations
 
         For cheat_on_open order execution, it is also necessary to make the
-        call ``cerebro.broker.set_coo(True)`` or instantite a broker with
+        call ``cerebro.broker_or_exchange.set_coo(True)`` or instantite a broker_or_exchange with
         ``BackBroker(coo=True)`` (where *coo* stands for cheat-on-open) or set
         the ``broker_coo`` parameter to ``True``. Cerebro will do it
         automatically unless disabled below.
 
       - ``broker_coo`` (default: ``True``)
 
-        This will automatically invoke the ``set_coo`` method of the broker
+        This will automatically invoke the ``set_coo`` method of the broker_or_exchange
         with ``True`` to activate ``cheat_on_open`` execution. Will only do it
         if ``cheat_on_open`` is also ``True``
 
       - ``quicknotify`` (default: ``False``)
 
-        Broker notifications are delivered right before the delivery of the
+        Broker_or_Exchange notifications are delivered right before the delivery of the
         *next* prices. For backtesting this has no implications, but with live
         brokers a notification can take place long before the bar is
         delivered. When set to ``True`` notifications will be delivered as soon
@@ -291,14 +291,14 @@ class Cerebro(with_metaclass(MetaParams, object)):
     )
 
     def __init__(self):
-        self._dolive = False
-        self._doreplay = False
-        self._dooptimize = False
-        self.stores = list()
-        self.feeds = list()
-        self.datas = list()
-        self.datasbyname = collections.OrderedDict()
-        self.strats = list()
+        self._do_live = False
+        self._do_replay = False
+        self._do_optimization = False
+        self.accounts_or_stores = list()
+        self.backend_feeds = list()
+        self.datafeeds = list()
+        self.datafeeds_by_name = collections.OrderedDict()
+        self.strategies = list()
         self.optcbs = list()  # holds a list of callbacks for opt strategies
         self.observers = list()
         self.analyzers = list()
@@ -312,10 +312,10 @@ class Cerebro(with_metaclass(MetaParams, object)):
         self._signal_concurrent = False
         self._signal_accumulate = False
 
-        self._dataid = itertools.count(1)
+        self._datafeed_id = itertools.count(1)
 
-        self._broker = BackBroker()
-        self._broker.cerebro = self
+        self._broker_or_exchange = BackBroker()
+        self._broker_or_exchange.cerebro = self
 
         self._tradingcal = None  # TradingCalendar()
 
@@ -341,7 +341,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
 
     def set_fund_history(self, fund):
         '''
-        Add a history of orders to be directly executed in the broker for
+        Add a history of orders to be directly executed in the broker_or_exchange for
         performance evaluation
 
           - ``fund``: is an iterable (ex: list, tuple, iterator, generator)
@@ -365,7 +365,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
 
     def add_order_history(self, orders, notify=True):
         '''
-        Add a history of orders to be directly executed in the broker for
+        Add a history of orders to be directly executed in the broker_or_exchange for
         performance evaluation
 
           - ``orders``: is an iterable (ex: list, tuple, iterator, generator)
@@ -405,7 +405,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
         self._ohistory.append((orders, notify))
 
     def get_orders(self):
-        return self._broker.get_orders()
+        return self._broker_or_exchange.get_orders()
 
     def notify_timer(self, timer, when, *args, **kwargs):
         '''Receives a timer notification where ``timer`` is the timer which was
@@ -515,14 +515,14 @@ class Cerebro(with_metaclass(MetaParams, object)):
 
             **Note**: If ``when`` is either ``SESSION_START`` or
               ``SESSION_END`` and ``tzdata`` is ``None``, the 1st *data feed*
-              in the system (aka ``self.data0``) will be used as the reference
+              in the system (aka ``self.datafeed0``) will be used as the reference
               to find out the session times.
 
           - ``strats`` (default: ``False``) call also the ``notify_timer`` of
             strategies
 
           - ``cheat`` (default ``False``) if ``True`` the timer will be called
-            before the broker has a chance to evaluate the orders. This opens
+            before the broker_or_exchange has a chance to evaluate the orders. This opens
             the chance to issue orders based on opening price for example right
             before the session starts
           - ``*args``: any extra args will be passed to ``notify_timer``
@@ -542,7 +542,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
             tzdata=tzdata, strats=strats, cheat=cheat,
             *args, **kwargs)
 
-    def addtz(self, tz):
+    def add_timezone(self, tz):
         '''
         This can also be done with the parameter ``tz``
 
@@ -558,12 +558,12 @@ class Cerebro(with_metaclass(MetaParams, object)):
 
           - ``integer``. Use, for the strategy, the same timezone as the
             corresponding ``data`` in the ``self.datas`` iterable (``0`` would
-            use the timezone from ``data0``)
+            use the timezone from ``datafeed0``)
 
         '''
         self.p.tz = tz
 
-    def addcalendar(self, cal):
+    def add_calendar(self, cal):
         '''Adds a global trading calendar to the system. Individual data feeds
         may have separate calendars which override the global one
 
@@ -609,52 +609,52 @@ class Cerebro(with_metaclass(MetaParams, object)):
         allowed to increase a position'''
         self._signal_accumulate = onoff
 
-    def addstore(self, store):
-        '''Adds an ``Store`` instance to the if not already present'''
-        if store not in self.stores:
-            self.stores.append(store)
+    def add_account_store(self, store):
+        '''Adds an ``Account Store`` instance to the if not already present'''
+        if store not in self.accounts_or_stores:
+            self.accounts_or_stores.append(store)
 
-    def addwriter(self, wrtcls, *args, **kwargs):
+    def add_writer(self, wrtcls, *args, **kwargs):
         '''Adds an ``Writer`` class to the mix. Instantiation will be done at
         ``run`` time in cerebro
         '''
         self.writers.append((wrtcls, args, kwargs))
 
-    def addsizer(self, sizercls, *args, **kwargs):
+    def add_sizer(self, sizercls, *args, **kwargs):
         '''Adds a ``Sizer`` class (and args) which is the default sizer for any
         strategy added to cerebro
         '''
         self.sizers[None] = (sizercls, args, kwargs)
 
-    def addsizer_byidx(self, idx, sizercls, *args, **kwargs):
+    def add_sizer_by_idx(self, idx, sizercls, *args, **kwargs):
         '''Adds a ``Sizer`` class by idx. This idx is a reference compatible to
-        the one returned by ``addstrategy``. Only the strategy referenced by
+        the one returned by ``add_strategy``. Only the strategy referenced by
         ``idx`` will receive this size
         '''
         self.sizers[idx] = (sizercls, args, kwargs)
 
-    def addindicator(self, indcls, *args, **kwargs):
+    def add_indicator(self, indcls, *args, **kwargs):
         '''
         Adds an ``Indicator`` class to the mix. Instantiation will be done at
         ``run`` time in the passed strategies
         '''
         self.indicators.append((indcls, args, kwargs))
 
-    def addanalyzer(self, ancls, *args, **kwargs):
+    def add_analyzer(self, ancls, *args, **kwargs):
         '''
         Adds an ``Analyzer`` class to the mix. Instantiation will be done at
         ``run`` time
         '''
         self.analyzers.append((ancls, args, kwargs))
 
-    def addobserver(self, obscls, *args, **kwargs):
+    def add_system_wide_observer(self, obscls, *args, **kwargs):
         '''
         Adds an ``Observer`` class to the mix. Instantiation will be done at
         ``run`` time
         '''
         self.observers.append((False, obscls, args, kwargs))
 
-    def addobservermulti(self, obscls, *args, **kwargs):
+    def add_per_datafeed_observer(self, obscls, *args, **kwargs):
         '''
         Adds an ``Observer`` class to the mix. Instantiation will be done at
         ``run`` time
@@ -666,121 +666,121 @@ class Cerebro(with_metaclass(MetaParams, object)):
         '''
         self.observers.append((True, obscls, args, kwargs))
 
-    def addstorecb(self, callback):
+    def add_account_store_callback(self, callback):
         '''Adds a callback to get messages which would be handled by the
-        notify_store method
+        notify_account_or_store method
 
         The signature of the callback must support the following:
 
           - callback(msg, \*args, \*\*kwargs)
 
         The actual ``msg``, ``*args`` and ``**kwargs`` received are
-        implementation defined (depend entirely on the *data/broker/store*) but
+        implementation defined (depend entirely on the *data/broker_or_exchange/store*) but
         in general one should expect them to be *printable* to allow for
         reception and experimentation.
         '''
         self.storecbs.append(callback)
 
-    def _notify_store(self, msg, *args, **kwargs):
+    def _notify_account_or_store_with_callback(self, msg, *args, **kwargs):
         for callback in self.storecbs:
             callback(msg, *args, **kwargs)
 
-        self.notify_store(msg, *args, **kwargs)
+        self.notify_account_or_store(msg, *args, **kwargs)
 
-    def notify_store(self, msg, *args, **kwargs):
+    def notify_account_or_store(self, msg, *args, **kwargs):
         '''Receive store notifications in cerebro
 
         This method can be overridden in ``Cerebro`` subclasses
 
         The actual ``msg``, ``*args`` and ``**kwargs`` received are
-        implementation defined (depend entirely on the *data/broker/store*) but
+        implementation defined (depend entirely on the *data/broker_or_exchange/store*) but
         in general one should expect them to be *printable* to allow for
         reception and experimentation.
         '''
         pass
 
-    def _storenotify(self):
-        for store in self.stores:
+    def _notify_account_or_store(self):
+        for store in self.accounts_or_stores:
             for notif in store.get_notifications():
                 msg, args, kwargs = notif
 
-                self._notify_store(msg, *args, **kwargs)
+                self._notify_account_or_store_with_callback(msg, *args, **kwargs)
                 for strat in self.runningstrats:
-                    strat.notify_store(msg, *args, **kwargs)
+                    strat.notify_account_or_store(msg, *args, **kwargs)
 
-    def adddatacb(self, callback):
+    def add_datafeed_callback(self, callback):
         '''Adds a callback to get messages which would be handled by the
-        notify_data method
+        datafeed_notification method
 
         The signature of the callback must support the following:
 
           - callback(data, status, \*args, \*\*kwargs)
 
         The actual ``*args`` and ``**kwargs`` received are implementation
-        defined (depend entirely on the *data/broker/store*) but in general one
+        defined (depend entirely on the *data/broker_or_exchange/store*) but in general one
         should expect them to be *printable* to allow for reception and
         experimentation.
         '''
         self.datacbs.append(callback)
 
-    def _datanotify(self):
-        for data in self.datas:
-            for notif in data.get_notifications():
+    def _datafeed_notification(self):
+        for datafeed in self.datafeeds:
+            for notif in datafeed.get_notifications():
                 status, args, kwargs = notif
-                self._notify_data(data, status, *args, **kwargs)
+                self._datafeed_callback_notification(datafeed, status, *args, **kwargs)
                 for strat in self.runningstrats:
-                    strat.notify_data(data, status, *args, **kwargs)
+                    strat.datafeed_notification(datafeed, status, *args, **kwargs)
 
-    def _notify_data(self, data, status, *args, **kwargs):
+    def _datafeed_callback_notification(self, datafeed, status, *args, **kwargs):
         for callback in self.datacbs:
-            callback(data, status, *args, **kwargs)
+            callback(datafeed, status, *args, **kwargs)
 
-        self.notify_data(data, status, *args, **kwargs)
+        self.datafeed_notification(datafeed, status, *args, **kwargs)
 
-    def notify_data(self, data, status, *args, **kwargs):
+    def datafeed_notification(self, datafeed, status, *args, **kwargs):
         '''Receive data notifications in cerebro
 
         This method can be overridden in ``Cerebro`` subclasses
 
         The actual ``*args`` and ``**kwargs`` received are
-        implementation defined (depend entirely on the *data/broker/store*) but
+        implementation defined (depend entirely on the *data/broker_or_exchange/store*) but
         in general one should expect them to be *printable* to allow for
         reception and experimentation.
         '''
         pass
 
-    def adddata(self, data, name=None):
+    def add_datafeed(self, datafeed, name=None):
         '''
-        Adds a ``Data Feed`` instance to the mix.
+        Adds a ``datafeed`` instance to the mix.
 
-        If ``name`` is not None it will be put into ``data._name`` which is
+        If ``name`` is not None it will be put into ``datafeed._name`` which is
         meant for decoration/plotting purposes.
         '''
         if name is not None:
-            data._name = name
+            datafeed._name = name
         else:
-            print("WARNING: No name has been assigned for adddata datafeed in cerebro")
+            print("WARNING: No name has been assigned for add_datafeed datafeed in cerebro")
 
-        data._id = next(self._dataid)
-        data.setenvironment(self)
+        datafeed._id = next(self._datafeed_id)
+        datafeed.setenvironment(self)
 
-        self.datas.append(data)
-        self.datasbyname[data._name] = data
-        feed = data.getfeed()
-        if feed and feed not in self.feeds:
-            self.feeds.append(feed)
+        self.datafeeds.append(datafeed)
+        self.datafeeds_by_name[datafeed._name] = datafeed
+        feed = datafeed.get_backend_datafeed()
+        if feed and feed not in self.backend_feeds:
+            self.backend_feeds.append(feed)
 
-        if data.islive():
-            self._dolive = True
+        if datafeed.is_live():
+            self._do_live = True
 
-        return data
+        return datafeed
 
-    def chaindata(self, *args, **kwargs):
+    def chain_datafeed(self, *args, **kwargs):
         '''
-        Chains several data feeds into one
+        Chains several datafeeds into one
 
         If ``name`` is passed as named argument and is not None it will be put
-        into ``data._name`` which is meant for decoration/plotting purposes.
+        into ``datafeed._name`` which is meant for decoration/plotting purposes.
 
         If ``None``, then the name of the 1st data will be used
         '''
@@ -788,7 +788,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
         if dname is None:
             dname = args[0]._dataname
         d = bt.feeds.Chainer(dataname=dname, *args)
-        self.adddata(d, name=dname)
+        self.add_datafeed(d, name=dname)
 
         return d
 
@@ -796,11 +796,11 @@ class Cerebro(with_metaclass(MetaParams, object)):
         obj = deepcopy(self)
         return obj
 
-    def rolloverdata(self, *args, **kwargs):
+    def roll_over_datafeed(self, *args, **kwargs):
         '''Chains several data feeds into one
 
         If ``name`` is passed as named argument and is not None it will be put
-        into ``data._name`` which is meant for decoration/plotting purposes.
+        into ``datafeed._name`` which is meant for decoration/plotting purposes.
 
         If ``None``, then the name of the 1st data will be used
 
@@ -811,45 +811,45 @@ class Cerebro(with_metaclass(MetaParams, object)):
         if dname is None:
             dname = args[0]._dataname
         d = bt.feeds.RollOver(dataname=dname, *args, **kwargs)
-        self.adddata(d, name=dname)
+        self.add_datafeed(d, name=dname)
 
         return d
 
-    def replaydata(self, dataname, name=None, **kwargs):
+    def replay_datafeed(self, dataname, name=None, **kwargs):
         '''
         Adds a ``Data Feed`` to be replayed by the system
 
-        If ``name`` is not None it will be put into ``data._name`` which is
+        If ``name`` is not None it will be put into ``datafeed._name`` which is
         meant for decoration/plotting purposes.
 
         Any other kwargs like ``timeframe``, ``compression``, ``todate`` which
         are supported by the replay filter will be passed transparently
         '''
-        if any(dataname is x for x in self.datas):
+        if any(dataname is x for x in self.datafeeds):
             dataname = dataname.clone()
 
         dataname.replay(**kwargs)
-        self.adddata(dataname, name=name)
-        self._doreplay = True
+        self.add_datafeed(dataname, name=name)
+        self._do_replay = True
 
         return dataname
 
-    def resampledata(self, dataname, name=None, **kwargs):
+    def resample_datafeed(self, dataname, name=None, **kwargs):
         '''
         Adds a ``Data Feed`` to be resample by the system
 
-        If ``name`` is not None it will be put into ``data._name`` which is
+        If ``name`` is not None it will be put into ``datafeed._name`` which is
         meant for decoration/plotting purposes.
 
         Any other kwargs like ``timeframe``, ``compression``, ``todate`` which
         are supported by the resample filter will be passed transparently
         '''
-        if any(dataname is x for x in self.datas):
+        if any(dataname is x for x in self.datafeeds):
             dataname = dataname.clone()
 
         dataname.resample(**kwargs)
-        self.adddata(dataname, name=name)
-        self._doreplay = True
+        self.add_datafeed(dataname, name=name)
+        self._do_replay = True
 
         return dataname
 
@@ -862,7 +862,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
         '''
         self.optcbs.append(cb)
 
-    def optstrategy(self, strategy, *args, **kwargs):
+    def optimize_strategy(self, strategy, *args, **kwargs):
         '''
         Adds a ``Strategy`` class to the mix for optimization. Instantiation
         will happen during ``run`` time.
@@ -870,13 +870,13 @@ class Cerebro(with_metaclass(MetaParams, object)):
         args and kwargs MUST BE iterables which hold the values to check.
 
         Example: if a Strategy accepts a parameter ``period``, for optimization
-        purposes the call to ``optstrategy`` looks like:
+        purposes the call to ``optimize_strategy`` looks like:
 
-          - cerebro.optstrategy(MyStrategy, period=(15, 25))
+          - cerebro.optimize_strategy(MyStrategy, period=(15, 25))
 
         This will execute an optimization for values 15 and 25. Whereas
 
-          - cerebro.optstrategy(MyStrategy, period=range(15, 25))
+          - cerebro.optimize_strategy(MyStrategy, period=range(15, 25))
 
         will execute MyStrategy with ``period`` values 15 -> 25 (25 not
         included, because ranges are semi-open in Python)
@@ -884,18 +884,18 @@ class Cerebro(with_metaclass(MetaParams, object)):
         If a parameter is passed but shall not be optimized the call looks
         like:
 
-          - cerebro.optstrategy(MyStrategy, period=(15,))
+          - cerebro.optimize_strategy(MyStrategy, period=(15,))
 
         Notice that ``period`` is still passed as an iterable ... of just 1
         element
 
         ``backtrader`` will anyhow try to identify situations like:
 
-          - cerebro.optstrategy(MyStrategy, period=15)
+          - cerebro.optimize_strategy(MyStrategy, period=15)
 
         and will create an internal pseudo-iterable if possible
         '''
-        self._dooptimize = True
+        self._do_optimization = True
         args = self.iterize(args)
         optargs = itertools.product(*args)
 
@@ -909,9 +909,9 @@ class Cerebro(with_metaclass(MetaParams, object)):
         optkwargs = map(dict, okwargs1)
 
         it = itertools.product([strategy], optargs, optkwargs)
-        self.strats.append(it)
+        self.strategies.append(it)
 
-    def addstrategy(self, strategy, *args, **kwargs):
+    def add_strategy(self, strategy, *args, **kwargs):
         '''
         Adds a ``Strategy`` class to the mix for a single pass run.
         Instantiation will happen during ``run`` time.
@@ -922,27 +922,27 @@ class Cerebro(with_metaclass(MetaParams, object)):
         Returns the index with which addition of other objects (like sizers)
         can be referenced
         '''
-        self.strats.append([(strategy, args, kwargs)])
-        return len(self.strats) - 1
+        self.strategies.append([(strategy, args, kwargs)])
+        return len(self.strategies) - 1
 
-    def setbroker(self, broker):
+    def set_broker_or_exchange(self, broker_or_exchange):
         '''
-        Sets a specific ``broker`` instance for this strategy, replacing the
+        Sets a specific ``broker_or_exchange or exchange`` instance for this strategy, replacing the
         one inherited from cerebro.
         '''
-        self._broker = broker
-        broker.cerebro = self
-        return broker
+        self._broker_or_exchange = broker_or_exchange
+        broker_or_exchange.cerebro = self
+        return broker_or_exchange
 
-    def getbroker(self):
+    def get_broker_or_exchange(self):
         '''
-        Returns the broker instance.
+        Returns the broker_or_exchange or exchange instance.
 
-        This is also available as a ``property`` by the name ``broker``
+        This is also available as a ``property`` by the name ``broker_or_exchange or exchange``
         '''
-        return self._broker
+        return self._broker_or_exchange
 
-    broker = property(getbroker, setbroker)
+    broker_or_exchange = property(get_broker_or_exchange, set_broker_or_exchange)
 
     def plot(self, plotter=None, numfigs=1, iplot=True, start=None, end=None,
              width=16, height=9, dpi=300, tight=True, backend=None, **kwargs):
@@ -1016,7 +1016,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
         '''
 
         predata = self.p.optdatas and self._dopreload and self._dorunonce
-        return self.runstrategies(iterstrat, predata=predata)
+        return self.run_strategies(iterstrat, predata=predata)
 
     def __getstate__(self):
         '''
@@ -1029,7 +1029,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
             del(rv['runstrats'])
         return rv
 
-    def runstop(self):
+    def stop_running(self):
         '''If invoked from inside a strategy or anywhere else, including other
         threads the execution will stop as soon as possible.'''
         self._event_stop = True  # signal a stop has been requested
@@ -1044,14 +1044,14 @@ class Cerebro(with_metaclass(MetaParams, object)):
         It has different return values:
 
           - For No Optimization: a list contanining instances of the Strategy
-            classes added with ``addstrategy``
+            classes added with ``add_strategy``
 
           - For Optimization: a list of lists which contain instances of the
-            Strategy classes added with ``addstrategy``
+            Strategy classes added with ``add_strategy``
         '''
         self._event_stop = False  # Stop is requested
 
-        if not self.datas:
+        if not self.datafeeds:
             return []  # nothing can be run
 
         pkeys = self.params._getkeys()
@@ -1074,13 +1074,13 @@ class Cerebro(with_metaclass(MetaParams, object)):
             self._dorunonce = False  # something is saving memory, no runonce
             self._dopreload = self._dopreload and self._exactbars < 1
 
-        self._doreplay = self._doreplay or any(x.replaying for x in self.datas)
-        if self._doreplay:
+        self._do_replay = self._do_replay or any(x.replaying for x in self.datafeeds)
+        if self._do_replay:
             # preloading is not supported with replay. full timeframe bars
             # are constructed in realtime
             self._dopreload = False
 
-        if self._dolive or self.p.live:
+        if self._do_live or self.p.live:
             # in this case both preload and runonce must be off
             self._dorunonce = False
             self._dopreload = False
@@ -1107,13 +1107,13 @@ class Cerebro(with_metaclass(MetaParams, object)):
             if signalst is None:
                 # Try to see if the 1st regular strategy is a signal strategy
                 try:
-                    signalst, sargs, skwargs = self.strats.pop(0)
+                    signalst, sargs, skwargs = self.strategies.pop(0)
                 except IndexError:
                     pass  # Nothing there
                 else:
                     if not isinstance(signalst, SignalStrategy):
                         # no signal ... reinsert at the beginning
-                        self.strats.insert(0, (signalst, sargs, skwargs))
+                        self.strategies.insert(0, (signalst, sargs, skwargs))
                         signalst = None  # flag as not presetn
 
             if signalst is None:  # recheck
@@ -1121,35 +1121,35 @@ class Cerebro(with_metaclass(MetaParams, object)):
                 signalst, sargs, skwargs = SignalStrategy, tuple(), dict()
 
             # Add the signal strategy
-            self.addstrategy(signalst,
+            self.add_strategy(signalst,
                              _accumulate=self._signal_accumulate,
                              _concurrent=self._signal_concurrent,
                              signals=self.signals,
                              *sargs,
                              **skwargs)
 
-        if not self.strats:  # Datas are present, add a strategy
-            self.addstrategy(Strategy)
+        if not self.strategies:  # Datas are present, add a strategy
+            self.add_strategy(Strategy)
 
-        iterstrats = itertools.product(*self.strats)
-        if not self._dooptimize or self.p.maxcpus == 1:
+        iterstrats = itertools.product(*self.strategies)
+        if not self._do_optimization or self.p.maxcpus == 1:
             # If no optimmization is wished ... or 1 core is to be used
             # let's skip process "spawning"
             for iterstrat in iterstrats:
-                runstrat = self.runstrategies(iterstrat)
+                runstrat = self.run_strategies(iterstrat)
                 self.runstrats.append(runstrat)
-                if self._dooptimize:
+                if self._do_optimization:
                     for cb in self.optcbs:
                         cb(runstrat)  # callback receives finished strategy
         else:
             if self.p.optdatas and self._dopreload and self._dorunonce:
-                for data in self.datas:
-                    data.reset()
+                for datafeed in self.datafeeds:
+                    datafeed.reset()
                     if self._exactbars < 1:  # datas can be full length
-                        data.extend(size=self.params.lookahead)
-                    data._start()
+                        datafeed.extend(size=self.params.lookahead)
+                    datafeed._start()
                     if self._dopreload:
-                        data.preload()
+                        datafeed.preload()
 
             pool = multiprocessing.Pool(self.p.maxcpus or None)
             for r in pool.imap(self, iterstrats):
@@ -1164,10 +1164,10 @@ class Cerebro(with_metaclass(MetaParams, object)):
             pool.close()
 
             if self.p.optdatas and self._dopreload and self._dorunonce:
-                for data in self.datas:
-                    data.stop()
+                for datafeed in self.datafeeds:
+                    datafeed.stop()
 
-        if not self._dooptimize:
+        if not self._do_optimization:
             # avoid a list of list for regular cases
             return self.runstrats[0]
 
@@ -1179,37 +1179,37 @@ class Cerebro(with_metaclass(MetaParams, object)):
     def _next_stid(self):
         return next(self.stcount)
 
-    def runstrategies(self, iterstrat, predata=False):
+    def run_strategies(self, iterstrat, predata=False):
         '''
         Internal method invoked by ``run``` to run a set of strategies
         '''
         self._init_stcount()
 
         self.runningstrats = runstrats = list()
-        for store in self.stores:
+        for store in self.accounts_or_stores:
             store.start()
 
         if self.p.cheat_on_open and self.p.broker_coo:
-            # try to activate in broker
-            if hasattr(self._broker, 'set_coo'):
-                self._broker.set_coo(True)
+            # try to activate in broker_or_exchange
+            if hasattr(self._broker_or_exchange, 'set_coo'):
+                self._broker_or_exchange.set_coo(True)
 
         if self._fhistory is not None:
-            self._broker.set_fund_history(self._fhistory)
+            self._broker_or_exchange.set_fund_history(self._fhistory)
 
         for orders, onotify in self._ohistory:
-            self._broker.add_order_history(orders, onotify)
+            self._broker_or_exchange.add_order_history(orders, onotify)
 
-        self._broker.start()
+        self._broker_or_exchange.start()
 
-        for feed in self.feeds:
+        for feed in self.backend_feeds:
             feed.start()
 
         if self.writers_csv:
             wheaders = list()
-            for data in self.datas:
-                if data.csv:
-                    wheaders.extend(data.getwriterheaders())
+            for datafeed in self.datafeeds:
+                if datafeed.csv:
+                    wheaders.extend(datafeed.getwriterheaders())
 
             for writer in self.runwriters:
                 if writer.p.csv:
@@ -1219,16 +1219,16 @@ class Cerebro(with_metaclass(MetaParams, object)):
         # self._plotfillers2 = [list() for d in self.datas]
 
         if not predata:
-            for data in self.datas:
-                data.reset()
+            for datafeed in self.datafeeds:
+                datafeed.reset()
                 if self._exactbars < 1:  # datas can be full length
-                    data.extend(size=self.params.lookahead)
-                data._start()
+                    datafeed.extend(size=self.params.lookahead)
+                datafeed._start()
                 if self._dopreload:
-                    data.preload()
+                    datafeed.preload()
 
         for stratcls, sargs, skwargs in iterstrat:
-            sargs = self.datas + list(sargs)
+            sargs = self.datafeeds + list(sargs)
             try:
                 strat = stratcls(*sargs, **skwargs)
             except bt.errors.StrategySkipError:
@@ -1242,7 +1242,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
 
         tz = self.p.tz
         if isinstance(tz, integer_types):
-            tz = self.datas[tz]._tz
+            tz = self.datafeeds[tz]._tz
         else:
             tz = tzparse(tz)
 
@@ -1251,26 +1251,26 @@ class Cerebro(with_metaclass(MetaParams, object)):
             defaultsizer = self.sizers.get(None, (None, None, None))
             for idx, strat in enumerate(runstrats):
                 if self.p.stdstats:
-                    strat._addobserver(False, observers.Broker)
+                    strat._add_observer(False, observers.Broker_or_Exchange)
                     if self.p.oldbuysell:
-                        strat._addobserver(True, observers.BuySell)
+                        strat._add_observer(True, observers.Buy_and_Sell)
                     else:
-                        strat._addobserver(True, observers.BuySell,
+                        strat._add_observer(True, observers.Buy_and_Sell,
                                            barplot=True)
 
-                    if self.p.oldtrades or len(self.datas) == 1:
-                        strat._addobserver(False, observers.Trades)
+                    if self.p.oldtrades or len(self.datafeeds) == 1:
+                        strat._add_observer(False, observers.Trades)
                     else:
-                        strat._addobserver(False, observers.DataTrades)
+                        strat._add_observer(False, observers.DataTrades)
 
                 for multi, obscls, obsargs, obskwargs in self.observers:
-                    strat._addobserver(multi, obscls, *obsargs, **obskwargs)
+                    strat._add_observer(multi, obscls, *obsargs, **obskwargs)
 
                 for indcls, indargs, indkwargs in self.indicators:
-                    strat._addindicator(indcls, *indargs, **indkwargs)
+                    strat._add_indicator(indcls, *indargs, **indkwargs)
 
                 for ancls, anargs, ankwargs in self.analyzers:
-                    strat._addanalyzer(ancls, *anargs, **ankwargs)
+                    strat._add_analyzer(ancls, *anargs, **ankwargs)
 
                 sizer, sargs, skwargs = self.sizers.get(idx, defaultsizer)
                 if sizer is not None:
@@ -1285,7 +1285,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
 
             if not predata:
                 for strat in runstrats:
-                    strat.qbuffer(self._exactbars, replaying=self._doreplay)
+                    strat.qbuffer(self._exactbars, replaying=self._do_replay)
 
             for writer in self.runwriters:
                 writer.start()
@@ -1295,7 +1295,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
             self._timerscheat = []
             for timer in self._pretimers:
                 # preprocess tzdata if needed
-                timer.start(self.datas[0])
+                timer.start(self.datafeeds[0])
 
                 if timer.params.cheat:
                     self._timerscheat.append(timer)
@@ -1306,7 +1306,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
                 if self.p.oldsync:
                     self._runonce_old(runstrats)
                 else:
-                    self._runonce(runstrats)
+                    self._run_once(runstrats)
             else:
                 if self.p.oldsync:
                     self._runnext_old(runstrats)
@@ -1316,21 +1316,21 @@ class Cerebro(with_metaclass(MetaParams, object)):
             for strat in runstrats:
                 strat._stop()
 
-        self._broker.stop()
+        self._broker_or_exchange.stop()
 
         if not predata:
-            for data in self.datas:
-                data.stop()
+            for datafeed in self.datafeeds:
+                datafeed.stop()
 
-        for feed in self.feeds:
+        for feed in self.backend_feeds:
             feed.stop()
 
-        for store in self.stores:
+        for store in self.accounts_or_stores:
             store.stop()
 
         self.stop_writers(runstrats)
 
-        if self._dooptimize and self.p.optreturn:
+        if self._do_optimization and self.p.optreturn:
             # Results can be optimized
             results = list()
             for strat in runstrats:
@@ -1338,7 +1338,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
                     a.strategy = None
                     a._parent = None
                     for attrname in dir(a):
-                        if attrname.startswith('data'):
+                        if attrname.startswith('datafeed'):
                             setattr(a, attrname, None)
 
                 oreturn = OptReturn(strat.params, analyzers=strat.analyzers, strategycls=type(strat))
@@ -1352,8 +1352,8 @@ class Cerebro(with_metaclass(MetaParams, object)):
         cerebroinfo = OrderedDict()
         datainfos = OrderedDict()
 
-        for i, data in enumerate(self.datas):
-            datainfos['Data%d' % i] = data.getwriterinfo()
+        for i, datafeed in enumerate(self.datafeeds):
+            datainfos['Data%d' % i] = datafeed.getwriterinfo()
 
         cerebroinfo['Datas'] = datainfos
 
@@ -1368,14 +1368,14 @@ class Cerebro(with_metaclass(MetaParams, object)):
             writer.writedict(dict(Cerebro=cerebroinfo))
             writer.stop()
 
-    def _brokernotify(self):
+    def _broker_or_echange_notification(self):
         '''
-        Internal method which kicks the broker and delivers any broker
+        Internal method which kicks the broker_or_exchange and delivers any broker_or_exchange
         notification to the strategy
         '''
-        self._broker.next()
+        self._broker_or_exchange.next()
         while True:
-            order = self._broker.get_notification()
+            order = self._broker_or_exchange.get_notification()
             if order is None:
                 break
 
@@ -1383,55 +1383,55 @@ class Cerebro(with_metaclass(MetaParams, object)):
             if owner is None:
                 owner = self.runningstrats[0]  # default
 
-            owner._addnotification(order, quicknotify=self.p.quicknotify)
+            owner._add_notification(order, quicknotify=self.p.quicknotify)
 
     def _runnext_old(self, runstrats):
         '''
         Actual implementation of run in full next mode. All objects have its
         ``next`` method invoke on each data arrival
         '''
-        data0 = self.datas[0]
+        datafeed0 = self.datafeeds[0]
         d0ret = True
         while d0ret or d0ret is None:
             lastret = False
             # Notify anything from the store even before moving datas
             # because datas may not move due to an error reported by the store
-            self._storenotify()
+            self._notify_account_or_store()
             if self._event_stop:  # stop if requested
                 return
-            self._datanotify()
+            self._datafeed_notification()
             if self._event_stop:  # stop if requested
                 return
 
-            d0ret = data0.next()
+            d0ret = datafeed0.next()
             if d0ret:
-                for data in self.datas[1:]:
-                    if not data.next(datamaster=data0):  # no delivery
-                        data._check(forcedata=data0)  # check forcing output
-                        data.next(datamaster=data0)  # retry
+                for datafeed in self.datafeeds[1:]:
+                    if not datafeed.next(datamaster=datafeed0):  # no delivery
+                        datafeed._check(forcedata=datafeed0)  # check forcing output
+                        datafeed.next(datamaster=datafeed0)  # retry
 
             elif d0ret is None:
                 # meant for things like live feeds which may not produce a bar
                 # at the moment but need the loop to run for notifications and
                 # getting resample and others to produce timely bars
-                data0._check()
-                for data in self.datas[1:]:
-                    data._check()
+                datafeed0._check()
+                for datafeed in self.datafeeds[1:]:
+                    datafeed._check()
             else:
-                lastret = data0._last()
-                for data in self.datas[1:]:
-                    lastret += data._last(datamaster=data0)
+                lastret = datafeed0._last()
+                for data in self.datafeeds[1:]:
+                    lastret += data._last(datamaster=datafeed0)
 
                 if not lastret:
                     # Only go extra round if something was changed by "lasts"
                     break
 
             # Datas may have generated a new notification after next
-            self._datanotify()
+            self._datafeed_notification()
             if self._event_stop:  # stop if requested
                 return
 
-            self._brokernotify()
+            self._broker_or_echange_notification()
             if self._event_stop:  # stop if requested
                 return
 
@@ -1444,10 +1444,10 @@ class Cerebro(with_metaclass(MetaParams, object)):
                     self._next_writers(runstrats)
 
         # Last notification chance before stopping
-        self._datanotify()
+        self._datafeed_notification()
         if self._event_stop:  # stop if requested
             return
-        self._storenotify()
+        self._notify_account_or_store()
         if self._event_stop:  # stop if requested
             return
 
@@ -1464,20 +1464,20 @@ class Cerebro(with_metaclass(MetaParams, object)):
         # has not moved forward all datas/indicators/observers that
         # were homed before calling once, Hence no "need" to do it
         # here again, because pointers are at 0
-        data0 = self.datas[0]
-        datas = self.datas[1:]
-        for i in range(data0.buflen()):
-            data0.advance()
-            for data in datas:
-                data.advance(datamaster=data0)
+        datafeed0 = self.datafeeds[0]
+        datafeeds = self.datafeeds[1:]
+        for i in range(datafeed0.buflen()):
+            datafeed0.advance()
+            for datafeed in datafeeds:
+                datafeed.advance(datamaster=datafeed0)
 
-            self._brokernotify()
+            self._broker_or_echange_notification()
             if self._event_stop:  # stop if requested
                 return
 
             for strat in runstrats:
-                # data0.datetime[0] for compat. w/ new strategy's oncepost
-                strat._oncepost(data0.datetime[0])
+                # datafeed0.datetime[0] for compat. w/ new strategy's oncepost
+                strat._oncepost(datafeed0.datetime[0])
                 if self._event_stop:  # stop if requested
                     return
 
@@ -1489,8 +1489,8 @@ class Cerebro(with_metaclass(MetaParams, object)):
 
         if self.writers_csv:
             wvalues = list()
-            for data in self.datas:
-                if data.csv:
+            for datafeed in self.datafeeds:
+                if datafeed.csv:
                     wvalues.extend(data.getwritervalues())
 
             for strat in runstrats:
@@ -1511,40 +1511,40 @@ class Cerebro(with_metaclass(MetaParams, object)):
         Actual implementation of run in full next mode. All objects have its
         ``next`` method invoke on each data arrival
         '''
-        datas = sorted(self.datas,
-                       key=lambda x: (x._timeframe, x._compression))
-        datas1 = datas[1:]
-        data0 = datas[0]
+        datafeeds = sorted(self.datafeeds,
+                           key=lambda x: (x._timeframe, x._compression))
+        datas1 = datafeeds[1:]
+        datafeed0 = datafeeds[0]
         d0ret = True
 
-        rs = [i for i, x in enumerate(datas) if x.resampling]
-        rp = [i for i, x in enumerate(datas) if x.replaying]
-        rsonly = [i for i, x in enumerate(datas)
+        rs = [i for i, x in enumerate(datafeeds) if x.resampling]
+        rp = [i for i, x in enumerate(datafeeds) if x.replaying]
+        rsonly = [i for i, x in enumerate(datafeeds)
                   if x.resampling and not x.replaying]
-        onlyresample = len(datas) == len(rsonly)
+        onlyresample = len(datafeeds) == len(rsonly)
         noresample = not rsonly
 
-        clonecount = sum(d._clone for d in datas)
-        ldatas = len(datas)
+        clonecount = sum(d._clone for d in datafeeds)
+        ldatas = len(datafeeds)
         ldatas_noclones = ldatas - clonecount
         lastqcheck = False
         dt0 = date2num(datetime.datetime.max) - 2  # default at max
         while d0ret or d0ret is None:
             # if any has live data in the buffer, no data will wait anything
-            newqcheck = not any(d.haslivedata() for d in datas)
+            newqcheck = not any(d.has_live_data() for d in datafeeds)
             if not newqcheck:
                 # If no data has reached the live status or all, wait for
                 # the next incoming data
-                livecount = sum(d._laststatus == d.LIVE for d in datas)
+                livecount = sum(d._laststatus == d.LIVE for d in datafeeds)
                 newqcheck = not livecount or livecount == ldatas_noclones
 
             lastret = False
-            # Notify anything from the store even before moving datas
-            # because datas may not move due to an error reported by the store
-            self._storenotify()
+            # Notify anything from the store even before moving datafeeds
+            # because datafeeds may not move due to an error reported by the store
+            self._notify_account_or_store()
             if self._event_stop:  # stop if requested
                 return
-            self._datanotify()
+            self._datafeed_notification()
             if self._event_stop:  # stop if requested
                 return
 
@@ -1552,7 +1552,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
             # from the qcheck value
             drets = []
             qstart = datetime.datetime.utcnow()
-            for d in datas:
+            for d in datafeeds:
                 qlapse = datetime.datetime.utcnow() - qstart
                 d.do_qcheck(newqcheck, qlapse.total_seconds())
                 drets.append(d.next(ticks=False))
@@ -1564,7 +1564,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
             if d0ret:
                 dts = []
                 for i, ret in enumerate(drets):
-                    dts.append(datas[i].datetime[0] if ret else None)
+                    dts.append(datafeeds[i].datetime[0] if ret else None)
 
                 # Get index to minimum datetime
                 if onlyresample or noresample:
@@ -1573,7 +1573,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
                     dt0 = min((d for i, d in enumerate(dts)
                                if d is not None and i not in rsonly))
 
-                dmaster = datas[dts.index(dt0)]  # and timemaster
+                dmaster = datafeeds[dts.index(dt0)]  # and timemaster
                 self._dtmaster = dmaster.num2date(dt0)
                 self._udtmaster = num2date(dt0)
 
@@ -1584,7 +1584,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
                         continue
 
                     # try to get a data by checking with a master
-                    d = datas[i]
+                    d = datafeeds[i]
                     d._check(forcedata=dmaster)  # check to force output
                     if d.next(datamaster=dmaster, ticks=False):  # retry
                         dts[i] = d.datetime[0]  # good -> store
@@ -1596,7 +1596,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
                 # make sure only those at dmaster level end up delivering
                 for i, dti in enumerate(dts):
                     if dti is not None:
-                        di = datas[i]
+                        di = datafeeds[i]
                         rpi = False and di.replaying   # to check behavior
                         if dti > dt0:
                             if not rpi:  # must see all ticks ...
@@ -1612,23 +1612,23 @@ class Cerebro(with_metaclass(MetaParams, object)):
                 # meant for things like live feeds which may not produce a bar
                 # at the moment but need the loop to run for notifications and
                 # getting resample and others to produce timely bars
-                for data in datas:
-                    data._check()
+                for datafeed in datafeeds:
+                    datafeed._check()
             else:
-                lastret = data0._last()
+                lastret = datafeed0._last()
                 for data in datas1:
-                    lastret += data._last(datamaster=data0)
+                    lastret += data._last(datamaster=datafeed0)
 
                 if not lastret:
                     # Only go extra round if something was changed by "lasts"
                     break
 
             # Datas may have generated a new notification after next
-            self._datanotify()
+            self._datafeed_notification()
             if self._event_stop:  # stop if requested
                 return
 
-            if d0ret or lastret:  # if any bar, check timers before broker
+            if d0ret or lastret:  # if any bar, check timers before broker_or_exchange
                 self._check_timers(runstrats, dt0, cheat=True)
                 if self.p.cheat_on_open:
                     for strat in runstrats:
@@ -1636,7 +1636,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
                         if self._event_stop:  # stop if requested
                             return
 
-            self._brokernotify()
+            self._broker_or_echange_notification()
             if self._event_stop:  # stop if requested
                 return
 
@@ -1650,14 +1650,14 @@ class Cerebro(with_metaclass(MetaParams, object)):
                     self._next_writers(runstrats)
 
         # Last notification chance before stopping
-        self._datanotify()
+        self._datafeed_notification()
         if self._event_stop:  # stop if requested
             return
-        self._storenotify()
+        self._notify_account_or_store()
         if self._event_stop:  # stop if requested
             return
 
-    def _runonce(self, runstrats):
+    def _run_once(self, runstrats):
         '''
         Actual implementation of run in vector mode.
 
@@ -1669,25 +1669,25 @@ class Cerebro(with_metaclass(MetaParams, object)):
             strat.reset()  # strat called next by next - reset lines
 
         # The default once for strategies does nothing and therefore
-        # has not moved forward all datas/indicators/observers that
+        # has not moved forward all datafeeds/indicators/observers that
         # were homed before calling once, Hence no "need" to do it
         # here again, because pointers are at 0
-        datas = sorted(self.datas,
+        datafeeds = sorted(self.datafeeds,
                        key=lambda x: (x._timeframe, x._compression))
 
         while True:
-            # Check next incoming date in the datas
-            dts = [d.advance_peek() for d in datas]
+            # Check next incoming date in the datafeeds
+            dts = [datafeed.advance_peek() for datafeed in datafeeds]
             dt0 = min(dts)
             if dt0 == float('inf'):
                 break  # no data delivers anything
 
             # Timemaster if needed be
-            # dmaster = datas[dts.index(dt0)]  # and timemaster
+            # dmaster = datafeeds[dts.index(dt0)]  # and timemaster
             slen = len(runstrats[0])
             for i, dti in enumerate(dts):
                 if dti <= dt0:
-                    datas[i].advance()
+                    datafeeds[i].advance()
                     # self._plotfillers2[i].append(slen)  # mark as fill
                 else:
                     # self._plotfillers[i].append(slen)
@@ -1701,7 +1701,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
                     if self._event_stop:  # stop if requested
                         return
 
-            self._brokernotify()
+            self._broker_or_echange_notification()
             if self._event_stop:  # stop if requested
                 return
 
@@ -1722,6 +1722,6 @@ class Cerebro(with_metaclass(MetaParams, object)):
 
             t.params.owner.notify_timer(t, t.lastwhen, *t.args, **t.kwargs)
 
-            if t.params.strats:
+            if t.params.strategies:
                 for strat in runstrats:
                     strat.notify_timer(t, t.lastwhen, *t.args, **t.kwargs)

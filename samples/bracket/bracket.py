@@ -90,7 +90,7 @@ class St(bt.Strategy):
                     print('{}: Oref {} / Buy at {}'.format(
                         self.datetime.date(), o1.ref, p1))
 
-                    o2 = self.sell(exectype=bt.Order.Stop,
+                    o2 = self.sell(exectype=bt.Order.StopMarket,
                                    price=p2,
                                    valid=valid2,
                                    parent=o1,
@@ -140,16 +140,16 @@ def runstrat(args=None):
 
     # Data feed
     data0 = bt.feeds.BacktraderCSVData(dataname=args.data0, **kwargs)
-    cerebro.adddata(data0)
+    cerebro.add_datafeed(data0)
 
     # Broker
     cerebro.broker = bt.brokers.BackBroker(**eval('dict(' + args.broker + ')'))
 
     # Sizer
-    cerebro.addsizer(bt.sizers.FixedSize, **eval('dict(' + args.sizer + ')'))
+    cerebro.add_sizer(bt.sizers.FixedSize, **eval('dict(' + args.sizer + ')'))
 
     # Strategy
-    cerebro.addstrategy(St, **eval('dict(' + args.strat + ')'))
+    cerebro.add_strategy(St, **eval('dict(' + args.strat + ')'))
 
     # Execute
     cerebro.run(**eval('dict(' + args.cerebro + ')'))

@@ -56,11 +56,11 @@ class _AroonBase(Indicator):
         idxperiod = self.p.period + 1
 
         if self._up:
-            hhidx = FindFirstIndexHighest(self.data.high, period=idxperiod)
+            hhidx = FindFirstIndexHighest(self.datafeed.high, period=idxperiod)
             self.up = (100.0 / self.p.period) * (self.p.period - hhidx)
 
         if self._down:
-            llidx = FindFirstIndexLowest(self.data.low, period=idxperiod)
+            llidx = FindFirstIndexLowest(self.datafeed.low, period=idxperiod)
             self.down = (100.0 / self.p.period) * (self.p.period - llidx)
 
         super(_AroonBase, self).__init__()

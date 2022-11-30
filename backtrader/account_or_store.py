@@ -41,46 +41,46 @@ class MetaSingleton(MetaParams):
         return cls._singleton
 
 
-class Store(with_metaclass(MetaSingleton, object)):
+class Account_or_Store(with_metaclass(MetaSingleton, object)):
     '''Base class for all Stores'''
 
     _started = False
 
     params = ()
 
-    def getdata(self, *args, **kwargs):
-        '''Returns ``DataCls`` with args, kwargs'''
-        data = self.DataCls(*args, **kwargs)
-        data._store = self
-        return data
+    def instantiate_datafeed(self, *args, **kwargs):
+        '''Returns ``Datafeed_Cls`` with args, kwargs'''
+        datafeeds = self.Datafeed_Cls(*args, **kwargs)
+        datafeeds._store = self
+        return datafeeds
 
     @classmethod
-    def getbroker(cls, *args, **kwargs):
-        '''Returns broker with *args, **kwargs from registered ``BrokerCls``'''
-        broker = cls.BrokerCls(*args, **kwargs)
-        broker._store = cls
-        return broker
+    def get_broker_or_exchange(cls, *args, **kwargs):
+        '''Returns broker_or_exchange with *args, **kwargs from registered ``Broker_or_Exchange_Cls``'''
+        broker_or_exchange = cls.Broker_or_Exchange_Cls(*args, **kwargs)
+        broker_or_exchange._store = cls
+        return broker_or_exchange
 
-    BrokerCls = None  # broker class will autoregister
-    DataCls = None  # data class will auto register
+    Broker_or_Exchange_Cls = None  # broker_or_exchange class will autoregister
+    Datafeed_Cls = None  # data class will auto register
 
-    def start(self, data=None, broker=None):
+    def start(self, datafeeds=None, broker_or_exchange=None):
         if not self._started:
             self._started = True
             self.notifs = collections.deque()
-            self.datas = list()
-            self.broker = None
+            self.datafeeds = list()
+            self.broker_or_exchange = None
 
-        if data is not None:
-            self._cerebro = self._env = data._env
-            self.datas.append(data)
+        if datafeeds is not None:
+            self._cerebro = self._env = datafeeds._env
+            self.datafeeds.append(datafeeds)
 
-            if self.broker is not None:
-                if hasattr(self.broker, 'data_started'):
-                    self.broker.data_started(data)
+            if self.broker_or_exchange is not None:
+                if hasattr(self.broker_or_exchange, 'data_started'):
+                    self.broker_or_exchange.data_started(datafeeds)
 
-        elif broker is not None:
-            self.broker = broker
+        elif broker_or_exchange is not None:
+            self.broker_or_exchange = broker_or_exchange
 
     def stop(self):
         pass

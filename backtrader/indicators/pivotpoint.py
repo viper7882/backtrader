@@ -34,12 +34,12 @@ class PivotPoint(Indicator):
     Example of using this indicator:
 
       data = btfeeds.ADataFeed(dataname=x, timeframe=bt.TimeFrame.Days)
-      cerebro.adddata(data)
-      cerebro.resampledata(data, timeframe=bt.TimeFrame.Months)
+      cerebro.add_datafeed(data)
+      cerebro.resample_datafeed(data, timeframe=bt.TimeFrame.Months)
 
     In the ``__init__`` method of the strategy:
 
-      pivotindicator = btind.PivotPoiont(self.data1)  # the resampled data
+      pivotindicator = btind.PivotPoiont(self.datafeed1)  # the resampled data
 
     The indicator will try to automatically plo to the non-resampled data. To
     disable this behavior use the following during construction:
@@ -74,14 +74,14 @@ class PivotPoint(Indicator):
     def _plotinit(self):
         # Try to plot to the actual timeframe master
         if self.p._autoplot:
-            if hasattr(self.data, 'data'):
-                self.plotinfo.plotmaster = self.data.data
+            if hasattr(self.datafeed, 'datafeed'):
+                self.plotinfo.plotmaster = self.datafeed.datafeed
 
     def __init__(self):
-        o = self.data.open
-        h = self.data.high  # current high
-        l = self.data.low  # current low
-        c = self.data.close  # current close
+        o = self.datafeed.open
+        h = self.datafeed.high  # current high
+        l = self.datafeed.low  # current low
+        c = self.datafeed.close  # current close
 
         if self.p.close:
             self.lines.p = p = (h + l + 2.0 * c) / 4.0
@@ -115,12 +115,12 @@ class FibonacciPivotPoint(Indicator):
     Example of using this indicator:
 
       data = btfeeds.ADataFeed(dataname=x, timeframe=bt.TimeFrame.Days)
-      cerebro.adddata(data)
-      cerebro.resampledata(data, timeframe=bt.TimeFrame.Months)
+      cerebro.add_datafeed(data)
+      cerebro.resample_datafeed(data, timeframe=bt.TimeFrame.Months)
 
     In the ``__init__`` method of the strategy:
 
-      pivotindicator = btind.FibonacciPivotPoiont(self.data1)  # the resampled data
+      pivotindicator = btind.FibonacciPivotPoiont(self.datafeed1)  # the resampled data
 
     The indicator will try to automatically plo to the non-resampled data. To
     disable this behavior use the following during construction:
@@ -158,14 +158,14 @@ class FibonacciPivotPoint(Indicator):
     def _plotinit(self):
         # Try to plot to the actual timeframe master
         if self.p._autoplot:
-            if hasattr(self.data, 'data'):
-                self.plotinfo.plotmaster = self.data.data
+            if hasattr(self.datafeed, 'datafeed'):
+                self.plotinfo.plotmaster = self.datafeed.datafeed
 
     def __init__(self):
-        o = self.data.open
-        h = self.data.high  # current high
-        l = self.data.low  # current high
-        c = self.data.close  # current high
+        o = self.datafeed.open
+        h = self.datafeed.high  # current high
+        l = self.datafeed.low  # current high
+        c = self.datafeed.close  # current high
 
         if self.p.close:
             self.lines.p = p = (h + l + 2.0 * c) / 4.0
@@ -199,12 +199,12 @@ class DemarkPivotPoint(Indicator):
     Example of using this indicator:
 
       data = btfeeds.ADataFeed(dataname=x, timeframe=bt.TimeFrame.Days)
-      cerebro.adddata(data)
-      cerebro.resampledata(data, timeframe=bt.TimeFrame.Months)
+      cerebro.add_datafeed(data)
+      cerebro.resample_datafeed(data, timeframe=bt.TimeFrame.Months)
 
     In the ``__init__`` method of the strategy:
 
-      pivotindicator = btind.DemarkPivotPoiont(self.data1)  # the resampled data
+      pivotindicator = btind.DemarkPivotPoiont(self.datafeed1)  # the resampled data
 
     The indicator will try to automatically plo to the non-resampled data. To
     disable this behavior use the following during construction:
@@ -245,19 +245,19 @@ class DemarkPivotPoint(Indicator):
     def _plotinit(self):
         # Try to plot to the actual timeframe master
         if self.p._autoplot:
-            if hasattr(self.data, 'data'):
-                self.plotinfo.plotmaster = self.data.data
+            if hasattr(self.datafeed, 'datafeed'):
+                self.plotinfo.plotmaster = self.datafeed.datafeed
 
     def __init__(self):
-        x1 = self.data.high + 2.0 * self.data.low + self.data.close
-        x2 = 2.0 * self.data.high + self.data.low + self.data.close
-        x3 = self.data.high + self.data.low + 2.0 * self.data.close
+        x1 = self.datafeed.high + 2.0 * self.datafeed.low + self.datafeed.close
+        x2 = 2.0 * self.datafeed.high + self.datafeed.low + self.datafeed.close
+        x3 = self.datafeed.high + self.datafeed.low + 2.0 * self.datafeed.close
 
-        x = CmpEx(self.data.close, self.data.open, x1, x2, x3)
+        x = CmpEx(self.datafeed.close, self.datafeed.open, x1, x2, x3)
         self.lines.p = x / 4.0
 
-        self.lines.s1 = x / 2.0 - self.data.high
-        self.lines.r1 = x / 2.0 - self.data.low
+        self.lines.s1 = x / 2.0 - self.datafeed.high
+        self.lines.r1 = x / 2.0 - self.datafeed.low
 
         super(DemarkPivotPoint, self).__init__()
 

@@ -77,7 +77,7 @@ class API(oandapy.API):
         if method == 'get':
             request_args['params'] = params
         else:
-            request_args['data'] = params
+            request_args['datafeed'] = params
 
         # Added the try block
         try:
@@ -189,8 +189,8 @@ class OandaStore(with_metaclass(MetaSingleton, object)):
         value/cash refresh
     '''
 
-    BrokerCls = None  # broker class will autoregister
-    DataCls = None  # data class will auto register
+    Broker_or_Exchange_Cls = None  # broker_or_exchange class will autoregister
+    Datafeed_Cls = None  # data class will auto register
 
     params = (
         ('token', ''),
@@ -204,14 +204,14 @@ class OandaStore(with_metaclass(MetaSingleton, object)):
     _ENVLIVE = 'live'
 
     @classmethod
-    def getdata(cls, *args, **kwargs):
-        '''Returns ``DataCls`` with args, kwargs'''
-        return cls.DataCls(*args, **kwargs)
+    def instantiate_datafeed(cls, *args, **kwargs):
+        '''Returns ``Datafeed_Cls`` with args, kwargs'''
+        return cls.Datafeed_Cls(*args, **kwargs)
 
     @classmethod
-    def getbroker(cls, *args, **kwargs):
-        '''Returns broker with *args, **kwargs from registered ``BrokerCls``'''
-        return cls.BrokerCls(*args, **kwargs)
+    def get_broker_or_exchange(cls, *args, **kwargs):
+        '''Returns broker_or_exchange with *args, **kwargs from registered ``Broker_or_Exchange_Cls``'''
+        return cls.Broker_or_Exchange_Cls(*args, **kwargs)
 
     def __init__(self):
         super(OandaStore, self).__init__()
@@ -219,8 +219,8 @@ class OandaStore(with_metaclass(MetaSingleton, object)):
         self.notifs = collections.deque()  # store notifications for cerebro
 
         self._env = None  # reference to cerebro for general notifications
-        self.broker = None  # broker instance
-        self.datas = list()  # datas that have registered over start
+        self.broker_or_exchange = None  # broker_or_exchange instance
+        self.datafeeds = list()  # datas that have registered over start
 
         self._orders = collections.OrderedDict()  # map order.ref to oid
         self._ordersrev = collections.OrderedDict()  # map oid to order.ref
@@ -235,28 +235,28 @@ class OandaStore(with_metaclass(MetaSingleton, object)):
         self._value = 0.0
         self._evt_acct = threading.Event()
 
-    def start(self, data=None, broker=None):
+    def start(self, datafeed=None, broker_or_exchange=None):
         # Datas require some processing to kickstart data reception
-        if data is None and broker is None:
+        if datafeed is None and broker_or_exchange is None:
             self.cash = None
             return
 
-        if data is not None:
-            self._env = data._env
+        if datafeed is not None:
+            self._env = datafeed._env
             # For datas simulate a queue with None to kickstart co
-            self.datas.append(data)
+            self.datafeeds.append(datafeed)
 
-            if self.broker is not None:
-                self.broker.data_started(data)
+            if self.broker_or_exchange is not None:
+                self.broker_or_exchange.data_started(datafeed)
 
-        elif broker is not None:
-            self.broker = broker
+        elif broker_or_exchange is not None:
+            self.broker_or_exchange = broker_or_exchange
             self.streaming_events()
             self.broker_threads()
 
     def stop(self):
         # signal end of thread
-        if self.broker is not None:
+        if self.broker_or_exchange is not None:
             self.q_ordercreate.put(None)
             self.q_orderclose.put(None)
             self.q_account.put(None)
@@ -415,7 +415,7 @@ class OandaStore(with_metaclass(MetaSingleton, object)):
     _ORDEREXECS = {
         bt.Order.Market: 'market',
         bt.Order.Limit: 'limit',
-        bt.Order.Stop: 'stop',
+        bt.Order.StopMarket: 'stop',
         bt.Order.StopLimit: 'stop',
     }
 
@@ -464,26 +464,26 @@ class OandaStore(with_metaclass(MetaSingleton, object)):
 
     def order_create(self, order, stopside=None, takeside=None, **kwargs):
         okwargs = dict()
-        okwargs['instrument'] = order.data._dataname
+        okwargs['instrument'] = order.datafeed._dataname
         okwargs['units'] = abs(order.created.size)
-        okwargs['side'] = 'buy' if order.isbuy() else 'sell'
-        okwargs['type'] = self._ORDEREXECS[order.exectype]
-        if order.exectype != bt.Order.Market:
+        okwargs['side'] = 'buy' if order.is_buy() else 'sell'
+        okwargs['type'] = self._ORDEREXECS[order.execution_type]
+        if order.execution_type != bt.Order.Market:
             okwargs['price'] = order.created.price
             if order.valid is None:
                 # 1 year and datetime.max fail ... 1 month works
                 valid = datetime.utcnow() + timedelta(days=30)
             else:
-                valid = order.data.num2date(order.valid)
+                valid = order.datafeed.num2date(order.valid)
                 # To timestamp with seconds precision
             okwargs['expiry'] = int((valid - self._DTEPOCH).total_seconds())
 
-        if order.exectype == bt.Order.StopLimit:
+        if order.execution_type == bt.Order.StopLimit:
             okwargs['lowerBound'] = order.created.pricelimit
             okwargs['upperBound'] = order.created.pricelimit
 
-        if order.exectype == bt.Order.StopTrail:
-            okwargs['trailingStop'] = order.trailamount
+        if order.execution_type == bt.Order.StopTrail:
+            okwargs['trailingStop'] = order.trailing_amount
 
         if stopside is not None:
             okwargs['stopLoss'] = stopside.price
@@ -510,7 +510,7 @@ class OandaStore(with_metaclass(MetaSingleton, object)):
                 o = self.oapi.create_order(self.p.account, **okwargs)
             except Exception as e:
                 self.put_notification(e)
-                self.broker._reject(oref)
+                self.broker_or_exchange._reject(oref)
                 return
 
             # Ids are delivered in different fields and all must be fetched to
@@ -526,13 +526,13 @@ class OandaStore(with_metaclass(MetaSingleton, object)):
                         oids.append(suboidfield['id'])
 
             if not oids:
-                self.broker._reject(oref)
+                self.broker_or_exchange._reject(oref)
                 return
 
             self._orders[oref] = oids[0]
-            self.broker._submit(oref)
+            self.broker_or_exchange._submit(oref)
             if okwargs['type'] == 'market':
-                self.broker._accept(oref)  # taken immediately
+                self.broker_or_exchange._accept(oref)  # taken immediately
 
             for oid in oids:
                 self._ordersrev[oid] = oref  # maps ids to backtrader order
@@ -564,7 +564,7 @@ class OandaStore(with_metaclass(MetaSingleton, object)):
             except Exception as e:
                 continue  # not cancelled - FIXME: notify
 
-            self.broker._cancel(oref)
+            self.broker_or_exchange._cancel(oref)
 
     _X_ORDER_CREATE = ('STOP_ORDER_CREATE',
                        'LIMIT_ORDER_CREATE', 'MARKET_IF_TOUCHED_ORDER_CREATE',)
@@ -641,10 +641,10 @@ class OandaStore(with_metaclass(MetaSingleton, object)):
             if trans['side'] == 'sell':
                 size = -size
             price = trans['price']
-            self.broker._fill(oref, size, price, ttype=ttype)
+            self.broker_or_exchange._fill(oref, size, price, ttype=ttype)
 
         elif ttype in self._X_ORDER_CREATE:
-            self.broker._accept(oref)
+            self.broker_or_exchange._accept(oref)
             self._ordersrev[oid] = oref
 
         elif ttype in 'ORDER_CANCEL':
@@ -652,8 +652,8 @@ class OandaStore(with_metaclass(MetaSingleton, object)):
             if reason == 'ORDER_FILLED':
                 pass  # individual execs have done the job
             elif reason == 'TIME_IN_FORCE_EXPIRED':
-                self.broker._expire(oref)
+                self.broker_or_exchange._expire(oref)
             elif reason == 'CLIENT_REQUEST':
-                self.broker._cancel(oref)
+                self.broker_or_exchange._cancel(oref)
             else:  # default action ... if nothing else
-                self.broker._reject(oref)
+                self.broker_or_exchange._reject(oref)

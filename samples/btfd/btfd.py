@@ -39,7 +39,7 @@ class ValueUnlever(bt.observers.Value):
     def next(self):
         super(ValueUnlever, self).next()
         if self.p.lever:
-            self.lines.value_lever[0] = self._owner.broker._valuelever
+            self.lines.value_lever[0] = self._owner.broker_or_exchange._valuelever
 
         if len(self) == 1:
             self.lines.asset[0] = self.p.assetstart
@@ -159,19 +159,19 @@ def runstrat(args=None):
 
     # Data feed - no plot - observer will do the job
     data = YahooData(dataname=args.data, plot=False, **kwargs)
-    cerebro.adddata(data)
+    cerebro.add_datafeed(data)
 
     # Broker
     cerebro.broker = bt.brokers.BackBroker(**eval('dict(' + args.broker + ')'))
 
     # Add a commission
-    cerebro.broker.setcommission(**eval('dict(' + args.comminfo + ')'))
+    cerebro.broker_or_exchange.set_commission(**eval('dict(' + args.comm_info + ')'))
 
     # Strategy
-    cerebro.addstrategy(St, **eval('dict(' + args.strat + ')'))
+    cerebro.add_strategy(St, **eval('dict(' + args.strat + ')'))
 
     # Add specific observer
-    cerebro.addobserver(ValueUnlever, **eval('dict(' + args.valobserver + ')'))
+    cerebro.add_system_wide_observer(ValueUnlever, **eval('dict(' + args.valobserver + ')'))
 
     # Execute
     cerebro.run(**eval('dict(' + args.cerebro + ')'))
@@ -219,7 +219,7 @@ def parse_args(pargs=None):
                         default='approach="highlow"',
                         metavar='kwargs', help='kwargs in key=value format')
 
-    parser.add_argument('--comminfo', required=False, default='leverage=2.0',
+    parser.add_argument('--comm_info', required=False, default='leverage=2.0',
                         metavar='kwargs', help='kwargs in key=value format')
 
     parser.add_argument('--plot', required=False, default='',

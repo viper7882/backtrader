@@ -41,7 +41,7 @@ class TrueHigh(Indicator):
     lines = ('truehigh',)
 
     def __init__(self):
-        self.lines.truehigh = Max(self.data.high, self.data.close(-1))
+        self.lines.truehigh = Max(self.datafeed.high, self.datafeed.close(-1))
         super(TrueHigh, self).__init__()
 
 
@@ -62,7 +62,7 @@ class TrueLow(Indicator):
     lines = ('truelow',)
 
     def __init__(self):
-        self.lines.truelow = Min(self.data.low, self.data.close(-1))
+        self.lines.truelow = Min(self.datafeed.low, self.datafeed.close(-1))
         super(TrueLow, self).__init__()
 
 
@@ -89,7 +89,7 @@ class TrueRange(Indicator):
     lines = ('tr',)
 
     def __init__(self):
-        self.lines.tr = TrueHigh(self.data) - TrueLow(self.data)
+        self.lines.tr = TrueHigh(self.datafeed) - TrueLow(self.datafeed)
         super(TrueRange, self).__init__()
 
 
@@ -118,5 +118,5 @@ class AverageTrueRange(Indicator):
         return plabels
 
     def __init__(self):
-        self.lines.atr = self.p.movav(TR(self.data), period=self.p.period)
+        self.lines.atr = self.p.movav(TR(self.datafeed), period=self.p.period)
         super(AverageTrueRange, self).__init__()

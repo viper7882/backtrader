@@ -41,10 +41,10 @@ class PercentSizer(bt.Sizer):
     def __init__(self):
         pass
 
-    def _getsizing(self, comminfo, cash, data, isbuy):
-        position = self.broker.getposition(data)
+    def _getsizing(self, commission_info, cash, datafeed, is_buy):
+        position = self.broker_or_exchange.get_position(datafeed)
         if not position:
-            size = cash / data.close[0] * (self.params.percents / 100)
+            size = cash / datafeed.close[0] * (self.params.percents / 100)
         else:
             size = position.size
 
@@ -55,7 +55,7 @@ class PercentSizer(bt.Sizer):
 
 
 class AllInSizer(PercentSizer):
-    '''This sizer return all available cash of broker
+    '''This sizer return all available cash of broker_or_exchange
 
      Params:
        - ``percents`` (default: ``100``)
@@ -79,7 +79,7 @@ class PercentSizerInt(PercentSizer):
 
 
 class AllInSizerInt(PercentSizerInt):
-    '''This sizer return all available cash of broker with the
+    '''This sizer return all available cash of broker_or_exchange with the
     size truncated to an int
 
      Params:

@@ -66,8 +66,8 @@ class UltimateOscillator(bt.Indicator):
         self.plotinfo.plotyticks = baseticks + hlines
 
     def __init__(self):
-        bp = self.data.close - TrueLow(self.data)
-        tr = TrueRange(self.data)
+        bp = self.datafeed.close - TrueLow(self.datafeed)
+        tr = TrueRange(self.datafeed)
 
         av7 = SumN(bp, period=self.p.p1) / SumN(tr, period=self.p.p1)
         av14 = SumN(bp, period=self.p.p2) / SumN(tr, period=self.p.p2)

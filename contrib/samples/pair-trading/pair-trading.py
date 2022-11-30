@@ -155,8 +155,8 @@ class PairTradingStrategy(bt.Strategy):
 
     def stop(self):
         print('==================================================')
-        print('Starting Value - %.2f' % self.broker.startingcash)
-        print('Ending   Value - %.2f' % self.broker.getvalue())
+        print('Starting Value - %.2f' % self.broker_or_exchange.starting_cash)
+        print('Ending   Value - %.2f' % self.broker_or_exchange.getvalue())
         print('==================================================')
 
 
@@ -177,7 +177,7 @@ def runstrategy():
         todate=todate)
 
     # Add the 1st data to cerebro
-    cerebro.adddata(data0)
+    cerebro.add_datafeed(data0)
 
     # Create the 2nd data
     data1 = btfeeds.YahooFinanceCSVData(
@@ -186,18 +186,18 @@ def runstrategy():
         todate=todate)
 
     # Add the 2nd data to cerebro
-    cerebro.adddata(data1)
+    cerebro.add_datafeed(data1)
 
     # Add the strategy
-    cerebro.addstrategy(PairTradingStrategy,
+    cerebro.add_strategy(PairTradingStrategy,
                         period=args.period,
                         stake=args.stake)
 
     # Add the commission - only stocks like a for each operation
-    cerebro.broker.setcash(args.cash)
+    cerebro.broker_or_exchange.setcash(args.cash)
 
     # Add the commission - only stocks like a for each operation
-    cerebro.broker.setcommission(commission=args.commperc)
+    cerebro.broker_or_exchange.set_commission(commission=args.commperc)
 
     # And run it
     cerebro.run(runonce=not args.runnext,

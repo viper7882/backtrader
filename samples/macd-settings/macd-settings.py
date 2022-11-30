@@ -42,10 +42,10 @@ class FixedPerc(bt.Sizer):
         ('perc', 0.20),  # perc of cash to use for operation
     )
 
-    def _getsizing(self, comminfo, cash, data, isbuy):
+    def _getsizing(self, comm_info, cash, data, isbuy):
         cashtouse = self.p.perc * cash
         if BTVERSION > (1, 7, 1, 93):
-            size = comminfo.getsize(data.close[0], cashtouse)
+            size = comm_info.getsize(data.close[0], cashtouse)
         else:
             size = cashtouse // data.close[0]
         return size
@@ -141,11 +141,11 @@ def runstrat(args=None):
     args = parse_args(args)
 
     cerebro = bt.Cerebro()
-    cerebro.broker.set_cash(args.cash)
-    comminfo = bt.commissions.CommInfo_Stocks_Perc(commission=args.commperc,
+    cerebro.broker_or_exchange.set_cash(args.cash)
+    comm_info = bt.commissions.CommInfo_Stocks_Perc(commission=args.commperc,
                                                    percabs=True)
 
-    cerebro.broker.addcommissioninfo(comminfo)
+    cerebro.broker_or_exchange.add_commission_info(comm_info)
 
     dkwargs = dict()
     if args.fromdate is not None:
@@ -158,10 +158,10 @@ def runstrat(args=None):
 
     # if dataset is None, args.data has been given
     dataname = DATASETS.get(args.dataset, args.data)
-    data0 = bt.feeds.YahooFinanceCSVData(dataname=dataname, **dkwargs)
-    cerebro.adddata(data0)
+    datafeed0 = bt.feeds.YahooFinanceCSVData(dataname=dataname, **dkwargs)
+    cerebro.add_datafeed(datafeed0)
 
-    cerebro.addstrategy(TheStrategy,
+    cerebro.add_strategy(TheStrategy,
                         macd1=args.macd1, macd2=args.macd2,
                         macdsig=args.macdsig,
                         atrperiod=args.atrperiod,
@@ -169,24 +169,24 @@ def runstrat(args=None):
                         smaperiod=args.smaperiod,
                         dirperiod=args.dirperiod)
 
-    cerebro.addsizer(FixedPerc, perc=args.cashalloc)
+    cerebro.add_sizer(FixedPerc, perc=args.cashalloc)
 
     # Add TimeReturn Analyzers for self and the benchmark data
-    cerebro.addanalyzer(bt.analyzers.TimeReturn, _name='alltime_roi',
+    cerebro.add_analyzer(bt.analyzers.TimeReturn, _name='alltime_roi',
                         timeframe=bt.TimeFrame.NoTimeFrame)
 
-    cerebro.addanalyzer(bt.analyzers.TimeReturn, data=data0, _name='benchmark',
+    cerebro.add_analyzer(bt.analyzers.TimeReturn, data=data0, _name='benchmark',
                         timeframe=bt.TimeFrame.NoTimeFrame)
 
     # Add TimeReturn Analyzers fot the annuyl returns
-    cerebro.addanalyzer(bt.analyzers.TimeReturn, timeframe=bt.TimeFrame.Years)
+    cerebro.add_analyzer(bt.analyzers.TimeReturn, timeframe=bt.TimeFrame.Years)
     # Add a SharpeRatio
-    cerebro.addanalyzer(bt.analyzers.SharpeRatio, timeframe=bt.TimeFrame.Years,
+    cerebro.add_analyzer(bt.analyzers.SharpeRatio, timeframe=bt.TimeFrame.Years,
                         riskfreerate=args.riskfreerate)
 
     # Add SQN to qualify the trades
-    cerebro.addanalyzer(bt.analyzers.SQN)
-    cerebro.addobserver(bt.observers.DrawDown)  # visualize the drawdown evol
+    cerebro.add_analyzer(bt.analyzers.SQN)
+    cerebro.add_system_wide_observer(bt.observers.DrawDown)  # visualize the drawdown evol
 
     results = cerebro.run()
     st0 = results[0]

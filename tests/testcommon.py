@@ -89,24 +89,24 @@ def runtest(datas,
 
                 if isinstance(datas, bt.LineSeries):
                     datas = [datas]
-                for data in datas:
-                    cerebro.adddata(data)
+                for datafeed in datafeeds:
+                    cerebro.add_datafeed(data)
 
                 if not optimize:
-                    cerebro.addstrategy(strategy, **kwargs)
+                    cerebro.add_strategy(strategy, **kwargs)
 
                     if writer:
                         wr = writer[0]
                         wrkwargs = writer[1]
-                        cerebro.addwriter(wr, **wrkwargs)
+                        cerebro.add_writer(wr, **wrkwargs)
 
                     if analyzer:
                         al = analyzer[0]
                         alkwargs = analyzer[1]
-                        cerebro.addanalyzer(al, **alkwargs)
+                        cerebro.add_analyzer(al, **alkwargs)
 
                 else:
-                    cerebro.optstrategy(strategy, **kwargs)
+                    cerebro.optimize_strategy(strategy, **kwargs)
 
                 cerebro.run()
                 if plot:
@@ -142,7 +142,7 @@ class TestStrategy(bt.Strategy):
         for ind in chkind[1:]:
             ind(self.data)
 
-        for data in self.datas[1:]:
+        for data in self.datafeeds[1:]:
             chkind[0](data, **self.p.chkargs)
 
             for ind in chkind[1:]:

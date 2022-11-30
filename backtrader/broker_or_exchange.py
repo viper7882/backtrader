@@ -21,12 +21,27 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-from backtrader.comminfo import CommInfoBase
+from backtrader.commission_info import CommInfoBase
 from backtrader.metabase import MetaParams
 from backtrader.utils.py3 import with_metaclass
 
 from . import fillers as fillers
 from . import fillers as filler
+
+
+class MetaSingleton(MetaParams):
+    '''Metaclass to make a metaclassed class a singleton'''
+
+    def __init__(cls, name, bases, dct):
+        super(MetaSingleton, cls).__init__(name, bases, dct)
+        cls._singleton = None
+
+    def __call__(cls, *args, **kwargs):
+        if cls._singleton is None:
+            cls._singleton = (
+                super(MetaSingleton, cls).__call__(*args, **kwargs))
+
+        return cls._singleton
 
 
 class MetaBroker(MetaParams):
@@ -45,20 +60,22 @@ class MetaBroker(MetaParams):
             if not hasattr(cls, attr):
                 setattr(cls, name, getattr(cls, trans))
 
-
-class BrokerBase(with_metaclass(MetaBroker, object)):
+class Broker_or_Exchange_Base(with_metaclass(MetaBroker, object)):
     params = (
-        ('commission', CommInfoBase(percabs=True)),
+        ('commission', CommInfoBase(percent_abs=True)),
     )
 
+    Exchange_Net_Types = ["Mainnet", "Testnet"]
+    MAINNET, TESTNET = range(len(Exchange_Net_Types))
+
     def __init__(self):
-        self.comminfo = dict()
+        self.commission_info = dict()
         self.init()
 
     def init(self):
         # called from init and from start
-        if None not in self.comminfo:
-            self.comminfo = dict({None: self.p.commission})
+        if None not in self.commission_info:
+            self.commission_info = dict({None: self.p.commission})
 
     def start(self):
         self.init()
@@ -74,45 +91,45 @@ class BrokerBase(with_metaclass(MetaBroker, object)):
         '''Add fund history. See cerebro for details'''
         raise NotImplementedError
 
-    def getcommissioninfo(self, data):
+    def get_commission_info(self, datafeed):
         '''Retrieves the ``CommissionInfo`` scheme associated with the given
         ``data``'''
-        if data._name in self.comminfo:
-            return self.comminfo[data._name]
+        if datafeed._name in self.commission_info:
+            return self.commission_info[datafeed._name]
 
-        return self.comminfo[None]
+        return self.commission_info[None]
 
-    def setcommission(self,
-                      commission=0.0, margin=None, mult=1.0,
-                      commtype=None, percabs=True, stocklike=False,
-                      interest=0.0, interest_long=False, leverage=1.0,
-                      automargin=False,
-                      name=None):
+    def set_commission(self,
+                       commission=0.0, margin=None, mult=1.0,
+                       commission_type=None, percent_abs=True, stock_like=False,
+                       interest=0.0, interest_long=False, leverage=1.0,
+                       automargin=False,
+                       name=None):
 
         '''This method sets a `` CommissionInfo`` object for assets managed in
-        the broker with the parameters. Consult the reference for
+        the broker_or_exchange with the parameters. Consult the reference for
         ``CommInfoBase``
 
         If name is ``None``, this will be the default for assets for which no
         other ``CommissionInfo`` scheme can be found
         '''
 
-        comm = CommInfoBase(commission=commission, margin=margin, mult=mult,
-                            commtype=commtype, stocklike=stocklike,
-                            percabs=percabs,
+        commission = CommInfoBase(commission=commission, margin=margin, mult=mult,
+                            commission_type=commission_type, stock_like=stock_like,
+                            percent_abs=percent_abs,
                             interest=interest, interest_long=interest_long,
                             leverage=leverage, automargin=automargin)
-        self.comminfo[name] = comm
+        self.commission_info[name] = commission
 
-    def addcommissioninfo(self, comminfo, name=None):
+    def add_commission_info(self, commission_info, name=None):
         '''Adds a ``CommissionInfo`` object that will be the default for all assets if
         ``name`` is ``None``'''
-        self.comminfo[name] = comminfo
+        self.commission_info[name] = commission_info
 
-    def getcash(self):
+    def get_cash(self):
         raise NotImplementedError
 
-    def getvalue(self, datas=None):
+    def get_value(self, datas=None):
         raise NotImplementedError
 
     def get_fundshares(self):
@@ -122,7 +139,7 @@ class BrokerBase(with_metaclass(MetaBroker, object)):
     fundshares = property(get_fundshares)
 
     def get_fundvalue(self):
-        return self.getvalue()
+        return self.get_value()
 
     fundvalue = property(get_fundvalue)
 
@@ -139,7 +156,7 @@ class BrokerBase(with_metaclass(MetaBroker, object)):
 
     fundmode = property(get_fundmode, set_fundmode)
 
-    def getposition(self, data):
+    def get_position(self, datafeed):
         raise NotImplementedError
 
     def submit(self, order):
@@ -148,16 +165,16 @@ class BrokerBase(with_metaclass(MetaBroker, object)):
     def cancel(self, order):
         raise NotImplementedError
 
-    def buy(self, owner, data, size, price=None, plimit=None,
-            exectype=None, valid=None, tradeid=0, oco=None,
-            trailamount=None, trailpercent=None,
+    def buy(self, owner, datafeed, size, price=None, price_limit=None,
+            execution_type=None, valid=None, tradeid=0, oco=None,
+            trailing_amount=None, trailing_percent=None,
             **kwargs):
 
         raise NotImplementedError
 
-    def sell(self, owner, data, size, price=None, plimit=None,
-             exectype=None, valid=None, tradeid=0, oco=None,
-             trailamount=None, trailpercent=None,
+    def sell(self, owner, datafeed, size, price=None, price_limit=None,
+             execution_type=None, valid=None, tradeid=0, oco=None,
+             trailing_amount=None, trailing_percent=None,
              **kwargs):
 
         raise NotImplementedError

@@ -11,7 +11,7 @@ class InnerStrategy(backtrader.Strategy):
             inspect.getframeinfo(inspect.currentframe()).function,
             inspect.getframeinfo(inspect.currentframe()).lineno,
             InnerStrategy.__name__))
-        self.cerebro.runstop()
+        self.cerebro.stop_running()
 
 
 class NestedStrategy(backtrader.Strategy):
@@ -24,7 +24,7 @@ class NestedStrategy(backtrader.Strategy):
             inspect.getframeinfo(inspect.currentframe()).function,
             inspect.getframeinfo(inspect.currentframe()).lineno,
             NestedStrategy.__name__))
-        self.cerebro.runstop()
+        self.cerebro.stop_running()
 
 
 def test_run():

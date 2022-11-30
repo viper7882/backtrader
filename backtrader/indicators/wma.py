@@ -49,7 +49,7 @@ class WeightedMovingAverage(MovingAverageBase):
         # Before super to ensure mixins (right-hand side in subclassing)
         # can see the assignment operation and operate on the line
         self.lines[0] = AverageWeighted(
-            self.data, period=self.p.period,
+            self.datafeed, period=self.p.period,
             coef=coef, weights=weights)
 
         super(WeightedMovingAverage, self).__init__()

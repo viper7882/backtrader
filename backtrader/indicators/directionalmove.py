@@ -41,7 +41,7 @@ class UpMove(Indicator):
     lines = ('upmove',)
 
     def __init__(self):
-        self.lines.upmove = self.data - self.data(-1)
+        self.lines.upmove = self.datafeed - self.datafeed(-1)
         super(UpMove, self).__init__()
 
 
@@ -62,7 +62,7 @@ class DownMove(Indicator):
     lines = ('downmove',)
 
     def __init__(self):
-        self.lines.downmove = self.data(-1) - self.data
+        self.lines.downmove = self.datafeed(-1) - self.datafeed
         super(DownMove, self).__init__()
 
 
@@ -86,10 +86,10 @@ class _DirectionalIndicator(Indicator):
         return plabels
 
     def __init__(self, _plus=True, _minus=True):
-        atr = ATR(self.data, period=self.p.period, movav=self.p.movav)
+        atr = ATR(self.datafeed, period=self.p.period, movav=self.p.movav)
 
-        upmove = self.data.high - self.data.high(-1)
-        downmove = self.data.low(-1) - self.data.low
+        upmove = self.datafeed.high - self.datafeed.high(-1)
+        downmove = self.datafeed.low(-1) - self.datafeed.low
 
         if _plus:
             plus = And(upmove > downmove, upmove > 0.0)

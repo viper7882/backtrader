@@ -46,7 +46,7 @@ class FixedSize(with_metaclass(MetaParams, object)):
 
     def __call__(self, order, price, ago):
         size = self.p.size or MAXINT
-        return min((order.data.volume[ago], abs(order.executed.remsize), size))
+        return min((order.datafeed.volume[ago], abs(order.executed.remaining_size), size))
 
 
 class FixedBarPerc(with_metaclass(MetaParams, object)):
@@ -65,9 +65,9 @@ class FixedBarPerc(with_metaclass(MetaParams, object)):
 
     def __call__(self, order, price, ago):
         # Get the volume and scale it to the requested perc
-        maxsize = (order.data.volume[ago] * self.p.perc) // 100
+        maxsize = (order.datafeed.volume[ago] * self.p.perc) // 100
         # Return the maximum possible executed volume
-        return min(maxsize, abs(order.executed.remsize))
+        return min(maxsize, abs(order.executed.remaining_size))
 
 
 class BarPointPerc(with_metaclass(MetaParams, object)):
@@ -97,15 +97,15 @@ class BarPointPerc(with_metaclass(MetaParams, object)):
     )
 
     def __call__(self, order, price, ago):
-        data = order.data
+        datafeed = order.datafeed
         minmov = self.p.minmov
 
         parts = 1
         if minmov:
             # high - low + minmov to account for open ended minus op
-            parts = (data.high[ago] - data.low[ago] + minmov) // minmov
+            parts = (datafeed.high[ago] - datafeed.low[ago] + minmov) // minmov
 
-        alloc_vol = ((data.volume[ago] / parts) * self.p.perc) // 100.0
+        alloc_vol = ((datafeed.volume[ago] / parts) * self.p.perc) // 100.0
 
         # return max possible executable volume
-        return min(alloc_vol, abs(order.executed.remsize))
+        return min(alloc_vol, abs(order.executed.remaining_size))

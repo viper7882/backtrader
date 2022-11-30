@@ -96,7 +96,7 @@ def runstrat(args=None):
     args = parse_args(args)
 
     cerebro = bt.Cerebro()
-    cerebro.broker.set_cash(args.cash)
+    cerebro.broker_or_exchange.set_cash(args.cash)
 
     dkwargs = dict()
     if args.fromdate:
@@ -108,24 +108,24 @@ def runstrat(args=None):
         dkwargs['todate'] = todate
 
     data0 = bt.feeds.YahooFinanceCSVData(dataname=args.data0, **dkwargs)
-    cerebro.adddata(data0, name='Data0')
+    cerebro.add_datafeed(data0, name='Data0')
 
-    cerebro.addstrategy(St,
+    cerebro.add_strategy(St,
                         period=args.period,
                         stake=args.stake,
                         printout=args.printout)
 
     if args.timereturn:
-        cerebro.addobserver(bt.observers.TimeReturn,
+        cerebro.add_system_wide_observer(bt.observers.TimeReturn,
                             timeframe=TIMEFRAMES[args.timeframe])
     else:
         benchdata = data0
         if args.benchdata1:
             data1 = bt.feeds.YahooFinanceCSVData(dataname=args.data1, **dkwargs)
-            cerebro.adddata(data1, name='Data1')
+            cerebro.add_datafeed(data1, name='Data1')
             benchdata = data1
 
-        cerebro.addobserver(bt.observers.Benchmark,
+        cerebro.add_system_wide_observer(bt.observers.Benchmark,
                             data=benchdata,
                             timeframe=TIMEFRAMES[args.timeframe])
 

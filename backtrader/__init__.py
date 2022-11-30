@@ -32,14 +32,14 @@ from .linebuffer import *
 from .functions import *
 
 from .order import *
-from .comminfo import *
+from .commission_info import *
 from .trade import *
 from .position import *
 
-from .store import Store
+from .account_or_store import Account_or_Store
 
-from . import broker as broker
-from .broker import *
+from . import broker_or_exchange as broker_or_exchange
+from .broker_or_exchange import *
 
 from .lineseries import *
 
@@ -67,20 +67,17 @@ from . import utils as utils
 
 from . import feeds as feeds
 from . import indicators as indicators
-from . import indicators as ind
 from . import studies as studies
 from . import strategies as strategies
-from . import strategies as strats
 from . import observers as observers
 from . import observers as obs
 from . import analyzers as analyzers
 from . import commissions as commissions
-from . import commissions as comms
 from . import filters as filters
 from . import signals as signals
 from . import sizers as sizers
-from . import stores as stores
-from . import brokers as brokers
+from . import accounts_or_stores as accounts_or_stores
+from . import brokers_or_exchanges as brokers_or_exchanges
 from . import timer as timer
 
 from . import talib as talib

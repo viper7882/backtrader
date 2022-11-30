@@ -133,26 +133,26 @@ def runstrategy():
         todate=todate)
 
     # Add the 1st data to cerebro
-    cerebro.adddata(data)
+    cerebro.add_datafeed(data)
 
     # Add the strategy
-    cerebro.addstrategy(LongShortStrategy,
+    cerebro.add_strategy(LongShortStrategy,
                         period=args.period,
                         onlylong=args.onlylong,
                         csvcross=args.csvcross,
                         stake=args.stake)
 
     # Add the commission - only stocks like a for each operation
-    cerebro.broker.setcash(args.cash)
+    cerebro.broker_or_exchange.setcash(args.cash)
 
     # Add the commission - only stocks like a for each operation
-    cerebro.broker.setcommission(commission=args.comm,
+    cerebro.broker_or_exchange.set_commission(commission=args.comm,
                                  mult=args.mult,
                                  margin=args.margin)
 
-    cerebro.addanalyzer(SQN)
+    cerebro.add_analyzer(SQN)
 
-    cerebro.addwriter(bt.WriterFile, csv=args.writercsv, rounding=2)
+    cerebro.add_writer(bt.WriterFile, csv=args.writercsv, rounding=2)
 
     # And run it
     cerebro.run()

@@ -59,7 +59,7 @@ class LaguerreRSI(PeriodN):
         l2_1 = self.l2
 
         g = self.p.gamma  # avoid more lookups
-        self.l0 = l0 = (1.0 - g) * self.data + g * l0_1
+        self.l0 = l0 = (1.0 - g) * self.datafeed + g * l0_1
         self.l1 = l1 = -g * l0 + l0_1 + g * l1_1
         self.l2 = l2 = -g * l1 + l1_1 + g * l2_1
         self.l3 = l3 = -g * l2 + l2_1 + g * self.l3
@@ -106,7 +106,7 @@ class LaguerreFilter(PeriodN):
         l2_1 = self.l2
 
         g = self.p.gamma  # avoid more lookups
-        self.l0 = l0 = (1.0 - g) * self.data + g * l0_1
+        self.l0 = l0 = (1.0 - g) * self.datafeed + g * l0_1
         self.l1 = l1 = -g * l0 + l0_1 + g * l1_1
         self.l2 = l2 = -g * l1 + l1_1 + g * l2_1
         self.l3 = l3 = -g * l2 + l2_1 + g * self.l3

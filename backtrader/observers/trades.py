@@ -89,19 +89,19 @@ class Trades(Observer):
         self.trades_length_min = 0
 
     def next(self):
-        for trade in self._owner._tradespending:
-            if trade.data not in self.ddatas:
+        for trade in self._owner._trades_pending:
+            if trade.datafeed not in self.ddatas:
                 continue
 
             if not trade.isclosed:
                 continue
 
-            pnl = trade.pnlcomm if self.p.pnlcomm else trade.pnl
+            profit_and_loss_amount = trade.pnlcomm if self.p.pnlcomm else trade.profit_and_loss_amount
 
-            if pnl >= 0.0:
-                self.lines.pnlplus[0] = pnl
+            if profit_and_loss_amount >= 0.0:
+                self.lines.pnlplus[0] = profit_and_loss_amount
             else:
-                self.lines.pnlminus[0] = pnl
+                self.lines.pnlminus[0] = profit_and_loss_amount
 
 
 class MetaDataTrades(Observer.__class__):
@@ -110,9 +110,9 @@ class MetaDataTrades(Observer.__class__):
 
         # Recreate the lines dynamically
         if _obj.params.usenames:
-            lnames = tuple(x._name for x in _obj.datas)
+            lnames = tuple(x._name for x in _obj.datafeeds)
         else:
-            lnames = tuple('data{}'.format(x) for x in range(len(_obj.datas)))
+            lnames = tuple('datafeed{}'.format(x) for x in range(len(_obj.datafeeds)))
 
         # Generate a new lines class
         linescls = cls.lines._derive(uuid.uuid4().hex, lnames, 0, ())
@@ -152,11 +152,11 @@ class DataTrades(with_metaclass(MetaDataTrades, Observer)):
     plotlines = dict()
 
     def next(self):
-        for trade in self._owner._tradespending:
-            if trade.data not in self.ddatas:
+        for trade in self._owner._trades_pending:
+            if trade.datafeed not in self.ddatas:
                 continue
 
             if not trade.isclosed:
                 continue
 
-            self.lines[trade.data._id - 1][0] = trade.pnl
+            self.lines[trade.datafeed._id - 1][0] = trade.profit_and_loss_amount

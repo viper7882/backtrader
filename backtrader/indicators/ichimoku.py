@@ -65,22 +65,22 @@ class Ichimoku(bt.Indicator):
     )
 
     def __init__(self):
-        hi_tenkan = Highest(self.data.high, period=self.p.tenkan)
-        lo_tenkan = Lowest(self.data.low, period=self.p.tenkan)
+        hi_tenkan = Highest(self.datafeed.high, period=self.p.tenkan)
+        lo_tenkan = Lowest(self.datafeed.low, period=self.p.tenkan)
         self.l.tenkan_sen = (hi_tenkan + lo_tenkan) / 2.0
 
-        hi_kijun = Highest(self.data.high, period=self.p.kijun)
-        lo_kijun = Lowest(self.data.low, period=self.p.kijun)
+        hi_kijun = Highest(self.datafeed.high, period=self.p.kijun)
+        lo_kijun = Lowest(self.datafeed.low, period=self.p.kijun)
         self.l.kijun_sen = (hi_kijun + lo_kijun) / 2.0
 
         senkou_span_a = (self.l.tenkan_sen + self.l.kijun_sen) / 2.0
         self.l.senkou_span_a = senkou_span_a(-self.p.senkou_lead)
 
-        hi_senkou = Highest(self.data.high, period=self.p.senkou)
-        lo_senkou = Lowest(self.data.low, period=self.p.senkou)
+        hi_senkou = Highest(self.datafeed.high, period=self.p.senkou)
+        lo_senkou = Lowest(self.datafeed.low, period=self.p.senkou)
         senkou_span_b = (hi_senkou + lo_senkou) / 2.0
         self.l.senkou_span_b = senkou_span_b(-self.p.senkou_lead)
 
-        self.l.chikou_span = self.data.close(self.p.chikou)
+        self.l.chikou_span = self.datafeed.close(self.p.chikou)
 
         super(Ichimoku, self).__init__()

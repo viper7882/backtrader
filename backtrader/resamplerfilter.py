@@ -44,25 +44,25 @@ class DTFaker(object):
     # to ensure the returned datetime object is localized according to the
     # expected output by the user (local timezone or any specified)
 
-    def __init__(self, data, forcedata=None):
-        self.data = data
+    def __init__(self, datafeeds, forcedata=None):
+        self.datafeeds = datafeeds
 
         # Aliases
         self.datetime = self
         self.p = self
 
         if forcedata is None:
-            _dtime = datetime.utcnow() + data._timeoffset()
+            _dtime = datetime.utcnow() + datafeeds._timeoffset()
             self._dt = dt = date2num(_dtime)  # utc-like time
-            self._dtime = data.num2date(dt)  # localized time
+            self._dtime = datafeeds.num2date(dt)  # localized time
         else:
             self._dt = forcedata.datetime[0]  # utc-like time
             self._dtime = forcedata.datetime.datetime()  # localized time
 
-        self.sessionend = data.p.sessionend
+        self.session_end = datafeeds.p.session_end
 
     def __len__(self):
-        return len(self.data)
+        return len(self.datafeeds)
 
     def __call__(self, idx=0):
         return self._dtime  # simulates data.datetime.datetime()
@@ -78,19 +78,19 @@ class DTFaker(object):
 
     @property
     def _calendar(self):
-        return self.data._calendar
+        return self.datafeeds._calendar
 
     def __getitem__(self, idx):
         return self._dt if idx == 0 else float('-inf')
 
     def num2date(self, *args, **kwargs):
-        return self.data.num2date(*args, **kwargs)
+        return self.datafeeds.num2date(*args, **kwargs)
 
     def date2num(self, *args, **kwargs):
-        return self.data.date2num(*args, **kwargs)
+        return self.datafeeds.date2num(*args, **kwargs)
 
     def _getnexteos(self):
-        return self.data._getnexteos()
+        return self.datafeeds._getnexteos()
 
 
 class _BaseResampler(with_metaclass(metabase.MetaParams, object)):
@@ -105,15 +105,15 @@ class _BaseResampler(with_metaclass(metabase.MetaParams, object)):
 
         ('takelate', True),
 
-        ('sessionend', True),
+        ('session_end', True),
     )
 
-    def __init__(self, data):
+    def __init__(self, datafeeds):
         self.subdays = TimeFrame.Ticks < self.p.timeframe < TimeFrame.Days
         self.subweeks = self.p.timeframe < TimeFrame.Weeks
         self.componly = (not self.subdays and
-                         data._timeframe == self.p.timeframe and
-                         not (self.p.compression % data._compression))
+                         datafeeds._timeframe == self.p.timeframe and
+                         not (self.p.compression % datafeeds._compression))
 
         self.bar = _Bar(maxdate=True)  # bar holder
         self.compcount = 0  # count of produced bars to control compression
@@ -124,23 +124,23 @@ class _BaseResampler(with_metaclass(metabase.MetaParams, object)):
         self._nexteos = None
 
         # Modify data information according to own parameters
-        data.resampling = 1
-        data.replaying = self.replaying
-        data._timeframe = self.p.timeframe
-        data._compression = self.p.compression
+        datafeeds.resampling = 1
+        datafeeds.replaying = self.replaying
+        datafeeds._timeframe = self.p.timeframe
+        datafeeds._compression = self.p.compression
 
-        self.data = data
+        self.datafeeds = datafeeds
 
-    def _latedata(self, data):
+    def _latedata(self, datafeeds):
         # new data at position 0, still untouched from stream
         if not self.subdays:
             return False
 
         # Time already delivered
-        return len(data) > 1 and data.datetime[0] <= data.datetime[-1]
+        return len(datafeeds) > 1 and datafeeds.datetime[0] <= datafeeds.datetime[-1]
 
-    def _checkbarover(self, data, fromcheck=False, forcedata=None):
-        chkdata = DTFaker(data, forcedata) if fromcheck else data
+    def _checkbarover(self, datafeeds, fromcheck=False, forcedata=None):
+        chkdata = DTFaker(datafeeds, forcedata) if fromcheck else datafeeds
 
         isover = False
         if not self.componly and not self._barover(chkdata):
@@ -156,7 +156,7 @@ class _BaseResampler(with_metaclass(metabase.MetaParams, object)):
 
         return isover
 
-    def _barover(self, data):
+    def _barover(self, datafeeds):
         tframe = self.p.timeframe
 
         if tframe == TimeFrame.Ticks:
@@ -164,31 +164,31 @@ class _BaseResampler(with_metaclass(metabase.MetaParams, object)):
             return self.bar.isopen()
 
         elif tframe < TimeFrame.Days:
-            return self._barover_subdays(data)
+            return self._barover_subdays(datafeeds)
 
         elif tframe == TimeFrame.Days:
-            return self._barover_days(data)
+            return self._barover_days(datafeeds)
 
         elif tframe == TimeFrame.Weeks:
-            return self._barover_weeks(data)
+            return self._barover_weeks(datafeeds)
 
         elif tframe == TimeFrame.Months:
-            return self._barover_months(data)
+            return self._barover_months(datafeeds)
 
         elif tframe == TimeFrame.Years:
-            return self._barover_years(data)
+            return self._barover_years(datafeeds)
 
     def _eosset(self):
         if self._nexteos is None:
-            self._nexteos, self._nextdteos = self.data._getnexteos()
+            self._nexteos, self._nextdteos = self.datafeeds._getnexteos()
             return
 
-    def _eoscheck(self, data, seteos=True, exact=False):
+    def _eoscheck(self, datafeeds, seteos=True, exact=False):
         if seteos:
             self._eosset()
 
-        equal = data.datetime[0] == self._nextdteos
-        grter = data.datetime[0] > self._nextdteos
+        equal = datafeeds.datetime[0] == self._nextdteos
+        grter = datafeeds.datetime[0] > self._nextdteos
 
         if exact:
             ret = equal
@@ -211,33 +211,33 @@ class _BaseResampler(with_metaclass(metabase.MetaParams, object)):
 
         return ret
 
-    def _barover_days(self, data):
-        return self._eoscheck(data)
+    def _barover_days(self, datafeeds):
+        return self._eoscheck(datafeeds)
 
-    def _barover_weeks(self, data):
-        if self.data._calendar is None:
-            year, week, _ = data.num2date(self.bar.datetime).date().isocalendar()
+    def _barover_weeks(self, datafeeds):
+        if self.datafeeds._calendar is None:
+            year, week, _ = datafeeds.num2date(self.bar.datetime).date().isocalendar()
             yearweek = year * 100 + week
 
-            baryear, barweek, _ = data.datetime.date().isocalendar()
+            baryear, barweek, _ = datafeeds.datetime.date().isocalendar()
             bar_yearweek = baryear * 100 + barweek
 
             return bar_yearweek > yearweek
         else:
-            return data._calendar.last_weekday(data.datetime.date())
+            return datafeeds._calendar.last_weekday(datafeeds.datetime.date())
 
-    def _barover_months(self, data):
-        dt = data.num2date(self.bar.datetime).date()
+    def _barover_months(self, datafeeds):
+        dt = datafeeds.num2date(self.bar.datetime).date()
         yearmonth = dt.year * 100 + dt.month
 
-        bardt = data.datetime.datetime()
+        bardt = datafeeds.datetime.datetime()
         bar_yearmonth = bardt.year * 100 + bardt.month
 
         return bar_yearmonth > yearmonth
 
-    def _barover_years(self, data):
-        return (data.datetime.datetime().year >
-                data.num2date(self.bar.datetime).year)
+    def _barover_years(self, datafeeds):
+        return (datafeeds.datetime.datetime().year >
+                datafeeds.num2date(self.bar.datetime).year)
 
     def _gettmpoint(self, tm):
         '''Returns the point of time intraday for a given time according to the
@@ -263,16 +263,16 @@ class _BaseResampler(with_metaclass(metabase.MetaParams, object)):
 
         return point, restpoint
 
-    def _barover_subdays(self, data):
-        if self._eoscheck(data):
+    def _barover_subdays(self, datafeeds):
+        if self._eoscheck(datafeeds):
             return True
 
-        if data.datetime[0] < self.bar.datetime:
+        if datafeeds.datetime[0] < self.bar.datetime:
             return False
 
         # Get time objects for the comparisons - in utc-like format
         tm = num2date(self.bar.datetime).time()
-        bartm = num2date(data.datetime[0]).time()
+        bartm = num2date(datafeeds.datetime[0]).time()
 
         point, _ = self._gettmpoint(tm)
         barpoint, _ = self._gettmpoint(bartm)
@@ -296,7 +296,7 @@ class _BaseResampler(with_metaclass(metabase.MetaParams, object)):
 
         return ret
 
-    def check(self, data, _forcedata=None):
+    def check(self, datafeeds, _forcedata=None):
         '''Called to check if the current stored bar has to be delivered in
         spite of the data not having moved forward. If no ticks from a live
         feed come in, a 5 second resampled bar could be delivered 20 seconds
@@ -307,21 +307,21 @@ class _BaseResampler(with_metaclass(metabase.MetaParams, object)):
         if not self.bar.isopen():
             return
 
-        return self(data, fromcheck=True, forcedata=_forcedata)
+        return self(datafeeds, fromcheck=True, forcedata=_forcedata)
 
-    def _dataonedge(self, data):
+    def _dataonedge(self, datafeeds):
         if not self.subweeks:
-            if data._calendar is None:
+            if datafeeds._calendar is None:
                 return False, True  # nothing can be done
 
             tframe = self.p.timeframe
             ret = False
             if tframe == TimeFrame.Weeks:  # Ticks is already the lowest
-                ret = data._calendar.last_weekday(data.datetime.date())
+                ret = datafeeds._calendar.last_weekday(datafeeds.datetime.date())
             elif tframe == TimeFrame.Months:
-                ret = data._calendar.last_monthday(data.datetime.date())
+                ret = datafeeds._calendar.last_monthday(datafeeds.datetime.date())
             elif tframe == TimeFrame.Years:
-                ret = data._calendar.last_yearday(data.datetime.date())
+                ret = datafeeds._calendar.last_yearday(datafeeds.datetime.date())
 
             if ret:
                 # Data must be consumed but compression may not be met yet
@@ -335,11 +335,11 @@ class _BaseResampler(with_metaclass(metabase.MetaParams, object)):
 
             return ret, docheckover
 
-        if self._eoscheck(data, exact=True):
+        if self._eoscheck(datafeeds, exact=True):
             return True, True
 
         if self.subdays:
-            point, prest = self._gettmpoint(data.datetime.time())
+            point, prest = self._gettmpoint(datafeeds.datetime.time())
             if prest:
                 return False, True  # cannot be on boundary, subunits present
 
@@ -350,21 +350,21 @@ class _BaseResampler(with_metaclass(metabase.MetaParams, object)):
             return (brest == 0 and point == (bound * self.p.compression), True)
 
         # Code overriden by eoscheck
-        if False and self.p.sessionend:
+        if False and self.p.session_end:
             # Days scenario - get datetime to compare in output timezone
-            # because p.sessionend is expected in output timezone
-            bdtime = data.datetime.datetime()
-            bsend = datetime.combine(bdtime.date(), data.p.sessionend)
+            # because p.session_end is expected in output timezone
+            bdtime = datafeeds.datetime.datetime()
+            bsend = datetime.combine(bdtime.date(), datafeeds.p.session_end)
             return bdtime == bsend
 
-        return False, True  # subweeks, not subdays and not sessionend
+        return False, True  # subweeks, not subdays and not session_end
 
     def _calcadjtime(self, greater=False):
         if self._nexteos is None:
             # Session has been exceeded - end of session is the mark
             return self._lastdteos  # utc-like
 
-        dt = self.data.num2date(self.bar.datetime)
+        dt = self.datafeeds.num2date(self.bar.datetime)
 
         # Get current time
         tm = dt.time()
@@ -417,7 +417,7 @@ class _BaseResampler(with_metaclass(metabase.MetaParams, object)):
                         second=int(ps), microsecond=int(pus))
         if extradays:
             dt += timedelta(days=extradays)
-        dtnum = self.data.date2num(dt)
+        dtnum = self.datafeeds.date2num(dt)
         return dtnum
 
     def _adjusttime(self, greater=False, forcedata=None):
@@ -480,7 +480,7 @@ class Resampler(_BaseResampler):
 
     replaying = False
 
-    def last(self, data):
+    def last(self, datafeeds):
         '''Called when the data is no longer producing bars
 
         Can be called multiple times. It has the chance to (for example)
@@ -491,48 +491,48 @@ class Resampler(_BaseResampler):
             if self.doadjusttime:
                 self._adjusttime()
 
-            data._add2stack(self.bar.lvalues())
+            datafeeds._add2stack(self.bar.lvalues())
             self.bar.bstart(maxdate=True)  # close the bar to avoid dups
             return True
 
         return False
 
-    def __call__(self, data, fromcheck=False, forcedata=None):
+    def __call__(self, datafeeds, fromcheck=False, forcedata=None):
         '''Called for each set of values produced by the data source'''
         consumed = False
         onedge = False
         docheckover = True
         if not fromcheck:
-            if self._latedata(data):
+            if self._latedata(datafeeds):
                 if not self.p.takelate:
-                    data.backwards()
+                    datafeeds.backwards()
                     return True  # get a new bar
 
-                self.bar.bupdate(data)  # update new or existing bar
+                self.bar.bupdate(datafeeds)  # update new or existing bar
                 # push time beyond reference
-                self.bar.datetime = data.datetime[-1] + 0.000001
-                data.backwards()  # remove used bar
+                self.bar.datetime = datafeeds.datetime[-1] + 0.000001
+                datafeeds.backwards()  # remove used bar
                 return True
 
             if self.componly:  # only if not subdays
                 # Get a session ref before rewinding
-                _, self._lastdteos = self.data._getnexteos()
+                _, self._lastdteos = self.datafeeds._getnexteos()
                 consumed = True
 
             else:
-                onedge, docheckover = self._dataonedge(data)  # for subdays
+                onedge, docheckover = self._dataonedge(datafeeds)  # for subdays
                 consumed = onedge
 
         if consumed:
-            self.bar.bupdate(data)  # update new or existing bar
-            data.backwards()  # remove used bar
+            self.bar.bupdate(datafeeds)  # update new or existing bar
+            datafeeds.backwards()  # remove used bar
 
         # if self.bar.isopen and (onedge or (docheckover and checkbarover))
         cond = self.bar.isopen()
         if cond:  # original is and, the 2nd term must also be true
             if not onedge:  # onedge true is sufficient
                 if docheckover:
-                    cond = self._checkbarover(data, fromcheck=fromcheck,
+                    cond = self._checkbarover(datafeeds, fromcheck=fromcheck,
                                               forcedata=forcedata)
         if cond:
             dodeliver = False
@@ -554,13 +554,13 @@ class Resampler(_BaseResampler):
                 if not onedge and self.doadjusttime:
                     self._adjusttime(greater=True, forcedata=forcedata)
 
-                data._add2stack(self.bar.lvalues())
+                datafeeds._add2stack(self.bar.lvalues())
                 self.bar.bstart(maxdate=True)  # bar delivered -> restart
 
         if not fromcheck:
             if not consumed:
-                self.bar.bupdate(data)  # update new or existing bar
-                data.backwards()  # remove used bar
+                self.bar.bupdate(datafeeds)  # update new or existing bar
+                datafeeds.backwards()  # remove used bar
 
         return True
 
@@ -617,16 +617,16 @@ class Replayer(_BaseResampler):
 
     replaying = True
 
-    def __call__(self, data, fromcheck=False, forcedata=None):
+    def __call__(self, datafeeds, fromcheck=False, forcedata=None):
         consumed = False
         onedge = False
         takinglate = False
         docheckover = True
 
         if not fromcheck:
-            if self._latedata(data):
+            if self._latedata(datafeeds):
                 if not self.p.takelate:
-                    data.backwards(force=True)
+                    datafeeds.backwards(force=True)
                     return True  # get a new bar
 
                 consumed = True
@@ -636,36 +636,36 @@ class Replayer(_BaseResampler):
                 consumed = True
 
             else:
-                onedge, docheckover = self._dataonedge(data)  # for subdays
+                onedge, docheckover = self._dataonedge(datafeeds)  # for subdays
                 consumed = onedge
 
-            data._tick_fill(force=True)  # update
+            datafeeds._tick_fill(force=True)  # update
 
         if consumed:
-            self.bar.bupdate(data)
+            self.bar.bupdate(datafeeds)
             if takinglate:
-                self.bar.datetime = data.datetime[-1] + 0.000001
+                self.bar.datetime = datafeeds.datetime[-1] + 0.000001
 
         # if onedge or (checkbarover and self._checkbarover)
         cond = onedge
         if not cond:  # original is or, if true it would suffice
             if docheckover:
-                cond = self._checkbarover(data, fromcheck=fromcheck)
+                cond = self._checkbarover(datafeeds, fromcheck=fromcheck)
         if cond:
             if not onedge and self.doadjusttime:  # insert tick with adjtime
                 adjusted = self._adjusttime(greater=True)
                 if adjusted:
                     ago = 0 if (consumed or fromcheck) else -1
                     # Update to the point right before the new data
-                    data._updatebar(self.bar.lvalues(), forward=False, ago=ago)
+                    datafeeds._updatebar(self.bar.lvalues(), forward=False, ago=ago)
 
                 if not fromcheck:
                     if not consumed:
                         # Reopen bar with real new data and save data to queue
-                        self.bar.bupdate(data, reopen=True)
+                        self.bar.bupdate(datafeeds, reopen=True)
                         # erase is True, but the tick will not be seen below
                         # and therefore no need to mark as 1st
-                        data._save2stack(erase=True, force=True)
+                        datafeeds._save2stack(erase=True, force=True)
                     else:
                         self.bar.bstart(maxdate=True)
                         self._firstbar = True  # next is first
@@ -675,31 +675,31 @@ class Replayer(_BaseResampler):
                     self._firstbar = True  # next is first
                     if adjusted:
                         # after adjusting need to redeliver if this was a check
-                        data._save2stack(erase=True, force=True)
+                        datafeeds._save2stack(erase=True, force=True)
 
             elif not fromcheck:
                 if not consumed:
                     # Data already "forwarded" and we replay to new bar
                     # No need to go backwards. simply reopen internal cache
-                    self.bar.bupdate(data, reopen=True)
+                    self.bar.bupdate(datafeeds, reopen=True)
                 else:
                     # compression only, used data to update bar, hence remove
                     # from stream, update existing data, reopen bar
                     if not self._firstbar:  # only discard data if not firstbar
-                        data.backwards(force=True)
-                    data._updatebar(self.bar.lvalues(), forward=False, ago=0)
+                        datafeeds.backwards(force=True)
+                    datafeeds._updatebar(self.bar.lvalues(), forward=False, ago=0)
                     self.bar.bstart(maxdate=True)
                     self._firstbar = True  # make sure next tick moves forward
 
         elif not fromcheck:
             # not over, update, remove new entry, deliver
             if not consumed:
-                self.bar.bupdate(data)
+                self.bar.bupdate(datafeeds)
 
             if not self._firstbar:  # only discard data if not firstbar
-                data.backwards(force=True)
+                datafeeds.backwards(force=True)
 
-            data._updatebar(self.bar.lvalues(), forward=False, ago=0)
+            datafeeds._updatebar(self.bar.lvalues(), forward=False, ago=0)
             self._firstbar = False
 
         return False  # the existing bar can be processed by the system

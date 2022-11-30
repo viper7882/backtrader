@@ -36,7 +36,7 @@ def runstrat():
     cerebro = bt.Cerebro(stdstats=False)
 
     # Add a strategy
-    cerebro.addstrategy(bt.Strategy)
+    cerebro.add_strategy(bt.Strategy)
 
     # Get a pandas dataframe
     datapath = ('../../datas/2006-day-001.txt')
@@ -65,7 +65,7 @@ def runstrat():
                                nocase=True,
                                )
 
-    cerebro.adddata(data)
+    cerebro.add_datafeed(data)
 
     # Run over everything
     cerebro.run()

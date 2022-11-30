@@ -39,7 +39,7 @@ class CommInfoBase(with_metaclass(MetaParams)):
         value/profit
 
       - ``margin`` (def: ``None``): amount of monetary units needed to
-        open/hold an operation. It only applies if the final ``_stocklike``
+        open/hold an operation. It only applies if the final ``_stock_like``
         attribute in the class is set to ``False``
 
       - ``automargin`` (def: ``False``): Used by the method ``get_margin``
@@ -53,7 +53,7 @@ class CommInfoBase(with_metaclass(MetaParams)):
           - Use param ``automargin`` * ``price`` if ``automargin > 0``
 
       - ``commtype`` (def: ``None``): Supported values are
-        ``CommInfoBase.COMM_PERC`` (commission to be understood as %) and
+        ``CommInfoBase.COMM_PERCENT`` (commission to be understood as %) and
         ``CommInfoBase.COMM_FIXED`` (commission to be understood as monetary
         units)
 
@@ -61,23 +61,23 @@ class CommInfoBase(with_metaclass(MetaParams)):
         compatibility with the legacy ``CommissionInfo`` object. If
         ``commtype`` is set to None, then the following applies:
 
-          - ``margin`` is ``None``: Internal ``_commtype`` is set to
-            ``COMM_PERC`` and ``_stocklike`` is set to ``True`` (Operating
+          - ``margin`` is ``None``: Internal ``_commission_type`` is set to
+            ``COMM_PERCENT`` and ``_stock_like`` is set to ``True`` (Operating
             %-wise with Stocks)
 
-          - ``margin`` is not ``None``: ``_commtype`` set to ``COMM_FIXED`` and
-            ``_stocklike`` set to ``False`` (Operating with fixed rount-trip
+          - ``margin`` is not ``None``: ``_commission_type`` set to ``COMM_FIXED`` and
+            ``_stock_like`` set to ``False`` (Operating with fixed rount-trip
             commission with Futures)
 
         If this param is set to something else than ``None``, then it will be
-        passed to the internal ``_commtype`` attribute and the same will be
-        done with the param ``stocklike`` and the internal attribute
-        ``_stocklike``
+        passed to the internal ``_commission_type`` attribute and the same will be
+        done with the param ``stock_like`` and the internal attribute
+        ``_stock_like``
 
-      - ``stocklike`` (def: ``False``): Indicates if the instrument is
+      - ``stock_like`` (def: ``False``): Indicates if the instrument is
         Stock-like or Futures-like (see the ``commtype`` discussion above)
 
-      - ``percabs`` (def: ``False``): when ``commtype`` is set to COMM_PERC,
+      - ``percent_abs`` (def: ``False``): when ``commtype`` is set to COMM_PERCENT,
         whether the parameter ``commission`` has to be understood as XX% or
         0.XX
 
@@ -108,8 +108,8 @@ class CommInfoBase(with_metaclass(MetaParams)):
 
     Attributes:
 
-      - ``_stocklike``: Final value to use for Stock-like/Futures-like behavior
-      - ``_commtype``: Final value to use for PERC vs FIXED commissions
+      - ``_stock_like``: Final value to use for Stock-like/Futures-like behavior
+      - ``_commission_type``: Final value to use for PERC vs FIXED commissions
 
       This two are used internally instead of the declared params to enable the
       compatibility check described above for the legacy ``CommissionInfo``
@@ -117,13 +117,13 @@ class CommInfoBase(with_metaclass(MetaParams)):
 
     '''
 
-    COMM_PERC, COMM_FIXED = range(2)
+    COMM_PERCENT, COMM_FIXED = range(2)
 
     params = (
         ('commission', 0.0), ('mult', 1.0), ('margin', None),
-        ('commtype', None),
-        ('stocklike', False),
-        ('percabs', False),
+        ('commission_type', None),
+        ('stock_like', False),
+        ('percent_abs', False),
         ('interest', 0.0),
         ('interest_long', False),
         ('leverage', 1.0),
@@ -133,8 +133,8 @@ class CommInfoBase(with_metaclass(MetaParams)):
     def __init__(self):
         super(CommInfoBase, self).__init__()
 
-        self._stocklike = self.p.stocklike
-        self._commtype = self.p.commtype
+        self._stock_like = self.p.stock_like
+        self._commission_type = self.p.commission_type
 
         # The intial block checks for the behavior of the original
         # CommissionInfo in which the commission scheme (perc/fixed) was
@@ -142,18 +142,18 @@ class CommInfoBase(with_metaclass(MetaParams)):
         # If the parameter "commtype" is None, this behavior is emulated
         # else, the parameter values are used
 
-        if self._commtype is None:  # original CommissionInfo behavior applies
+        if self._commission_type is None:  # original CommissionInfo behavior applies
             if self.p.margin:
-                self._stocklike = False
-                self._commtype = self.COMM_FIXED
+                self._stock_like = False
+                self._commission_type = self.COMM_FIXED
             else:
-                self._stocklike = True
-                self._commtype = self.COMM_PERC
+                self._stock_like = True
+                self._commission_type = self.COMM_PERCENT
 
-        if not self._stocklike and not self.p.margin:
+        if not self._stock_like and not self.p.margin:
             self.p.margin = 1.0  # avoid having None/0
 
-        if self._commtype == self.COMM_PERC and not self.p.percabs:
+        if self._commission_type == self.COMM_PERCENT and not self.p.percent_abs:
             self.p.commission /= 100.0
 
         self._creditrate = self.p.interest / 365.0
@@ -163,8 +163,8 @@ class CommInfoBase(with_metaclass(MetaParams)):
         return self.p.margin
 
     @property
-    def stocklike(self):
-        return self._stocklike
+    def stock_like(self):
+        return self._stock_like
 
     def get_margin(self, price):
         '''Returns the actual margin/guarantees needed for a single item of the
@@ -189,32 +189,32 @@ class CommInfoBase(with_metaclass(MetaParams)):
         '''Returns the level of leverage allowed for this comission scheme'''
         return self.p.leverage
 
-    def getsize(self, price, cash):
+    def get_size(self, price, cash):
         '''Returns the needed size to meet a cash operation at a given price'''
-        if not self._stocklike:
+        if not self._stock_like:
             return int(self.p.leverage * (cash // self.get_margin(price)))
 
         return int(self.p.leverage * (cash // price))
 
-    def getoperationcost(self, size, price):
+    def get_operating_cost(self, size, price):
         '''Returns the needed amount of cash an operation would cost'''
-        if not self._stocklike:
+        if not self._stock_like:
             return abs(size) * self.get_margin(price)
 
         return abs(size) * price
 
-    def getvaluesize(self, size, price):
+    def get_value_size(self, size, price):
         '''Returns the value of size for given a price. For future-like
         objects it is fixed at size * margin'''
-        if not self._stocklike:
+        if not self._stock_like:
             return abs(size) * self.get_margin(price)
 
         return size * price
 
-    def getvalue(self, position, price):
+    def get_value(self, position, price):
         '''Returns the value of a position given a price. For future-like
         objects it is fixed at size * margin'''
-        if not self._stocklike:
+        if not self._stock_like:
             return abs(position.size) * self.get_margin(price)
 
         size = position.size
@@ -226,36 +226,36 @@ class CommInfoBase(with_metaclass(MetaParams)):
         value += (position.price - price) * size  # increased value
         return value
 
-    def _getcommission(self, size, price, pseudoexec):
+    def _get_commission_rate(self, size, price, pseudoexec):
         '''Calculates the commission of an operation at a given price
 
         pseudoexec: if True the operation has not yet been executed
         '''
-        if self._commtype == self.COMM_PERC:
+        if self._commission_type == self.COMM_PERCENT:
             return abs(size) * self.p.commission * price
 
         return abs(size) * self.p.commission
 
-    def getcommission(self, size, price):
+    def get_commission_rate(self, size, price):
         '''Calculates the commission of an operation at a given price
         '''
-        return self._getcommission(size, price, pseudoexec=True)
+        return self._get_commission_rate(size, price, pseudoexec=True)
 
-    def confirmexec(self, size, price):
-        return self._getcommission(size, price, pseudoexec=False)
+    def confirmed_execution(self, size, price):
+        return self._get_commission_rate(size, price, pseudoexec=False)
 
-    def profitandloss(self, size, price, newprice):
+    def profit_and_loss(self, size, price, newprice):
         '''Return actual profit and loss a position has'''
         return size * (newprice - price) * self.p.mult
 
-    def cashadjust(self, size, price, newprice):
+    def cash_adjust(self, size, price, newprice):
         '''Calculates cash adjustment for a given price difference'''
-        if not self._stocklike:
+        if not self._stock_like:
             return size * (newprice - price) * self.p.mult
 
         return 0.0
 
-    def get_credit_interest(self, data, pos, dt):
+    def get_credit_interest(self, datafeeds, pos, dt):
         '''Calculates the credit due for short selling or product specific'''
         size, price = pos.size, pos.price
 
@@ -268,13 +268,13 @@ class CommInfoBase(with_metaclass(MetaParams)):
         if dt0 <= dt1:
             return 0.0
 
-        return self._get_credit_interest(data, size, price,
+        return self._get_credit_interest(datafeeds, size, price,
                                          (dt0 - dt1).days, dt0, dt1)
 
-    def _get_credit_interest(self, data, size, price, days, dt0, dt1):
+    def _get_credit_interest(self, datafeeds, size, price, days, dt0, dt1):
         '''
         This method returns  the cost in terms of credit interest charged by
-        the broker.
+        the broker_or_exchange.
 
         In the case of ``size > 0`` this method will only be called if the
         parameter to the class ``interest_long`` is ``True``
@@ -312,11 +312,11 @@ class CommissionInfo(CommInfoBase):
     support provided by *backtrader*. New commission schemes derive from this
     class which subclasses ``CommInfoBase``.
 
-    The default value of ``percabs`` is also changed to ``True``
+    The default value of ``percent_abs`` is also changed to ``True``
 
     Params:
 
-      - ``percabs`` (def: True): when ``commtype`` is set to COMM_PERC, whether
+      - ``percent_abs`` (def: True): when ``commtype`` is set to COMM_PERCENT, whether
         the parameter ``commission`` has to be understood as XX% or 0.XX
 
         If this param is True: 0.XX
@@ -324,5 +324,5 @@ class CommissionInfo(CommInfoBase):
 
     '''
     params = (
-        ('percabs', True),  # Original CommissionInfo took 0.xx for percentages
+        ('percent_abs', True),  # Original CommissionInfo took 0.xx for percentages
     )

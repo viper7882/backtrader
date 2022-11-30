@@ -59,5 +59,5 @@ class Signal(bt.Indicator):
     lines = ('signal',)
 
     def __init__(self):
-        self.lines.signal = self.data0.lines[0]
-        self.plotinfo.plotmaster = getattr(self.data0, '_clock', self.data0)
+        self.lines.signal = self.datafeed0.lines[0]
+        self.plotinfo.plotmaster = getattr(self.datafeed0, '_clock', self.datafeed0)

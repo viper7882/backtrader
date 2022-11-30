@@ -47,15 +47,15 @@ class SlipTestStrategy(bt.SignalStrategy):
 
     def __init__(self):
         self.ma = bt.ind.EMA(period=10)
-        self.cross = bt.ind.CrossOver(self.datas[0].close, self.ma)
+        self.cross = bt.ind.CrossOver(self.datafeeds[0].close, self.ma)
         # Single logic
-        self.lg = bt.Log(self.datas[0].close)
-        self.cl = bt.Ceiling(self.datas[0].close)
-        self.fl = bt.Floor(self.datas[0].close)
+        self.lg = bt.Log(self.datafeeds[0].close)
+        self.cl = bt.Ceiling(self.datafeeds[0].close)
+        self.fl = bt.Floor(self.datafeeds[0].close)
         self.cross_abs = bt.Abs(self.cross)
 
         # Check Multi still works
-        self.mx = bt.Max(self.datas[0].close, self.datas[0].open)
+        self.mx = bt.Max(self.datafeeds[0].close, self.datafeeds[0].open)
 
     def start(self):
 
@@ -78,8 +78,8 @@ class SlipTestStrategy(bt.SignalStrategy):
             self.log(
                 " open {:.2f} close {:.2f}, max {:.2f}, log {:5.3f}, ceiling {:5.3f}, floor {:5.3f}, "
                 "cross {:2.0f} abs cross {:2.0f}".format(
-                    self.datas[0].open[0],
-                    self.datas[0].close[0],
+                    self.datafeeds[0].open[0],
+                    self.datafeeds[0].close[0],
                     self.mx[0],
                     self.lg[0],
                     self.cl[0],
@@ -91,13 +91,13 @@ class SlipTestStrategy(bt.SignalStrategy):
 
         # Test values
         # max
-        assert self.mx[0] == max(self.datas[0].close[0], self.datas[0].open[0])
+        assert self.mx[0] == max(self.datafeeds[0].close[0], self.datafeeds[0].open[0])
         # Log
-        assert self.lg[0] == math.log10(self.datas[0].close[0])
+        assert self.lg[0] == math.log10(self.datafeeds[0].close[0])
         # ceiling
-        assert self.cl[0] == math.ceil(self.datas[0].close[0])
+        assert self.cl[0] == math.ceil(self.datafeeds[0].close[0])
         # floor
-        assert self.fl[0] == math.floor(self.datas[0].close[0])
+        assert self.fl[0] == math.floor(self.datafeeds[0].close[0])
         # absolut value
         assert self.cross_abs[0] == math.fabs(self.cross[0])
 
@@ -112,7 +112,7 @@ def test_run(main=False):
     else:
         strat_kwargs = dict(printdata=False, printops=False)
 
-    cerebro.addstrategy(SlipTestStrategy, **strat_kwargs)
+    cerebro.add_strategy(SlipTestStrategy, **strat_kwargs)
 
     modpath = os.path.dirname(os.path.abspath(__file__))
     dataspath = "../datas"
@@ -124,7 +124,7 @@ def test_run(main=False):
         timeframe=bt.TimeFrame.Days,
         compression=1,
     )
-    cerebro.adddata(data0)
+    cerebro.add_datafeed(data0)
 
     cerebro.run()
 

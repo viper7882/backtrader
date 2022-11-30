@@ -84,7 +84,7 @@ class HurstExponent(PeriodN):
 
     def next(self):
         # Fetch the data
-        ts = asarray(self.data.get(size=self.p.period))
+        ts = asarray(self.datafeed.get(size=self.p.period))
 
         # Calculate the array of the variances of the lagged differences
         tau = [sqrt(std(subtract(ts[lag:], ts[:-lag]))) for lag in self.lags]

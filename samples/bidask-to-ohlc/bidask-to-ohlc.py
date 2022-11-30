@@ -56,11 +56,11 @@ def runstrat():
         openinterest=-1,  # -1 for not present
         timeframe=bt.TimeFrame.Ticks)
 
-    cerebro.resampledata(data,
+    cerebro.resample_datafeed(data,
                          timeframe=bt.TimeFrame.Ticks,
                          compression=args.compression)
 
-    cerebro.addstrategy(St)
+    cerebro.add_strategy(St)
 
     cerebro.run()
     if args.plot:

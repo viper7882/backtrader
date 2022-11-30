@@ -71,15 +71,15 @@ class SessionFiller(with_metaclass(metabase.MetaParams, object)):
         TimeFrame.MicroSeconds: timedelta(microseconds=1),
     }
 
-    def __init__(self, data):
+    def __init__(self, datafeed):
         # Calculate and save timedelta for timeframe
-        self._tdframe = self._tdeltas[data._timeframe]
-        self._tdunit = self._tdeltas[data._timeframe] * data._compression
+        self._tdframe = self._tdeltas[datafeed._timeframe]
+        self._tdunit = self._tdeltas[datafeed._timeframe] * datafeed._compression
 
         self.seenbar = False  # control if at least one bar has been seen
         self.sessend = self.MAXDATE  # maxdate is the control for session bar
 
-    def __call__(self, data):
+    def __call__(self, datafeed):
         '''
         Params:
           - data: the data source to filter/process
@@ -92,7 +92,7 @@ class SessionFiller(with_metaclass(metabase.MetaParams, object)):
 
           - If new bar is over session end (never true for 1st bar)
 
-            Fill up to session end. Reset sessionend to MAXDATE & fall through
+            Fill up to session end. Reset session_end to MAXDATE & fall through
 
           - If session end is flagged as MAXDATE
 
@@ -105,13 +105,13 @@ class SessionFiller(with_metaclass(metabase.MetaParams, object)):
         # Get time of current (from data source) bar
         ret = False
 
-        dtime_cur = data.datetime.datetime()
+        dtime_cur = datafeed.datetime.datetime()
 
         if dtime_cur > self.sessend:
             # bar over session end - fill up and invalidate
             # Do not put current bar in stack to let it be evaluated below
             # Fill up to endsession + smallest unit of timeframe
-            ret = self._fillbars(data, self.dtime_prev,
+            ret = self._fillbars(datafeed, self.dtime_prev,
                                  self.sessend + self._tdframe,
                                  tostack=False)
             self.sessend = self.MAXDATE
@@ -121,13 +121,13 @@ class SessionFiller(with_metaclass(metabase.MetaParams, object)):
         if self.sessend == self.MAXDATE:
             # No bar seen yet or one went over previous session limit
             ddate = dtime_cur.date()
-            sessstart = datetime.combine(ddate, data.p.sessionstart)
-            self.sessend = sessend = datetime.combine(ddate, data.p.sessionend)
+            sessstart = datetime.combine(ddate, datafeed.p.sessionstart)
+            self.sessend = sessend = datetime.combine(ddate, datafeed.p.session_end)
 
             if sessstart <= dtime_cur <= sessend:
                 # 1st bar from session in the session - fill from session start
                 if self.seenbar or not self.p.skip_first_fill:
-                    ret = self._fillbars(data,
+                    ret = self._fillbars(datafeed,
                                          sessstart - self._tdunit, dtime_cur)
 
             self.seenbar = True
@@ -135,12 +135,12 @@ class SessionFiller(with_metaclass(metabase.MetaParams, object)):
 
         else:
             # Seen a previous bar and this is in the session - fill up to it
-            ret = self._fillbars(data, self.dtime_prev, dtime_cur)
+            ret = self._fillbars(datafeed, self.dtime_prev, dtime_cur)
             self.dtime_prev = dtime_cur
 
         return ret
 
-    def _fillbars(self, data, time_start, time_end, tostack=True):
+    def _fillbars(self, datafeed, time_start, time_end, tostack=True):
         '''
         Fills one by one bars as needed from time_start to time_end
 
@@ -151,36 +151,36 @@ class SessionFiller(with_metaclass(metabase.MetaParams, object)):
 
         time_start += self._tdunit
         while time_start < time_end:
-            dirty += self._fillbar(data, time_start)
+            dirty += self._fillbar(datafeed, time_start)
             time_start += self._tdunit
 
         if dirty and tostack:
-            data._save2stack(erase=True)
+            datafeed._save2stack(erase=True)
 
         return bool(dirty) or not tostack
 
-    def _fillbar(self, data, dtime):
+    def _fillbar(self, datafeed, dtime):
         # Prepare an array of the needed size
-        bar = [float('Nan')] * data.size()
+        bar = [float('Nan')] * datafeed.size()
 
         # Fill datetime
-        bar[data.DateTime] = data.date2num(dtime)
+        bar[datafeed.DateTime] = datafeed.date2num(dtime)
 
         # Fill the prices
-        price = self.p.fill_price or data.close[-1]
-        for pricetype in [data.Open, data.High, data.Low, data.Close]:
+        price = self.p.fill_price or datafeed.close[-1]
+        for pricetype in [datafeed.Open, datafeed.High, datafeed.Low, datafeed.Close]:
             bar[pricetype] = price
 
         # Fill volume and open interest
-        bar[data.Volume] = self.p.fill_vol
-        bar[data.OpenInterest] = self.p.fill_oi
+        bar[datafeed.Volume] = self.p.fill_vol
+        bar[datafeed.OpenInterest] = self.p.fill_oi
 
         # Fill extra lines the data feed may have defined beyond DateTime
-        for i in range(data.DateTime + 1, data.size()):
-            bar[i] = data.lines[i][0]
+        for i in range(datafeed.DateTime + 1, datafeed.size()):
+            bar[i] = datafeed.lines[i][0]
 
         # Add tot he stack of bars to save
-        data._add2stack(bar)
+        datafeed._add2stack(bar)
 
         return True
 
@@ -199,10 +199,10 @@ class SessionFilterSimple(with_metaclass(metabase.MetaParams, object)):
     Bar Management will be done by the SimpleFilterWrapper class made which is
     added durint the DataBase.addfilter_simple call
     '''
-    def __init__(self, data):
+    def __init__(self, datafeed):
         pass
 
-    def __call__(self, data):
+    def __call__(self, datafeed):
         '''
         Return Values:
 
@@ -211,7 +211,7 @@ class SessionFilterSimple(with_metaclass(metabase.MetaParams, object)):
         '''
         # Both ends of the comparison are in the session
         return not (
-            data.p.sessionstart <= data.datetime.time(0) <= data.p.sessionend)
+            datafeed.p.sessionstart <= datafeed.datetime.time(0) <= datafeed.p.session_end)
 
 
 class SessionFilter(with_metaclass(metabase.MetaParams, object)):
@@ -225,10 +225,10 @@ class SessionFilter(with_metaclass(metabase.MetaParams, object)):
 
     It needs no "last" method because it has nothing to deliver
     '''
-    def __init__(self, data):
+    def __init__(self, datafeed):
         pass
 
-    def __call__(self, data):
+    def __call__(self, datafeed):
         '''
         Return Values:
 
@@ -236,10 +236,10 @@ class SessionFilter(with_metaclass(metabase.MetaParams, object)):
           - True: data stream was manipulated (bar outside of session times and
           - removed)
         '''
-        if data.p.sessionstart <= data.datetime.time(0) <= data.p.sessionend:
+        if datafeed.p.sessionstart <= datafeed.datetime.time(0) <= datafeed.p.session_end:
             # Both ends of the comparison are in the session
             return False  # say the stream is untouched
 
         # bar outside of the regular session times
-        data.backwards()  # remove bar from data stack
+        datafeed.backwards()  # remove bar from data stack
         return True  # signal the data was manipulated

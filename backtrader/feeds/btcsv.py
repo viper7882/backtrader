@@ -46,7 +46,7 @@ class BacktraderCSVData(feed.CSVDataBase):
             tmtxt = next(itoken)  # Format if present HH:MM:SS, skip 3 and 6
             tm = time(int(tmtxt[0:2]), int(tmtxt[3:5]), int(tmtxt[6:8]))
         else:
-            tm = self.p.sessionend  # end of the session parameter
+            tm = self.p.session_end  # end of the session parameter
 
         self.lines.datetime[0] = date2num(datetime.combine(dt, tm))
         self.lines.open[0] = float(next(itoken))
@@ -60,4 +60,4 @@ class BacktraderCSVData(feed.CSVDataBase):
 
 
 class BacktraderCSV(feed.CSVFeedBase):
-    DataCls = BacktraderCSVData
+    Datafeed_Cls = BacktraderCSVData

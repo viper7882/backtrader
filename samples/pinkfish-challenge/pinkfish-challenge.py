@@ -245,8 +245,8 @@ def runstrat():
     args = parse_args()
 
     cerebro = bt.Cerebro()
-    cerebro.broker.set_cash(args.cash)
-    cerebro.broker.set_eosbar(True)
+    cerebro.broker_or_exchange.set_cash(args.cash)
+    cerebro.broker_or_exchange.set_eosbar(True)
 
     dkwargs = dict()
     if args.fromdate:
@@ -263,16 +263,16 @@ def runstrat():
                                             compression=1,
                                             **dkwargs)
         data.addfilter(DayStepsCloseFilter)
-        cerebro.adddata(data)
+        cerebro.add_datafeed(data)
     else:
         data = bt.feeds.YahooFinanceCSVData(dataname=args.data,
                                             timeframe=bt.TimeFrame.Minutes,
                                             compression=1,
                                             **dkwargs)
         data.addfilter(DayStepsReplayFilter)
-        cerebro.replaydata(data, timeframe=bt.TimeFrame.Days, compression=1)
+        cerebro.replay_datafeed(data, timeframe=bt.TimeFrame.Days, compression=1)
 
-    cerebro.addstrategy(St,
+    cerebro.add_strategy(St,
                         sellafter=args.sellafter,
                         highperiod=args.highperiod,
                         market=args.market)

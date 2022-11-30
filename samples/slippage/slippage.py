@@ -56,7 +56,7 @@ def runstrat(args=None):
     args = parse_args(args)
 
     cerebro = bt.Cerebro()
-    cerebro.broker.set_cash(args.cash)
+    cerebro.broker_or_exchange.set_cash(args.cash)
 
     dkwargs = dict()
     if args.fromdate is not None:
@@ -69,7 +69,7 @@ def runstrat(args=None):
 
     # if dataset is None, args.data has been given
     data = bt.feeds.BacktraderCSVData(dataname=args.data, **dkwargs)
-    cerebro.adddata(data)
+    cerebro.add_datafeed(data)
 
     cerebro.signal_strategy(SlipSt)
     if not args.longonly:
@@ -80,13 +80,13 @@ def runstrat(args=None):
     cerebro.add_signal(stype, SMACrossOver, p1=args.period1, p2=args.period2)
 
     if args.slip_perc is not None:
-        cerebro.broker.set_slippage_perc(args.slip_perc,
+        cerebro.broker_or_exchange.set_slippage_perc(args.slip_perc,
                                          slip_open=args.slip_open,
                                          slip_match=not args.no_slip_match,
                                          slip_out=args.slip_out)
 
     elif args.slip_fixed is not None:
-        cerebro.broker.set_slippage_fixed(args.slip_fixed,
+        cerebro.broker_or_exchange.set_slippage_fixed(args.slip_fixed,
                                           slip_open=args.slip_open,
                                           slip_match=not args.no_slip_match,
                                           slip_out=args.slip_out)

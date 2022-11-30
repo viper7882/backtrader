@@ -46,12 +46,12 @@ class CloseSMA(bt.Strategy):
 class LongOnly(bt.Sizer):
     params = (('stake', 1),)
 
-    def _getsizing(self, comminfo, cash, data, isbuy):
+    def _getsizing(self, comm_info, cash, data, isbuy):
         if isbuy:
             return self.p.stake
 
         # Sell situation
-        position = self.broker.getposition(data)
+        position = self.broker_or_exchange.get_position(data)
         if not position.size:
             return 0  # do not sell if nothing is open
 
@@ -61,8 +61,8 @@ class LongOnly(bt.Sizer):
 class FixedReverser(bt.Sizer):
     params = (('stake', 1),)
 
-    def _getsizing(self, comminfo, cash, data, isbuy):
-        position = self.strategy.getposition(data)
+    def _getsizing(self, comm_info, cash, data, isbuy):
+        position = self.strategy.get_position(data)
         size = self.p.stake * (1 + (position.size != 0))
         return size
 
@@ -71,7 +71,7 @@ def runstrat(args=None):
     args = parse_args(args)
 
     cerebro = bt.Cerebro()
-    cerebro.broker.set_cash(args.cash)
+    cerebro.broker_or_exchange.set_cash(args.cash)
 
     dkwargs = dict()
     if args.fromdate:
@@ -83,14 +83,14 @@ def runstrat(args=None):
         dkwargs['todate'] = todate
 
     data0 = bt.feeds.YahooFinanceCSVData(dataname=args.data0, **dkwargs)
-    cerebro.adddata(data0, name='Data0')
+    cerebro.add_datafeed(data0, name='Data0')
 
-    cerebro.addstrategy(CloseSMA, period=args.period)
+    cerebro.add_strategy(CloseSMA, period=args.period)
 
     if args.longonly:
-        cerebro.addsizer(LongOnly, stake=args.stake)
+        cerebro.add_sizer(LongOnly, stake=args.stake)
     else:
-        cerebro.addsizer(bt.sizers.FixedReverser, stake=args.stake)
+        cerebro.add_sizer(bt.sizers.FixedReverser, stake=args.stake)
 
     cerebro.run()
     if args.plot:

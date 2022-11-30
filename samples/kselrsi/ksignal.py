@@ -63,21 +63,21 @@ def runstrat(pargs=None):
     args = parse_args(pargs)
 
     cerebro = bt.Cerebro()
-    cerebro.broker.set_cash(args.cash)
-    cerebro.broker.set_coc(args.coc)
+    cerebro.broker_or_exchange.set_cash(args.cash)
+    cerebro.broker_or_exchange.set_coc(args.coc)
     data0 = bt.feeds.YahooFinanceData(
         dataname=args.data,
         fromdate=datetime.datetime.strptime(args.fromdate, '%Y-%m-%d'),
         todate=datetime.datetime.strptime(args.todate, '%Y-%m-%d'),
         round=False)
 
-    cerebro.adddata(data0)
+    cerebro.add_datafeed(data0)
 
-    cerebro.addsizer(bt.sizers.FixedSize, stake=args.stake)
-    cerebro.addstrategy(TheStrategy, **(eval('dict(' + args.strat + ')')))
-    cerebro.addobserver(bt.observers.Value)
-    cerebro.addobserver(bt.observers.Trades)
-    cerebro.addobserver(bt.observers.BuySell, barplot=True)
+    cerebro.add_sizer(bt.sizers.FixedSize, stake=args.stake)
+    cerebro.add_strategy(TheStrategy, **(eval('dict(' + args.strat + ')')))
+    cerebro.add_system_wide_observer(bt.observers.Value)
+    cerebro.add_system_wide_observer(bt.observers.Trades)
+    cerebro.add_system_wide_observer(bt.observers.BuySell, barplot=True)
 
     cerebro.run(stdstats=False)
     if args.plot:

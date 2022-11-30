@@ -85,12 +85,12 @@ class MetaAbstractDataBase(dataseries.OHLCDateTime.__class__):
         elif _obj.p.sessionstart is None:
             _obj.p.sessionstart = datetime.time.min
 
-        if isinstance(_obj.p.sessionend, datetime.datetime):
-            _obj.p.sessionend = _obj.p.sessionend.time()
+        if isinstance(_obj.p.session_end, datetime.datetime):
+            _obj.p.session_end = _obj.p.session_end.time()
 
-        elif _obj.p.sessionend is None:
+        elif _obj.p.session_end is None:
             # remove 9 to avoid precision rounding errors
-            _obj.p.sessionend = datetime.time(23, 59, 59, 999990)
+            _obj.p.session_end = datetime.time(23, 59, 59, 999990)
 
         if isinstance(_obj.p.fromdate, datetime.date):
             # push it to the end of the day, or else intraday
@@ -104,7 +104,7 @@ class MetaAbstractDataBase(dataseries.OHLCDateTime.__class__):
             # values before the end of the day would be gone
             if not hasattr(_obj.p.todate, 'hour'):
                 _obj.p.todate = datetime.datetime.combine(
-                    _obj.p.todate, _obj.p.sessionend)
+                    _obj.p.todate, _obj.p.session_end)
 
         _obj._barstack = collections.deque()  # for filter operations
         _obj._barstash = collections.deque()  # for filter operations
@@ -133,7 +133,7 @@ class AbstractDataBase(with_metaclass(MetaAbstractDataBase,
         ('fromdate', None),
         ('todate', None),
         ('sessionstart', None),
-        ('sessionend', None),
+        ('session_end', None),
         ('filters', []),
         ('tz', None),
         ('tzinput', None),
@@ -194,7 +194,7 @@ class AbstractDataBase(with_metaclass(MetaAbstractDataBase,
 
         # FIXME: These two are never used and could be removed
         self.sessionstart = time2num(self.p.sessionstart)
-        self.sessionend = time2num(self.p.sessionend)
+        self.session_end = time2num(self.p.session_end)
 
         self._calendar = cal = self.p.calendar
         if cal is None:
@@ -216,7 +216,7 @@ class AbstractDataBase(with_metaclass(MetaAbstractDataBase,
     def _getnexteos(self):
         '''Returns the next eos using a trading calendar if available'''
         if self._clone:
-            return self.data._getnexteos()
+            return self.datafeed._getnexteos()
 
         if not len(self):
             return datetime.datetime.min, 0.0
@@ -224,7 +224,7 @@ class AbstractDataBase(with_metaclass(MetaAbstractDataBase,
         dt = self.lines.datetime[0]
         dtime = num2date(dt)
         if self._calendar is None:
-            nexteos = datetime.datetime.combine(dtime, self.p.sessionend)
+            nexteos = datetime.datetime.combine(dtime, self.p.session_end)
             nextdteos = self.date2num(nexteos)  # locl'ed -> utc-like
             nexteos = num2date(nextdteos)  # utc
             while dtime > nexteos:
@@ -260,7 +260,7 @@ class AbstractDataBase(with_metaclass(MetaAbstractDataBase,
 
         return num2date(dt, tz or self._tz, naive)
 
-    def haslivedata(self):
+    def has_live_data(self):
         return False  # must be overriden for those that can
 
     def do_qcheck(self, onoff, qlapse):
@@ -270,7 +270,7 @@ class AbstractDataBase(with_metaclass(MetaAbstractDataBase,
         qwait = max(0.0, qwait - qlapse)
         self._qcheck = qwait
 
-    def islive(self):
+    def is_live(self):
         '''If this returns True, ``Cerebro`` will deactivate ``preload`` and
         ``runonce`` because a live data source must be fetched tick by tick (or
         bar by bar)'''
@@ -296,7 +296,7 @@ class AbstractDataBase(with_metaclass(MetaAbstractDataBase,
 
         return notifs
 
-    def getfeed(self):
+    def get_backend_datafeed(self):
         return self._feed
 
     def qbuffer(self, savemem=0, replaying=False):
@@ -344,7 +344,7 @@ class AbstractDataBase(with_metaclass(MetaAbstractDataBase,
             self._filters.append((p, args, kwargs))
 
     def compensate(self, other):
-        '''Call it to let the broker know that actions on this asset will
+        '''Call it to let the broker_or_exchange know that actions on this asset will
         compensate open positions in another'''
 
         self._compensate = other
@@ -612,8 +612,8 @@ class AbstractDataBase(with_metaclass(MetaAbstractDataBase,
             #         inspect.getframeinfo(inspect.currentframe()).function,
             #         inspect.getframeinfo(inspect.currentframe()).lineno,
             #         self._name,
-            #         num2date(self.fromdate).isoformat().replace("T", " "),
-            #         num2date(dt).isoformat().replace("T", " "),
+            #         num2date(self.fromdate).isoformat().replace("T", " ")[:-3],
+            #         num2date(dt).isoformat().replace("T", " ")[:-3],
             #     ))
 
             # A bar has been loaded, adapt the time
@@ -629,7 +629,7 @@ class AbstractDataBase(with_metaclass(MetaAbstractDataBase,
                 #     print("{} Line: {}: DEBUG: {}: adapted new dt: {}".format(
                 #         inspect.getframeinfo(inspect.currentframe()).function,
                 #         inspect.getframeinfo(inspect.currentframe()).lineno,
-                #         self._name, num2date(dt).isoformat().replace("T", " "),
+                #         self._name, num2date(dt).isoformat().replace("T", " ")[:-3],
                 #     ))
                 # print_timestamp_checkpoint(
                 #     inspect.getframeinfo(inspect.currentframe()).function,
@@ -653,8 +653,8 @@ class AbstractDataBase(with_metaclass(MetaAbstractDataBase,
                 #     print("{} Line: {}: DEBUG: {}: dt: {} < self.fromdate: {}, continue".format(
                 #         inspect.getframeinfo(inspect.currentframe()).function,
                 #         inspect.getframeinfo(inspect.currentframe()).lineno,
-                #         self._name, num2date(dt).isoformat().replace("T", " "),
-                #         num2date(self.fromdate).isoformat().replace("T", " "),
+                #         self._name, num2date(dt).isoformat().replace("T", " ")[:-3],
+                #         num2date(self.fromdate).isoformat().replace("T", " ")[:-3],
                 #     ))
                 # print_timestamp_checkpoint(
                 #     inspect.getframeinfo(inspect.currentframe()).function,
@@ -670,8 +670,8 @@ class AbstractDataBase(with_metaclass(MetaAbstractDataBase,
                 #     print("{} Line: {}: DEBUG: {}: dt: {} > self.todate: {}, break".format(
                 #         inspect.getframeinfo(inspect.currentframe()).function,
                 #         inspect.getframeinfo(inspect.currentframe()).lineno,
-                #         self._name, num2date(dt).isoformat().replace("T", " "),
-                #         num2date(self.todate).isoformat().replace("T", " "),
+                #         self._name, num2date(dt).isoformat().replace("T", " ")[:-3],
+                #         num2date(self.todate).isoformat().replace("T", " ")[:-3],
                 #     ))
                 # print_timestamp_checkpoint(
                 #     inspect.getframeinfo(inspect.currentframe()).function,
@@ -704,7 +704,7 @@ class AbstractDataBase(with_metaclass(MetaAbstractDataBase,
                     #     print("{} Line: {}: DEBUG: {}: dt: {}, bar removed from system, break".format(
                     #         inspect.getframeinfo(inspect.currentframe()).function,
                     #         inspect.getframeinfo(inspect.currentframe()).lineno,
-                    #         self._name, num2date(dt).isoformat().replace("T", " "),
+                    #         self._name, num2date(dt).isoformat().replace("T", " ")[:-3],
                     #     ))
                     # print_timestamp_checkpoint(
                     #     inspect.getframeinfo(inspect.currentframe()).function,
@@ -727,7 +727,7 @@ class AbstractDataBase(with_metaclass(MetaAbstractDataBase,
                 #     print("{} Line: {}: DEBUG: {}: dt: {}, bar removed from system, continue".format(
                 #         inspect.getframeinfo(inspect.currentframe()).function,
                 #         inspect.getframeinfo(inspect.currentframe()).lineno,
-                #         self._name, num2date(dt).isoformat().replace("T", " "),
+                #         self._name, num2date(dt).isoformat().replace("T", " ")[:-3],
                 #     ))
                 # print_timestamp_checkpoint(
                 #     inspect.getframeinfo(inspect.currentframe()).function,
@@ -743,7 +743,7 @@ class AbstractDataBase(with_metaclass(MetaAbstractDataBase,
             #     print("{} Line: {}: DEBUG: {}: dt: {}, let the bar through, return True".format(
             #         inspect.getframeinfo(inspect.currentframe()).function,
             #         inspect.getframeinfo(inspect.currentframe()).lineno,
-            #         self._name, num2date(dt).isoformat().replace("T", " "),
+            #         self._name, num2date(dt).isoformat().replace("T", " ")[:-3],
             #     ))
             # print_timestamp_checkpoint(
             #     inspect.getframeinfo(inspect.currentframe()).function,
@@ -839,34 +839,34 @@ class FeedBase(with_metaclass(metabase.MetaParams, object)):
     params = () + DataBase.params._gettuple()
 
     def __init__(self):
-        self.datas = list()
+        self.datafeeds = list()
 
     def start(self):
-        for data in self.datas:
-            data.start()
+        for datafeed in self.datafeeds:
+            datafeed.start()
 
     def stop(self):
-        for data in self.datas:
-            data.stop()
+        for datafeed in self.datafeeds:
+            datafeed.stop()
 
-    def getdata(self, dataname, name=None, **kwargs):
+    def get_backend_datafeed(self, dataname, name=None, **kwargs):
         for pname, pvalue in self.p._getitems():
             kwargs.setdefault(pname, getattr(self.p, pname))
 
         kwargs['dataname'] = dataname
-        data = self._getdata(**kwargs)
+        datafeed = self._getdata(**kwargs)
 
-        data._name = name
+        datafeed._name = name
 
-        self.datas.append(data)
-        return data
+        self.datafeeds.append(datafeed)
+        return datafeed
 
     def _getdata(self, dataname, **kwargs):
         for pname, pvalue in self.p._getitems():
             kwargs.setdefault(pname, getattr(self.p, pname))
 
         kwargs['dataname'] = dataname
-        return self.DataCls(**kwargs)
+        return self.Datafeed_Cls(**kwargs)
 
 
 class MetaCSVDataBase(DataBase.__class__):
@@ -966,7 +966,7 @@ class CSVFeedBase(FeedBase):
     params = (('basepath', ''),) + CSVDataBase.params._gettuple()
 
     def _getdata(self, dataname, **kwargs):
-        return self.DataCls(dataname=self.p.basepath + dataname,
+        return self.Datafeed_Cls(dataname=self.p.basepath + dataname,
                             **self.p._getkwargs())
 
 
@@ -974,38 +974,38 @@ class DataClone(AbstractDataBase):
     _clone = True
 
     def __init__(self):
-        self.data = self.p.dataname
-        self._dataname = self.data._dataname
+        self.datafeed = self.p.dataname
+        self._dataname = self.datafeed._dataname
 
         # Copy date/session parameters
         self.p.fromdate = self.p.fromdate
         self.p.todate = self.p.todate
-        self.p.sessionstart = self.data.p.sessionstart
-        self.p.sessionend = self.data.p.sessionend
+        self.p.sessionstart = self.datafeed.p.sessionstart
+        self.p.session_end = self.datafeed.p.session_end
 
-        self.p.timeframe = self.data.p.timeframe
-        self.p.compression = self.data.p.compression
+        self.p.timeframe = self.datafeed.p.timeframe
+        self.p.compression = self.datafeed.p.compression
 
     def _start(self):
         # redefine to copy data bits from guest data
         self.start()
 
         # Copy tz infos
-        self._tz = self.data._tz
+        self._tz = self.datafeed._tz
         self.lines.datetime._settz(self._tz)
 
-        self._calendar = self.data._calendar
+        self._calendar = self.datafeed._calendar
 
         # input has already been converted by guest data
         self._tzinput = None  # no need to further converr
 
         # Copy dates/session infos
-        self.fromdate = self.data.fromdate
-        self.todate = self.data.todate
+        self.fromdate = self.datafeed.fromdate
+        self.todate = self.datafeed.todate
 
         # FIXME: if removed from guest, remove here too
-        self.sessionstart = self.data.sessionstart
-        self.sessionend = self.data.sessionend
+        self.sessionstart = self.datafeed.sessionstart
+        self.session_end = self.datafeed.session_end
 
     def start(self):
         super(DataClone, self).start()
@@ -1015,7 +1015,7 @@ class DataClone(AbstractDataBase):
     def preload(self):
         self._preloading = True
         super(DataClone, self).preload()
-        self.data.home()  # preloading data was pushed forward
+        self.datafeed.home()  # preloading data was pushed forward
         self._preloading = False
 
     def _load(self):
@@ -1024,24 +1024,24 @@ class DataClone(AbstractDataBase):
         if self._preloading:
             # data is preloaded, we are preloading too, can move
             # forward until have full bar or data source is exhausted
-            self.data.advance()
+            self.datafeed.advance()
 
-            if len(self.data) > self.data.buflen():
+            if len(self.datafeed) > self.datafeed.buflen():
                 return False
 
-            for line, dline in zip(self.lines, self.data.lines):
+            for line, dline in zip(self.lines, self.datafeed.lines):
                 line[0] = dline[0]
 
             return True
 
         # Not preloading
-        if not (len(self.data) > self._dlen):
+        if not (len(self.datafeed) > self._dlen):
             # Data not beyond last seen bar
             return False
 
         self._dlen += 1
 
-        for line, dline in zip(self.lines, self.data.lines):
+        for line, dline in zip(self.lines, self.datafeed.lines):
             line[0] = dline[0]
 
         return True

@@ -25,14 +25,14 @@ import collections
 from datetime import date, datetime, timedelta
 import threading
 
-from backtrader import BrokerBase, Order, BuyOrder, SellOrder
-from backtrader.comminfo import CommInfoBase
+from backtrader import Broker_or_Exchange_Base, Order, Buy_Order, Sell_Order
+from backtrader.commission_info import CommInfoBase
 from backtrader.feed import DataBase
 from backtrader.metabase import MetaParams
 from backtrader.position import Position
 from backtrader.utils.py3 import with_metaclass
 
-from backtrader.stores import vcstore
+from backtrader.accounts_or_stores import vcstore
 
 
 class VCCommInfo(CommInfoBase):
@@ -49,25 +49,25 @@ class VCCommInfo(CommInfoBase):
     (margin impact can be gotten from OrderState objects) and therefore it is
     left as future exercise to get it'''
 
-    def getvaluesize(self, size, price):
+    def get_value_size(self, size, price):
         # In real life the margin approaches the price
         return abs(size) * price
 
-    def getoperationcost(self, size, price):
+    def get_operating_cost(self, size, price):
         '''Returns the needed amount of cash an operation would cost'''
         # Same reasoning as above
         return abs(size) * price
 
 
-class MetaVCBroker(BrokerBase.__class__):
+class MetaVCBroker(Broker_or_Exchange_Base.__class__):
     def __init__(cls, name, bases, dct):
         '''Class has already been created ... register'''
         # Initialize the class
         super(MetaVCBroker, cls).__init__(name, bases, dct)
-        vcstore.VCStore.BrokerCls = cls
+        vcstore.VCStore.Broker_or_Exchange_Cls = cls
 
 
-class VCBroker(with_metaclass(MetaVCBroker, BrokerBase)):
+class VCBroker(with_metaclass(MetaVCBroker, Broker_or_Exchange_Base)):
     '''Broker implementation for VisualChart.
 
     This class maps the orders/positions from VisualChart to the
@@ -77,7 +77,7 @@ class VCBroker(with_metaclass(MetaVCBroker, BrokerBase)):
 
       - ``account`` (default: None)
 
-        VisualChart supports several accounts simultaneously on the broker. If
+        VisualChart supports several accounts simultaneously on the broker_or_exchange. If
         the default ``None`` is in place the 1st account in the ComTrader
         ``Accounts`` collection will be used.
 
@@ -99,7 +99,7 @@ class VCBroker(with_metaclass(MetaVCBroker, BrokerBase)):
         interface but only when the position has a "size". An update to
         indicate a position has moved to ZERO is reported by the absence of
         such position. This forces to keep accounting of the positions by
-        looking at the execution events, just like the simulation broker does
+        looking at the execution events, just like the simulation broker_or_exchange does
 
       - Commission
 
@@ -135,8 +135,8 @@ class VCBroker(with_metaclass(MetaVCBroker, BrokerBase)):
 
         # Account data
         self._acc_name = None
-        self.startingcash = self.cash = 0.0
-        self.startingvalue = self.value = 0.0
+        self.starting_cash = self.cash = 0.0
+        self.starting_value = self.value = 0.0
 
         # Position accounting
         self._lock_pos = threading.Lock()  # sync account updates
@@ -151,47 +151,47 @@ class VCBroker(with_metaclass(MetaVCBroker, BrokerBase)):
 
         # Dictionaries of values for order mapping
         self._otypes = {
-            Order.Market: self.store.vcctmod.OT_Market,
-            Order.Close: self.store.vcctmod.OT_Market,
-            Order.Limit: self.store.vcctmod.OT_Limit,
-            Order.Stop: self.store.vcctmod.OT_StopMarket,
-            Order.StopLimit: self.store.vcctmod.OT_StopLimit,
+            Order.Market: self.account_or_store.vcctmod.OT_Market,
+            Order.Close: self.account_or_store.vcctmod.OT_Market,
+            Order.Limit: self.account_or_store.vcctmod.OT_Limit,
+            Order.StopMarket: self.account_or_store.vcctmod.OT_StopMarket,
+            Order.StopLimit: self.account_or_store.vcctmod.OT_StopLimit,
         }
 
         self._osides = {
-            Order.Buy: self.store.vcctmod.OS_Buy,
-            Order.Sell: self.store.vcctmod.OS_Sell,
+            Order.Buy: self.account_or_store.vcctmod.OS_Buy,
+            Order.Sell: self.account_or_store.vcctmod.OS_Sell,
         }
 
         self._otrestriction = {
-            Order.T_None: self.store.vcctmod.TR_NoRestriction,
-            Order.T_Date: self.store.vcctmod.TR_Date,
-            Order.T_Close: self.store.vcctmod.TR_CloseAuction,
-            Order.T_Day: self.store.vcctmod.TR_Session,
+            Order.T_None: self.account_or_store.vcctmod.TR_NoRestriction,
+            Order.T_Date: self.account_or_store.vcctmod.TR_Date,
+            Order.T_Close: self.account_or_store.vcctmod.TR_CloseAuction,
+            Order.T_Day: self.account_or_store.vcctmod.TR_Session,
         }
 
         self._ovrestriction = {
-            Order.V_None: self.store.vcctmod.VR_NoRestriction,
+            Order.V_None: self.account_or_store.vcctmod.VR_NoRestriction,
         }
 
         self._futlikes = (
-            self.store.vcdsmod.IT_Future, self.store.vcdsmod.IT_Option,
-            self.store.vcdsmod.IT_Fund,
+            self.account_or_store.vcdsmod.IT_Future, self.account_or_store.vcdsmod.IT_Option,
+            self.account_or_store.vcdsmod.IT_Fund,
         )
 
     def start(self):
         super(VCBroker, self).start()
-        self.store.start(broker=self)
+        self.account_or_store.start(broker_or_exchange=self)
 
     def stop(self):
         super(VCBroker, self).stop()
-        self.store.stop()
+        self.account_or_store.stop()
 
-    def getcash(self):
+    def get_cash(self):
         # This call cannot block if no answer is available from ib
         return self.cash
 
-    def getvalue(self, datas=None):
+    def get_value(self, datas=None):
         return self.value
 
     def get_notification(self):
@@ -203,36 +203,36 @@ class VCBroker(with_metaclass(MetaVCBroker, BrokerBase)):
     def next(self):
         self.notifs.append(None)  # mark notificatino boundary
 
-    def getposition(self, data, clone=True):
+    def get_position(self, datafeed, clone=True):
         with self._lock_pos:
-            pos = self.positions[data._tradename]
+            pos = self.positions[datafeed._tradename]
             if clone:
                 return pos.clone()
 
         return pos
 
-    def getcommissioninfo(self, data):
-        if data._tradename in self.comminfo:
-            return self.comminfo[data._tradename]
+    def get_commission_info(self, datafeed):
+        if datafeed._tradename in self.commission_info:
+            return self.commission_info[datafeed._tradename]
 
-        comminfo = self.comminfo[None]
-        if comminfo is not None:
-            return comminfo
+        commission_info = self.commission_info[None]
+        if commission_info is not None:
+            return commission_info
 
-        stocklike = data._syminfo.Type in self._futlikes
+        stock_like = datafeed._syminfo.Type in self._futlikes
 
-        return VCCommInfo(mult=data._syminfo.PointValue, stocklike=stocklike)
+        return VCCommInfo(mult=datafeed._syminfo.PointValue, stock_like=stock_like)
 
-    def _makeorder(self, ordtype, owner, data,
-                   size, price=None, plimit=None,
-                   exectype=None, valid=None,
+    def _makeorder(self, order_type, owner, datafeed,
+                   size, price=None, price_limit=None,
+                   execution_type=None, valid=None,
                    tradeid=0, **kwargs):
 
-        order = self.store.vcctmod.Order()
+        order = self.account_or_store.vcctmod.Order()
         order.Account = self._acc_name
-        order.SymbolCode = data._tradename
-        order.OrderType = self._otypes[exectype]
-        order.OrderSide = self._osides[ordtype]
+        order.SymbolCode = datafeed._tradename
+        order.OrderType = self._otypes[execution_type]
+        order.OrderSide = self._osides[order_type]
 
         order.VolumeRestriction = self._ovrestriction[Order.V_None]
         order.HideVolume = 0
@@ -250,20 +250,20 @@ class VCBroker(with_metaclass(MetaVCBroker, BrokerBase)):
 
         order.StopPrice = 0.0
         order.Price = 0.0
-        if exectype == Order.Market:
+        if execution_type == Order.Market:
             pass
-        elif exectype == Order.Limit:
-            order.Price = price or plimit  # cover naming confusion cases
-        elif exectype == Order.Close:
+        elif execution_type == Order.Limit:
+            order.Price = price or price_limit  # cover naming confusion cases
+        elif execution_type == Order.Close:
             pass
-        elif exectype == Order.Stop:
+        elif execution_type == Order.StopMarket:
             order.StopPrice = price
-        elif exectype == Order.StopLimit:
+        elif execution_type == Order.StopLimit:
             order.StopPrice = price
-            order.Price = plimit
+            order.Price = price_limit
 
         order.ValidDate = None
-        if exectype == Order.Close:
+        if execution_type == Order.Close:
             order.TimeRestriction = self._otrestriction[Order.T_Close]
         else:
             if valid is None:
@@ -292,7 +292,7 @@ class VCBroker(with_metaclass(MetaVCBroker, BrokerBase)):
         order.submit(self)
 
         vco = vcorder
-        oid = self.store.vcct.SendOrder(
+        oid = self.account_or_store.vcct.SendOrder(
             vco.Account, vco.SymbolCode,
             vco.OrderType, vco.OrderSide, vco.Volume, vco.Price, vco.StopPrice,
             vco.VolumeRestriction, vco.TimeRestriction,
@@ -300,43 +300,43 @@ class VCBroker(with_metaclass(MetaVCBroker, BrokerBase)):
         )
 
         order.vcorder = oid
-        order.addcomminfo(self.getcommissioninfo(order.data))
+        order.add_commission_info(self.get_commission_info(order.datafeed))
 
         with self._lock_orders:
             self.orderbyid[oid] = order
         self.notify(order)
         return order
 
-    def buy(self, owner, data,
-            size, price=None, plimit=None,
-            exectype=None, valid=None, tradeid=0,
+    def buy(self, owner, datafeed,
+            size, price=None, price_limit=None,
+            execution_type=None, valid=None, tradeid=0,
             **kwargs):
 
-        order = BuyOrder(owner=owner, data=data,
-                         size=size, price=price, pricelimit=plimit,
-                         exectype=exectype, valid=valid, tradeid=tradeid)
+        order = Buy_Order(owner=owner, datafeed=datafeed,
+                         size=size, price=price, pricelimit=price_limit,
+                         execution_type=execution_type, valid=valid, tradeid=tradeid)
 
-        order.addinfo(**kwargs)
+        order.add_info(**kwargs)
 
-        vcorder = self._makeorder(order.ordtype, owner, data, size, price,
-                                  plimit, exectype, valid, tradeid,
+        vcorder = self._makeorder(order.order_type, owner, datafeed, size, price,
+                                  price_limit, execution_type, valid, tradeid,
                                   **kwargs)
 
         return self.submit(order, vcorder)
 
-    def sell(self, owner, data,
-             size, price=None, plimit=None,
-             exectype=None, valid=None, tradeid=0,
+    def sell(self, owner, datafeed,
+             size, price=None, price_limit=None,
+             execution_type=None, valid=None, tradeid=0,
              **kwargs):
 
-        order = SellOrder(owner=owner, data=data,
-                          size=size, price=price, pricelimit=plimit,
-                          exectype=exectype, valid=valid, tradeid=tradeid)
+        order = Sell_Order(owner=owner, datafeed=datafeed,
+                          size=size, price=price, pricelimit=price_limit,
+                          execution_type=execution_type, valid=valid, tradeid=tradeid)
 
-        order.addinfo(**kwargs)
+        order.add_info(**kwargs)
 
-        vcorder = self._makeorder(order.ordtype, owner, data, size, price,
-                                  plimit, exectype, valid, tradeid,
+        vcorder = self._makeorder(order.order_type, owner, datafeed, size, price,
+                                  price_limit, execution_type, valid, tradeid,
                                   **kwargs)
 
         return self.submit(order, vcorder)
@@ -351,8 +351,8 @@ class VCBroker(with_metaclass(MetaVCBroker, BrokerBase)):
 
         for acc in trader.Accounts:
             if self.p.account is None or self.p.account == acc.Account:
-                self.startingcash = self.cash = acc.Balance.Cash
-                self.startingvalue = self.value = acc.Balance.NetWorth
+                self.starting_cash = self.cash = acc.Balance.Cash
+                self.starting_value = self.value = acc.Balance.NetWorth
                 self._acc_name = acc.Account
                 break  # found the account
 
@@ -399,32 +399,32 @@ class VCBroker(with_metaclass(MetaVCBroker, BrokerBase)):
 
         price = Order.Price
         size = Order.Volume
-        if border.issell():
+        if border.is_sell():
             size *= -1
 
         # Find position and do a real update - accounting happens here
-        position = self.getposition(border.data, clone=False)
+        position = self.get_position(border.datafeed, clone=False)
         pprice_orig = position.price
-        psize, pprice, opened, closed = position.update(size, price)
+        position_size, position_average_price, opened, closed = position.update(size, price)
 
-        comminfo = border.comminfo
-        closedvalue = comminfo.getoperationcost(closed, pprice_orig)
-        closedcomm = comminfo.getcommission(closed, price)
+        commission_info = border.commission_info
+        closed_value = commission_info.get_operating_cost(closed, pprice_orig)
+        closed_commission = commission_info.get_commission_rate(closed, price)
 
-        openedvalue = comminfo.getoperationcost(opened, price)
-        openedcomm = comminfo.getcommission(opened, price)
+        opened_value = commission_info.get_operating_cost(opened, price)
+        opened_commission = commission_info.get_commission_rate(opened, price)
 
-        pnl = comminfo.profitandloss(-closed, pprice_orig, price)
-        margin = comminfo.getvaluesize(size, price)
+        profit_and_loss_amount = commission_info.profit_and_loss(-closed, pprice_orig, price)
+        margin = commission_info.get_value_size(size, price)
 
         # NOTE: No commission information available in the Trader interface
         # CHECK: Use reported time instead of last data time?
-        border.execute(border.data.datetime[0],
+        border.execute(border.datafeed.datetime[0],
                        size, price,
-                       closed, closedvalue, closedcomm,
-                       opened, openedvalue, openedcomm,
-                       margin, pnl,
-                       psize, pprice)  # pnl
+                       closed, closed_value, closed_commission,
+                       opened, opened_value, opened_commission,
+                       margin, profit_and_loss_amount,
+                       position_size, position_average_price)  # profit_and_loss_amount
 
         if partial:
             border.partial()

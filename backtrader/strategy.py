@@ -83,12 +83,12 @@ class MetaStrategy(StrategyBase.__class__):
 
         # INFO: If not run from cerebro, cerebro would be None
         if _obj.cerebro:
-            _obj.broker = _obj.env.broker
+            _obj.broker_or_exchange = _obj.env.broker_or_exchange
             _obj._sizer = bt.sizers.FixedSize()
             _obj._orders = list()
             _obj._orderspending = list()
             _obj._trades = collections.defaultdict(AutoDictList)
-            _obj._tradespending = list()
+            _obj._trades_pending = list()
 
             _obj.stats = _obj.observers = ItemCollection()
             _obj.analyzers = ItemCollection()
@@ -106,8 +106,8 @@ class MetaStrategy(StrategyBase.__class__):
             super(MetaStrategy, cls).dopostinit(_obj, *args, **kwargs)
 
         # INFO: If not run from cerebro, cerebro would be None
-        if _obj.cerebro:
-            _obj._sizer.set(_obj, _obj.broker)
+        if _obj.cerebro is not None:
+            _obj._sizer.set(_obj, _obj.broker_or_exchange)
 
         return _obj, args, kwargs
 
@@ -120,9 +120,9 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
     _ltype = LineIterator.StratType
 
     csv = True
-    _oldsync = False  # update clock using old methodology : data 0
+    _oldsync = False  # update clock using old methodology : datafeed 0
 
-    # keep the latest delivered data date in the line
+    # keep the latest delivered datafeed date in the line
     lines = ('datetime',)
 
     def qbuffer(self, savemem=0, replaying=False):
@@ -149,8 +149,8 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
                 ind.qbuffer(savemem=subsave)
 
         elif savemem > 0:
-            for data in self.datas:
-                data.qbuffer(replaying=replaying)
+            for datafeed in self.datafeeds:
+                datafeed.qbuffer(replaying=replaying)
 
             for line in self.lines:
                 line.qbuffer(savemem=1)
@@ -160,12 +160,12 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
                 for it in self._lineiterators[itcls]:
                     it.qbuffer(savemem=1)
 
-    def _periodset(self):
-        dataids = [id(data) for data in self.datas]
+    def _set_period(self):
+        dataids = [id(datafeed) for datafeed in self.datafeeds]
 
         _dminperiods = collections.defaultdict(list)
         for lineiter in self._lineiterators[LineIterator.IndType]:
-            # if multiple datas are used and multiple timeframes the larger
+            # if multiple datafeeds are used and multiple timeframes the larger
             # timeframe may place larger time constraints in calling next.
             clk = getattr(lineiter, '_clock', None)
             if clk is None:
@@ -175,7 +175,7 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
 
             while True:
                 if id(clk) in dataids:
-                    break  # already top-level clock (data feed)
+                    break  # already top-level clock (datafeed)
 
                 # See if the current clock has higher level clocks
                 clk2 = getattr(clk, '_clock', None)
@@ -195,32 +195,32 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
             if isinstance(clk, LineSeriesStub):
                 clk = clk.lines[0]
 
-            _dminperiods[clk].append(lineiter._minperiod)
+            _dminperiods[clk].append(lineiter._min_period)
 
-        self._minperiods = list()
-        for data in self.datas:
+        self._min_periods = list()
+        for datafeed in self.datafeeds:
 
-            # Do not only consider the data as clock but also its lines which
+            # Do not only consider the datafeed as clock but also its lines which
             # may have been individually passed as clock references and
             # discovered as clocks above
 
-            # Initialize with data min period if any
-            dlminperiods = _dminperiods[data]
+            # Initialize with datafeed min period if any
+            dlminperiods = _dminperiods[datafeed]
 
-            for l in data.lines:  # search each line for min periods
+            for l in datafeed.lines:  # search each line for min periods
                 if l in _dminperiods:
                     dlminperiods += _dminperiods[l]  # found, add it
 
             # keep the reference to the line if any was found
-            _dminperiods[data] = [max(dlminperiods)] if dlminperiods else []
+            _dminperiods[datafeed] = [max(dlminperiods)] if dlminperiods else []
 
-            dminperiod = max(_dminperiods[data] or [data._minperiod])
-            self._minperiods.append(dminperiod)
+            dminperiod = max(_dminperiods[datafeed] or [datafeed._min_period])
+            self._min_periods.append(dminperiod)
 
         # Set the minperiod
         minperiods = \
-            [x._minperiod for x in self._lineiterators[LineIterator.IndType]]
-        self._minperiod = max(minperiods or [self._minperiod])
+            [x._min_period for x in self._lineiterators[LineIterator.IndType]]
+        self._min_period = max(minperiods or [self._min_period])
 
     def _addwriter(self, writer):
         '''
@@ -230,12 +230,12 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
         '''
         self.writers.append(writer)
 
-    def _addindicator(self, indcls, *indargs, **indkwargs):
+    def _add_indicator(self, indcls, *indargs, **indkwargs):
         indcls(*indargs, **indkwargs)
 
     def _addanalyzer_slave(self, ancls, *anargs, **ankwargs):
-        '''Like _addanalyzer but meant for observers (or other entities) which
-        rely on the output of an analyzer for the data. These analyzers have
+        '''Like _add_analyzer but meant for observers (or other entities) which
+        rely on the output of an analyzer for the datafeed. These analyzers have
         not been added by the user and are kept separate from the main
         analyzers
 
@@ -248,20 +248,20 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
     def _getanalyzer_slave(self, idx):
         return self._slave_analyzers.append[idx]
 
-    def _addanalyzer(self, ancls, *anargs, **ankwargs):
+    def _add_analyzer(self, ancls, *anargs, **ankwargs):
         anname = ankwargs.pop('_name', '') or ancls.__name__.lower()
         nsuffix = next(self._alnames[anname])
         anname += str(nsuffix or '')  # 0 (first instance) gets no suffix
         analyzer = ancls(*anargs, **ankwargs)
         self.analyzers.append(analyzer, anname)
 
-    def _addobserver(self, multi, obscls, *obsargs, **obskwargs):
+    def _add_observer(self, multi, obscls, *obsargs, **obskwargs):
         obsname = obskwargs.pop('obsname', '')
         if not obsname:
             obsname = obscls.__name__.lower()
 
         if not multi:
-            newargs = list(itertools.chain(self.datas, obsargs))
+            newargs = list(itertools.chain(self.datafeeds, obsargs))
             obs = obscls(*newargs, **obskwargs)
             self.stats.append(obs, obsname)
             return
@@ -269,15 +269,15 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
         setattr(self.stats, obsname, list())
         l = getattr(self.stats, obsname)
 
-        for data in self.datas:
-            obs = obscls(data, *obsargs, **obskwargs)
+        for datafeed in self.datafeeds:
+            obs = obscls(datafeed, *obsargs, **obskwargs)
             l.append(obs)
 
-    def _getminperstatus(self):
-        # check the min period status connected to datas
-        dlens = map(operator.sub, self._minperiods, map(len, self.datas))
-        self._minperstatus = minperstatus = max(dlens)
-        return minperstatus
+    def _get_min_per_status(self):
+        # check the min period status connected to datafeeds
+        dlens = map(operator.sub, self._min_periods, map(len, self.datafeeds))
+        self._min_per_status = min_per_status = max(dlens)
+        return min_per_status
 
     def prenext_open(self):
         pass
@@ -289,10 +289,10 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
         pass
 
     def _oncepost_open(self):
-        minperstatus = self._minperstatus
-        if minperstatus < 0:
+        min_per_status = self._min_per_status
+        if min_per_status < 0:
             self.next_open()
-        elif minperstatus == 0:
+        elif min_per_status == 0:
             self.nextstart_open()  # only called for the 1st value
         else:
             self.prenext_open()
@@ -312,41 +312,41 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
         self.lines.datetime[0] = dt
         self._notify()
 
-        minperstatus = self._getminperstatus()
-        if minperstatus < 0:
+        min_per_status = self._get_min_per_status()
+        if min_per_status < 0:
             self.next()
-        elif minperstatus == 0:
+        elif min_per_status == 0:
             self.nextstart()  # only called for the 1st value
         else:
             self.prenext()
 
-        self._next_analyzers(minperstatus, once=True)
-        self._next_observers(minperstatus, once=True)
+        self._next_analyzers(min_per_status, once=True)
+        self._next_observers(min_per_status, once=True)
 
         self.clear()
 
     def _clk_update(self):
         if self._oldsync:
             clk_len = super(Strategy, self)._clk_update()
-            self.lines.datetime[0] = max(d.datetime[0]
-                                         for d in self.datas if len(d))
+            self.lines.datetime[0] = max(datafeed.datetime[0]
+                                         for datafeed in self.datafeeds if len(d))
             return clk_len
 
-        newdlens = [len(d) for d in self.datas]
+        newdlens = [len(datafeed) for datafeed in self.datafeeds]
         if any(nl > l for l, nl in zip(self._dlens, newdlens)):
             self.forward()
 
-        self.lines.datetime[0] = max(d.datetime[0]
-                                     for d in self.datas if len(d))
+        self.lines.datetime[0] = max(datafeed.datetime[0]
+                                     for datafeed in self.datafeeds if len(datafeed))
         self._dlens = newdlens
 
         return len(self)
 
     def _next_open(self):
-        minperstatus = self._minperstatus
-        if minperstatus < 0:
+        min_per_status = self._min_per_status
+        if min_per_status < 0:
             self.next_open()
-        elif minperstatus == 0:
+        elif min_per_status == 0:
             self.nextstart_open()  # only called for the 1st value
         else:
             self.prenext_open()
@@ -354,18 +354,18 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
     def _next(self, debug=False):
         super(Strategy, self)._next(debug=debug)
 
-        minperstatus = self._getminperstatus()
-        self._next_analyzers(minperstatus)
-        self._next_observers(minperstatus)
+        min_per_status = self._get_min_per_status()
+        self._next_analyzers(min_per_status)
+        self._next_observers(min_per_status)
 
         self.clear()
 
-    def _next_observers(self, minperstatus, once=False):
+    def _next_observers(self, min_per_status, once=False):
         for observer in self._lineiterators[LineIterator.ObsType]:
             for analyzer in observer._analyzers:
-                if minperstatus < 0:
+                if min_per_status < 0:
                     analyzer._next()
-                elif minperstatus == 0:
+                elif min_per_status == 0:
                     analyzer._nextstart()  # only called for the 1st value
                 else:
                     analyzer._prenext()
@@ -377,20 +377,20 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
                     else:
                         observer.forward()
 
-                if minperstatus < 0:
+                if min_per_status < 0:
                     observer.next()
-                elif minperstatus == 0:
+                elif min_per_status == 0:
                     observer.nextstart()  # only called for the 1st value
                 elif len(observer):
                     observer.prenext()
             else:
                 observer._next()
 
-    def _next_analyzers(self, minperstatus, once=False):
+    def _next_analyzers(self, min_per_status, once=False):
         for analyzer in self.analyzers:
-            if minperstatus < 0:
+            if min_per_status < 0:
                 analyzer._next()
-            elif minperstatus == 0:
+            elif min_per_status == 0:
                 analyzer._nextstart()  # only called for the 1st value
             else:
                 analyzer._prenext()
@@ -399,14 +399,14 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
         self.lines.datetime._settz(tz)
 
     def _start(self):
-        self._periodset()
+        self._set_period()
 
         for analyzer in itertools.chain(self.analyzers, self._slave_analyzers):
             analyzer._start()
 
         for obs in self.observers:
             if not isinstance(obs, list):
-                obs = [obs]  # support of multi-data observers
+                obs = [obs]  # support of multi-datafeed observers
 
             for o in obs:
                 o._start()
@@ -414,9 +414,9 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
         # change operators to stage 2
         self._stage2()
 
-        self._dlens = [len(data) for data in self.datas]
+        self._dlens = [len(datafeed) for datafeed in self.datafeeds]
 
-        self._minperstatus = MAXINT  # start in prenext
+        self._min_per_status = MAXINT  # start in prenext
 
         self.start()
 
@@ -433,7 +433,7 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
 
         headers = list()
 
-        # prepare the indicators/observers data headers
+        # prepare the indicators/observers datafeed headers
         for iocsv in self.indobscsv:
             name = iocsv.plotinfo.plotname or iocsv.__class__.__name__
             headers.append(name)
@@ -477,8 +477,8 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
         ainfo = wrinfo.Analyzers
 
         # Internal Value Analyzer
-        ainfo.Value.Begin = self.broker.startingcash
-        ainfo.Value.End = self.broker.getvalue()
+        ainfo.Value.Begin = self.broker_or_exchange.starting_cash
+        ainfo.Value.End = self.broker_or_exchange.get_value()
 
         # no slave analyzers for writer
         for aname, analyzer in self.analyzers.getitems():
@@ -493,7 +493,7 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
         for analyzer in itertools.chain(self.analyzers, self._slave_analyzers):
             analyzer._stop()
 
-        # change operators back to stage 1 - allows reuse of datas
+        # change operators back to stage 1 - allows reuse of datafeeds
         self._stage1()
 
     def stop(self):
@@ -506,9 +506,9 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
     def clear(self):
         self._orders.extend(self._orderspending)
         self._orderspending = list()
-        self._tradespending = list()
+        self._trades_pending = list()
 
-    def _addnotification(self, order, quicknotify=False):
+    def _add_notification(self, order, quicknotify=False):
         if not order.p.simulated:
             self._orderspending.append(order)
 
@@ -521,61 +521,61 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
                 self._notify(qorders=qorders, qtrades=qtrades)
             return
 
-        tradedata = order.data._compensate
+        tradedata = order.datafeed._compensate
         if tradedata is None:
-            tradedata = order.data
+            tradedata = order.datafeed
 
         datatrades = self._trades[tradedata][order.tradeid]
         if not datatrades:
-            trade = Trade(data=tradedata, tradeid=order.tradeid,
+            trade = Trade(datafeed=tradedata, tradeid=order.tradeid,
                           historyon=self._tradehistoryon)
             datatrades.append(trade)
         else:
             trade = datatrades[-1]
 
-        for exbit in order.executed.iterpending():
-            if exbit is None:
+        for execution_bit in order.executed.iterate_pending():
+            if execution_bit is None:
                 break
 
-            if exbit.closed:
+            if execution_bit.closed:
                 trade.update(order,
-                             exbit.closed,
-                             exbit.price,
-                             exbit.closedvalue,
-                             exbit.closedcomm,
-                             exbit.pnl,
-                             comminfo=order.comminfo)
+                             execution_bit.closed,
+                             execution_bit.price,
+                             execution_bit.closed_value,
+                             execution_bit.closed_commission,
+                             execution_bit.profit_and_loss_amount,
+                             commission_info=order.commission_info)
 
                 if trade.isclosed:
-                    self._tradespending.append(copy.copy(trade))
+                    self._trades_pending.append(copy.copy(trade))
                     if quicknotify:
                         qtrades.append(copy.copy(trade))
 
             # Update it if needed
-            if exbit.opened:
+            if execution_bit.opened:
                 if trade.isclosed:
-                    trade = Trade(data=tradedata, tradeid=order.tradeid,
+                    trade = Trade(datafeed=tradedata, tradeid=order.tradeid,
                                   historyon=self._tradehistoryon)
                     datatrades.append(trade)
 
                 trade.update(order,
-                             exbit.opened,
-                             exbit.price,
-                             exbit.openedvalue,
-                             exbit.openedcomm,
-                             exbit.pnl,
-                             comminfo=order.comminfo)
+                             execution_bit.opened,
+                             execution_bit.price,
+                             execution_bit.opened_value,
+                             execution_bit.opened_commission,
+                             execution_bit.profit_and_loss_amount,
+                             commission_info=order.commission_info)
 
                 # This extra check covers the case in which different tradeid
                 # orders have put the position down to 0 and the next order
                 # "opens" a position but "closes" the trade
                 if trade.isclosed:
-                    self._tradespending.append(copy.copy(trade))
+                    self._trades_pending.append(copy.copy(trade))
                     if quicknotify:
                         qtrades.append(copy.copy(trade))
 
             if trade.justopened:
-                self._tradespending.append(copy.copy(trade))
+                self._trades_pending.append(copy.copy(trade))
                 if quicknotify:
                     qtrades.append(copy.copy(trade))
 
@@ -591,10 +591,10 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
             proctrades = qtrades
         else:
             procorders = self._orderspending
-            proctrades = self._tradespending
+            proctrades = self._trades_pending
 
         for order in procorders:
-            if order.exectype != order.Historical or order.histnotify:
+            if order.execution_type != order.Historical or order.histnotify:
                 self.notify_order(order)
             for analyzer in itertools.chain(self.analyzers,
                                             self._slave_analyzers):
@@ -609,10 +609,10 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
         if qorders:
             return  # cash is notified on a regular basis
 
-        cash = self.broker.getcash()
-        value = self.broker.getvalue()
-        fundvalue = self.broker.fundvalue
-        fundshares = self.broker.fundshares
+        cash = self.broker_or_exchange.get_cash()
+        value = self.broker_or_exchange.get_value()
+        fundvalue = self.broker_or_exchange.fundvalue
+        fundshares = self.broker_or_exchange.fundshares
 
         self.notify_cashvalue(cash, value)
         self.notify_fund(cash, value, fundvalue, fundshares)
@@ -681,7 +681,7 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
             allowed for timers or else returns ``False``
 
           - ``tzdata`` which can be either ``None`` (default), a ``pytz``
-            instance or a ``data feed`` instance.
+            instance or a ``datafeed`` instance.
 
             ``None``: ``when`` is interpreted at face value (which translates
             to handling it as if it where UTC even if it's not)
@@ -689,17 +689,17 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
             ``pytz`` instance: ``when`` will be interpreted as being specified
             in the local time specified by the timezone instance.
 
-            ``data feed`` instance: ``when`` will be interpreted as being
+            ``datafeed`` instance: ``when`` will be interpreted as being
             specified in the local time specified by the ``tz`` parameter of
-            the data feed instance.
+            the datafeed instance.
 
             **Note**: If ``when`` is either ``SESSION_START`` or
-              ``SESSION_END`` and ``tzdata`` is ``None``, the 1st *data feed*
-              in the system (aka ``self.data0``) will be used as the reference
+              ``SESSION_END`` and ``tzdata`` is ``None``, the 1st *datafeed*
+              in the system (aka ``self.datafeed0``) will be used as the reference
               to find out the session times.
 
           - ``cheat`` (default ``False``) if ``True`` the timer will be called
-            before the broker has a chance to evaluate the orders. This opens
+            before the broker_or_exchange has a chance to evaluate the orders. This opens
             the chance to issue orders based on opening price for example right
             before the session starts
 
@@ -733,7 +733,7 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
 
     def notify_cashvalue(self, cash, value):
         '''
-        Receives the current fund value, value status of the strategy's broker
+        Receives the current fund value, value status of the strategy's broker_or_exchange
         '''
         pass
 
@@ -755,47 +755,47 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
         '''
         pass
 
-    def notify_store(self, msg, *args, **kwargs):
+    def notify_account_or_store(self, msg, *args, **kwargs):
         '''Receives a notification from a store provider'''
         pass
 
-    def notify_data(self, data, status, *args, **kwargs):
-        '''Receives a notification from data'''
+    def datafeed_notification(self, datafeed, status, *args, **kwargs):
+        '''Receives a notification from datafeed'''
         pass
 
-    def getdatanames(self):
+    def get_datafeed_names(self):
         '''
-        Returns a list of the existing data names
+        Returns a list of the existing datafeed names
         '''
-        return keys(self.env.datasbyname)
+        return keys(self.env.datafeeds_by_name)
 
-    def getdatabyname(self, name):
+    def get_datafeed_by_name(self, name):
         '''
-        Returns a given data by name using the environment (cerebro)
+        Returns a given datafeed by name using the environment (cerebro)
         '''
-        return self.env.datasbyname[name]
+        return self.env.datafeeds_by_name[name]
 
     def cancel(self, order):
-        '''Cancels the order in the broker'''
-        self.broker.cancel(order)
+        '''Cancels the order in the broker_or_exchange'''
+        self.broker_or_exchange.cancel(order)
 
-    def buy(self, data=None,
-            size=None, price=None, plimit=None,
-            exectype=None, valid=None, tradeid=0, oco=None,
-            trailamount=None, trailpercent=None,
+    def buy(self, datafeed=None,
+            size=None, price=None, price_limit=None,
+            execution_type=None, valid=None, tradeid=0, oco=None,
+            trailing_amount=None, trailing_percent=None,
             parent=None, transmit=True,
             **kwargs):
-        '''Create a buy (long) order and send it to the broker
+        '''Create a buy (long) order and send it to the broker_or_exchange
 
-          - ``data`` (default: ``None``)
+          - ``datafeed`` (default: ``None``)
 
-            For which data the order has to be created. If ``None`` then the
-            first data in the system, ``self.datas[0] or self.data0`` (aka
-            ``self.data``) will be used
+            For which datafeed the order has to be created. If ``None`` then the
+            first datafeed in the system, ``self.datafeeds[0] or self.datafeed0`` (aka
+            ``self.datafeed``) will be used
 
           - ``size`` (default: ``None``)
 
-            Size to use (positive) of units of data to use for the order.
+            Size to use (positive) of units of datafeed to use for the order.
 
             If ``None`` the ``sizer`` instance retrieved via ``getsizer`` will
             be used to determine the size.
@@ -808,31 +808,31 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
             ``None`` is valid for ``Market`` and ``Close`` orders (the market
             determines the price)
 
-            For ``Limit``, ``Stop`` and ``StopLimit`` orders this value
+            For ``Limit``, ``StopMarket`` and ``StopLimit`` orders this value
             determines the trigger point (in the case of ``Limit`` the trigger
             is obviously at which price the order should be matched)
 
-          - ``plimit`` (default: ``None``)
+          - ``price_limit`` (default: ``None``)
 
             Only applicable to ``StopLimit`` orders. This is the price at which
             to set the implicit *Limit* order, once the *Stop* has been
             triggered (for which ``price`` has been used)
 
-          - ``trailamount`` (default: ``None``)
+          - ``trailing_amount`` (default: ``None``)
 
             If the order type is StopTrail or StopTrailLimit, this is an
             absolute amount which determines the distance to the price (below
             for a Sell order and above for a buy order) to keep the trailing
             stop
 
-          - ``trailpercent`` (default: ``None``)
+          - ``trailing_percent`` (default: ``None``)
 
             If the order type is StopTrail or StopTrailLimit, this is a
             percentage amount which determines the distance to the price (below
             for a Sell order and above for a buy order) to keep the trailing
-            stop (if ``trailamount`` is also specified it will be used)
+            stop (if ``trailing_amount`` is also specified it will be used)
 
-          - ``exectype`` (default: ``None``)
+          - ``execution_type`` (default: ``None``)
 
             Possible values:
 
@@ -843,7 +843,7 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
             - ``Order.Limit``. An order which can only be executed at the given
               ``price`` or better
 
-            - ``Order.Stop``. An order which is triggered at ``price`` and
+            - ``Order.StopMarket``. An order which is triggered at ``price`` and
               executed like an ``Order.Market`` order
 
             - ``Order.StopLimit``. An order which is triggered at ``price`` and
@@ -854,11 +854,11 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
               closing price of the session (usually during a closing auction)
 
             - ``Order.StopTrail``. An order which is triggered at ``price``
-              minus ``trailamount`` (or ``trailpercent``) and which is updated
+              minus ``trailing_amount`` (or ``trailing_percent``) and which is updated
               if the price moves away from the stop
 
             - ``Order.StopTrailLimit``. An order which is triggered at
-              ``price`` minus ``trailamount`` (or ``trailpercent``) and which
+              ``price`` minus ``trailing_amount`` (or ``trailing_percent``) and which
               is updated if the price moves away from the stop
 
           - ``valid`` (default: ``None``)
@@ -908,12 +908,12 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
           - ``transmit`` (default: ``True``)
 
             Indicates if the order has to be **transmitted**, ie: not only
-            placed in the broker but also issued. This is meant for example to
+            placed in the broker_or_exchange but also issued. This is meant for example to
             control bracket orders, in which one disables the transmission for
             the parent and 1st set of children and activates it for the last
             children, which triggers the full placement of all bracket orders.
 
-          - ``**kwargs``: additional broker implementations may support extra
+          - ``**kwargs``: additional broker_or_exchange implementations may support extra
             parameters. ``backtrader`` will pass the *kwargs* down to the
             created order objects
 
@@ -931,54 +931,54 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
           - the submitted order
 
         '''
-        if isinstance(data, string_types):
-            data = self.getdatabyname(data)
+        if isinstance(datafeed, string_types):
+            datafeed = self.get_datafeed_by_name(datafeed)
 
-        data = data if data is not None else self.datas[0]
-        size = size if size is not None else self.getsizing(data, isbuy=True)
+        datafeed = datafeed if datafeed is not None else self.datafeeds[0]
+        size = size if size is not None else self.getsizing(datafeed, is_buy=True)
 
         if size:
-            return self.broker.buy(
-                self, data,
-                size=abs(size), price=price, plimit=plimit,
-                exectype=exectype, valid=valid, tradeid=tradeid, oco=oco,
-                trailamount=trailamount, trailpercent=trailpercent,
+            return self.broker_or_exchange.buy(
+                self, datafeed,
+                size=abs(size), price=price, price_limit=price_limit,
+                execution_type=execution_type, valid=valid, tradeid=tradeid, oco=oco,
+                trailing_amount=trailing_amount, trailing_percent=trailing_percent,
                 parent=parent, transmit=transmit,
                 **kwargs)
 
         return None
 
-    def sell(self, data=None,
-             size=None, price=None, plimit=None,
-             exectype=None, valid=None, tradeid=0, oco=None,
-             trailamount=None, trailpercent=None,
+    def sell(self, datafeed=None,
+             size=None, price=None, price_limit=None,
+             execution_type=None, valid=None, tradeid=0, oco=None,
+             trailing_amount=None, trailing_percent=None,
              parent=None, transmit=True,
              **kwargs):
         '''
-        To create a sell (short) order and send it to the broker
+        To create a sell (short) order and send it to the broker_or_exchange
 
         See the documentation for ``buy`` for an explanation of the parameters
 
         Returns: the submitted order
         '''
-        if isinstance(data, string_types):
-            data = self.getdatabyname(data)
+        if isinstance(datafeed, string_types):
+            datafeed = self.get_datafeed_by_name(datafeed)
 
-        data = data if data is not None else self.datas[0]
-        size = size if size is not None else self.getsizing(data, isbuy=False)
+        datafeed = datafeed if datafeed is not None else self.datafeeds[0]
+        size = size if size is not None else self.getsizing(datafeed, is_buy=False)
 
         if size:
-            return self.broker.sell(
-                self, data,
-                size=abs(size), price=price, plimit=plimit,
-                exectype=exectype, valid=valid, tradeid=tradeid, oco=oco,
-                trailamount=trailamount, trailpercent=trailpercent,
+            return self.broker_or_exchange.sell(
+                self, datafeed,
+                size=abs(size), price=price, price_limit=price_limit,
+                execution_type=execution_type, valid=valid, tradeid=tradeid, oco=oco,
+                trailing_amount=trailing_amount, trailing_percent=trailing_percent,
                 parent=parent, transmit=transmit,
                 **kwargs)
 
         return None
 
-    def close(self, data=None, size=None, **kwargs):
+    def close(self, datafeed=None, size=None, **kwargs):
         '''
         Counters a long/short position closing it
 
@@ -991,25 +991,25 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
 
         Returns: the submitted order
         '''
-        if isinstance(data, string_types):
-            data = self.getdatabyname(data)
-        elif data is None:
-            data = self.data
+        if isinstance(datafeed, string_types):
+            datafeed = self.get_datafeed_by_name(datafeed)
+        elif datafeed is None:
+            datafeed = self.datafeed
 
-        possize = self.getposition(data, self.broker).size
+        possize = self.get_position(datafeed, self.broker_or_exchange).size
         size = abs(size if size is not None else possize)
 
         if possize > 0:
-            return self.sell(data=data, size=size, **kwargs)
+            return self.sell(datafeed=datafeed, size=size, **kwargs)
         elif possize < 0:
-            return self.buy(data=data, size=size, **kwargs)
+            return self.buy(datafeed=datafeed, size=size, **kwargs)
 
         return None
 
-    def buy_bracket(self, data=None, size=None, price=None, plimit=None,
-                    exectype=bt.Order.Limit, valid=None, tradeid=0,
-                    trailamount=None, trailpercent=None, oargs={},
-                    stopprice=None, stopexec=bt.Order.Stop, stopargs={},
+    def buy_bracket(self, datafeed=None, size=None, price=None, price_limit=None,
+                    execution_type=bt.Order.Limit, valid=None, tradeid=0,
+                    trailing_amount=None, trailing_percent=None, oargs={},
+                    stopprice=None, stopexec=bt.Order.StopMarket, stopargs={},
                     limitprice=None, limitexec=bt.Order.Limit, limitargs={},
                     **kwargs):
         '''
@@ -1025,15 +1025,15 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
 
         See below for the different parameters
 
-          - ``data`` (default: ``None``)
+          - ``datafeed`` (default: ``None``)
 
-            For which data the order has to be created. If ``None`` then the
-            first data in the system, ``self.datas[0] or self.data0`` (aka
-            ``self.data``) will be used
+            For which datafeed the order has to be created. If ``None`` then the
+            first datafeed in the system, ``self.datafeeds[0] or self.datafeed0`` (aka
+            ``self.datafeed``) will be used
 
           - ``size`` (default: ``None``)
 
-            Size to use (positive) of units of data to use for the order.
+            Size to use (positive) of units of datafeed to use for the order.
 
             If ``None`` the ``sizer`` instance retrieved via ``getsizer`` will
             be used to determine the size.
@@ -1048,31 +1048,31 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
             ``None`` is valid for ``Market`` and ``Close`` orders (the market
             determines the price)
 
-            For ``Limit``, ``Stop`` and ``StopLimit`` orders this value
+            For ``Limit``, ``StopMarket`` and ``StopLimit`` orders this value
             determines the trigger point (in the case of ``Limit`` the trigger
             is obviously at which price the order should be matched)
 
-          - ``plimit`` (default: ``None``)
+          - ``price_limit`` (default: ``None``)
 
             Only applicable to ``StopLimit`` orders. This is the price at which
             to set the implicit *Limit* order, once the *Stop* has been
             triggered (for which ``price`` has been used)
 
-          - ``trailamount`` (default: ``None``)
+          - ``trailing_amount`` (default: ``None``)
 
             If the order type is StopTrail or StopTrailLimit, this is an
             absolute amount which determines the distance to the price (below
             for a Sell order and above for a buy order) to keep the trailing
             stop
 
-          - ``trailpercent`` (default: ``None``)
+          - ``trailing_percent`` (default: ``None``)
 
             If the order type is StopTrail or StopTrailLimit, this is a
             percentage amount which determines the distance to the price (below
             for a Sell order and above for a buy order) to keep the trailing
-            stop (if ``trailamount`` is also specified it will be used)
+            stop (if ``trailing_amount`` is also specified it will be used)
 
-          - ``exectype`` (default: ``bt.Order.Limit``)
+          - ``execution_type`` (default: ``bt.Order.Limit``)
 
             Possible values: (see the documentation for the method ``buy``
 
@@ -1090,7 +1090,7 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
             order. Arguments from the default ``**kwargs`` will be applied on
             top of this.
 
-          - ``**kwargs``: additional broker implementations may support extra
+          - ``**kwargs``: additional broker_or_exchange implementations may support extra
             parameters. ``backtrader`` will pass the *kwargs* down to the
             created order objects
 
@@ -1104,7 +1104,7 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
 
             Specific price for the *low side* stop order
 
-          - ``stopexec`` (default: ``bt.Order.Stop``)
+          - ``stopexec`` (default: ``bt.Order.StopMarket``)
 
             Specific execution type for the *low side* order
 
@@ -1144,9 +1144,9 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
         '''
 
         kargs = dict(size=size,
-                     data=data, price=price, plimit=plimit, exectype=exectype,
+                     datafeed=datafeed, price=price, price_limit=price_limit, execution_type=execution_type,
                      valid=valid, tradeid=tradeid,
-                     trailamount=trailamount, trailpercent=trailpercent)
+                     trailing_amount=trailing_amount, trailing_percent=trailing_percent)
         kargs.update(oargs)
         kargs.update(kwargs)
         kargs['transmit'] = limitexec is None and stopexec is None
@@ -1154,7 +1154,7 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
 
         if stopexec is not None and stopprice is not None:
             # low side / stop
-            kargs = dict(data=data, price=stopprice, exectype=stopexec,
+            kargs = dict(datafeed=datafeed, price=stopprice, execution_type=stopexec,
                          valid=valid, tradeid=tradeid)
             kargs.update(stopargs)
             kargs.update(kwargs)
@@ -1167,7 +1167,7 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
 
         if limitexec is not None and limitprice is not None:
             # high side / limit
-            kargs = dict(data=data, price=limitprice, exectype=limitexec,
+            kargs = dict(datafeed=datafeed, price=limitprice, execution_type=limitexec,
                          valid=valid, tradeid=tradeid)
             kargs.update(limitargs)
             kargs.update(kwargs)
@@ -1180,12 +1180,12 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
 
         return [o, ostop, olimit]
 
-    def sell_bracket(self, data=None,
-                     size=None, price=None, plimit=None,
-                     exectype=bt.Order.Limit, valid=None, tradeid=0,
-                     trailamount=None, trailpercent=None,
+    def sell_bracket(self, datafeed=None,
+                     size=None, price=None, price_limit=None,
+                     execution_type=bt.Order.Limit, valid=None, tradeid=0,
+                     trailing_amount=None, trailing_percent=None,
                      oargs={},
-                     stopprice=None, stopexec=bt.Order.Stop, stopargs={},
+                     stopprice=None, stopexec=bt.Order.StopMarket, stopargs={},
                      limitprice=None, limitexec=bt.Order.Limit, limitargs={},
                      **kwargs):
         '''
@@ -1216,9 +1216,9 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
         '''
 
         kargs = dict(size=size,
-                     data=data, price=price, plimit=plimit, exectype=exectype,
+                     datafeed=datafeed, price=price, price_limit=price_limit, execution_type=execution_type,
                      valid=valid, tradeid=tradeid,
-                     trailamount=trailamount, trailpercent=trailpercent)
+                     trailing_amount=trailing_amount, trailing_percent=trailing_percent)
         kargs.update(oargs)
         kargs.update(kwargs)
         kargs['transmit'] = limitexec is None and stopexec is None
@@ -1226,7 +1226,7 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
 
         if stopexec is not None and stopprice is not None:
             # high side / stop
-            kargs = dict(data=data, price=stopprice, exectype=stopexec,
+            kargs = dict(datafeed=datafeed, price=stopprice, execution_type=stopexec,
                          valid=valid, tradeid=tradeid)
             kargs.update(stopargs)
             kargs.update(kwargs)
@@ -1239,7 +1239,7 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
 
         if limitexec is not None and limitprice is not None:
             # low side / limit
-            kargs = dict(data=data, price=limitprice, exectype=limitexec,
+            kargs = dict(datafeed=datafeed, price=limitprice, execution_type=limitexec,
                          valid=valid, tradeid=tradeid)
             kargs.update(limitargs)
             kargs.update(kwargs)
@@ -1252,7 +1252,7 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
 
         return [o, ostop, olimit]
 
-    def order_target_size(self, data=None, target=0, **kwargs):
+    def order_target_size(self, datafeed=None, target=0, **kwargs):
         '''
         Place an order to rebalance a position to have final size of ``target``
 
@@ -1271,24 +1271,24 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
 
           - ``None`` if no order has been issued (``target == position.size``)
         '''
-        if isinstance(data, string_types):
-            data = self.getdatabyname(data)
-        elif data is None:
-            data = self.data
+        if isinstance(datafeed, string_types):
+            datafeed = self.get_datafeed_by_name(datafeed)
+        elif datafeed is None:
+            datafeed = self.datafeed
 
-        possize = self.getposition(data, self.broker).size
+        possize = self.get_position(datafeed, self.broker_or_exchange).size
         if not target and possize:
-            return self.close(data=data, size=possize, **kwargs)
+            return self.close(datafeed=datafeed, size=possize, **kwargs)
 
         elif target > possize:
-            return self.buy(data=data, size=target - possize, **kwargs)
+            return self.buy(datafeed=datafeed, size=target - possize, **kwargs)
 
         elif target < possize:
-            return self.sell(data=data, size=possize - target, **kwargs)
+            return self.sell(datafeed=datafeed, size=possize - target, **kwargs)
 
         return None  # no execution target == possize
 
-    def order_target_value(self, data=None, target=0.0, price=None, **kwargs):
+    def order_target_value(self, datafeed=None, target=0.0, price=None, **kwargs):
         '''
         Place an order to rebalance a position to have final value of
         ``target``
@@ -1296,9 +1296,9 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
         The current ``value`` is taken into account as the start point to
         achieve ``target``
 
-          - If no ``target`` then close postion on data
-          - If ``target`` > ``value`` then buy on data
-          - If ``target`` < ``value`` then sell on data
+          - If no ``target`` then close postion on datafeed
+          - If ``target`` > ``value`` then buy on datafeed
+          - If ``target`` < ``value`` then sell on datafeed
 
         It returns either:
 
@@ -1309,33 +1309,33 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
           - ``None`` if no order has been issued
         '''
 
-        if isinstance(data, string_types):
-            data = self.getdatabyname(data)
-        elif data is None:
-            data = self.data
+        if isinstance(datafeed, string_types):
+            datafeed = self.get_datafeed_by_name(datafeed)
+        elif datafeed is None:
+            datafeed = self.datafeed
 
-        possize = self.getposition(data, self.broker).size
+        possize = self.get_position(datafeed, self.broker_or_exchange).size
         if not target and possize:  # closing a position
-            return self.close(data=data, size=possize, price=price, **kwargs)
+            return self.close(datafeed=datafeed, size=possize, price=price, **kwargs)
 
         else:
-            value = self.broker.getvalue(datas=[data])
-            comminfo = self.broker.getcommissioninfo(data)
+            value = self.broker_or_exchange.get_value(datafeed=[datafeed])
+            commission_info = self.broker_or_exchange.get_commission_info(datafeed)
 
             # Make sure a price is there
-            price = price if price is not None else data.close[0]
+            price = price if price is not None else datafeed.close[0]
 
             if target > value:
-                size = comminfo.getsize(price, target - value)
-                return self.buy(data=data, size=size, price=price, **kwargs)
+                size = commission_info.get_size(price, target - value)
+                return self.buy(datafeed=datafeed, size=size, price=price, **kwargs)
 
             elif target < value:
-                size = comminfo.getsize(price, value - target)
-                return self.sell(data=data, size=size, price=price, **kwargs)
+                size = commission_info.get_size(price, value - target)
+                return self.sell(datafeed=datafeed, size=size, price=price, **kwargs)
 
         return None  # no execution size == possize
 
-    def order_target_percent(self, data=None, target=0.0, **kwargs):
+    def order_target_percent(self, datafeed=None, target=0.0, **kwargs):
         '''
         Place an order to rebalance a position to have final value of
         ``target`` percentage of current portfolio ``value``
@@ -1373,71 +1373,71 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
 
           - ``None`` if no order has been issued (``target == position.size``)
         '''
-        if isinstance(data, string_types):
-            data = self.getdatabyname(data)
-        elif data is None:
-            data = self.data
+        if isinstance(datafeed, string_types):
+            datafeed = self.get_datafeed_by_name(datafeed)
+        elif datafeed is None:
+            datafeed = self.datafeed
 
-        possize = self.getposition(data, self.broker).size
-        target *= self.broker.getvalue()
+        possize = self.get_position(datafeed, self.broker_or_exchange).size
+        target *= self.broker_or_exchange.get_value()
 
-        return self.order_target_value(data=data, target=target, **kwargs)
+        return self.order_target_value(datafeed=datafeed, target=target, **kwargs)
 
-    def getposition(self, data=None, broker=None):
+    def get_position(self, datafeed=None, broker_or_exchange=None):
         '''
-        Returns the current position for a given data in a given broker.
+        Returns the current position for a given datafeed in a given broker_or_exchange.
 
-        If both are None, the main data and the default broker will be used
+        If both are None, the main datafeed and the default broker_or_exchange will be used
 
         A property ``position`` is also available
         '''
-        data = data if data is not None else self.datas[0]
-        broker = broker or self.broker
-        return broker.getposition(data)
+        datafeed = datafeed if datafeed is not None else self.datafeeds[0]
+        broker_or_exchange = broker_or_exchange or self.broker_or_exchange
+        return broker_or_exchange.get_position(datafeed)
 
-    position = property(getposition)
+    position = property(get_position)
 
-    def getpositionbyname(self, name=None, broker=None):
+    def getpositionbyname(self, name=None, broker_or_exchange=None):
         '''
-        Returns the current position for a given name in a given broker.
+        Returns the current position for a given name in a given broker_or_exchange.
 
-        If both are None, the main data and the default broker will be used
+        If both are None, the main datafeed and the default broker_or_exchange will be used
 
         A property ``positionbyname`` is also available
         '''
-        data = self.datas[0] if not name else self.getdatabyname(name)
-        broker = broker or self.broker
-        return broker.getposition(data)
+        datafeed = self.datafeeds[0] if not name else self.get_datafeed_by_name(name)
+        broker_or_exchange = broker_or_exchange or self.broker_or_exchange
+        return broker_or_exchange.get_position(datafeed)
 
     positionbyname = property(getpositionbyname)
 
-    def getpositions(self, broker=None):
+    def get_positions(self, broker_or_exchange=None):
         '''
-        Returns the current by data positions directly from the broker
+        Returns the current by positions directly from the broker_or_exchange
 
-        If the given ``broker`` is None, the default broker will be used
+        If the given ``broker_or_exchange`` is None, the default broker_or_exchange will be used
 
         A property ``positions`` is also available
         '''
-        broker = broker or self.broker
-        return broker.positions
+        broker_or_exchange = broker_or_exchange or self.broker_or_exchange
+        return broker_or_exchange.positions
 
-    positions = property(getpositions)
+    positions = property(get_positions)
 
-    def getpositionsbyname(self, broker=None):
+    def getpositionsbyname(self, broker_or_exchange=None):
         '''
-        Returns the current by name positions directly from the broker
+        Returns the current by name positions directly from the broker_or_exchange
 
-        If the given ``broker`` is None, the default broker will be used
+        If the given ``broker_or_exchange`` is None, the default broker_or_exchange will be used
 
         A property ``positionsbyname`` is also available
         '''
-        broker = broker or self.broker
-        positions = broker.positions
+        broker_or_exchange = broker_or_exchange or self.broker_or_exchange
+        positions = broker_or_exchange.positions
 
         posbyname = collections.OrderedDict()
-        for name, data in iteritems(self.env.datasbyname):
-            posbyname[name] = positions[data]
+        for name, datafeed in iteritems(self.env.datafeeds_by_name):
+            posbyname[name] = positions[datafeed]
 
         return posbyname
 
@@ -1454,7 +1454,7 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
         Replace the default (fixed stake) sizer
         '''
         self._sizer = sizer
-        sizer.set(self, self.broker)
+        sizer.set(self, self.broker_or_exchange)
         return sizer
 
     def getsizer(self):
@@ -1468,13 +1468,13 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
 
     sizer = property(getsizer, setsizer)
 
-    def getsizing(self, data=None, isbuy=True):
+    def getsizing(self, datafeed=None, is_buy=True):
         '''
         Return the stake calculated by the sizer instance for the current
         situation
         '''
-        data = data if data is not None else self.datas[0]
-        return self._sizer.getsizing(data, isbuy=isbuy)
+        datafeed = datafeed if datafeed is not None else self.datafeeds[0]
+        return self._sizer.getsizing(datafeed, is_buy=is_buy)
 
 
 class MetaSigStrategy(Strategy.__class__):
@@ -1496,17 +1496,17 @@ class MetaSigStrategy(Strategy.__class__):
 
         _obj._signals = collections.defaultdict(list)
 
-        _data = _obj.p._data
-        if _data is None:
-            _obj._dtarget = _obj.data0
-        elif isinstance(_data, integer_types):
-            _obj._dtarget = _obj.datas[_data]
-        elif isinstance(_data, string_types):
-            _obj._dtarget = _obj.getdatabyname(_data)
-        elif isinstance(_data, bt.LineRoot):
-            _obj._dtarget = _data
+        _datafeed = _obj.p._datafeed
+        if _datafeed is None:
+            _obj._dtarget = _obj.datafeed0
+        elif isinstance(_datafeed, integer_types):
+            _obj._dtarget = _obj.datafeeds[_datafeed]
+        elif isinstance(_datafeed, string_types):
+            _obj._dtarget = _obj.get_datafeed_by_name(_datafeed)
+        elif isinstance(_datafeed, bt.LineRoot):
+            _obj._dtarget = _datafeed
         else:
-            _obj._dtarget = _obj.data0
+            _obj._dtarget = _obj.datafeed0
 
         return _obj, args, kwargs
 
@@ -1595,18 +1595,18 @@ class SignalStrategy(with_metaclass(MetaSigStrategy, Strategy)):
       - ``_concurrent`` (default: ``False``): allow orders to be issued even if
         orders are already pending execution
 
-      - ``_data`` (default: ``None``): if multiple datas are present in the
+      - ``_datafeed`` (default: ``None``): if multiple datafeeds are present in the
         system which is the target for orders. This can be
 
-        - ``None``: The first data in the system will be used
+        - ``None``: The first datafeed in the system will be used
 
-        - An ``int``: indicating the data that was inserted at that position
+        - An ``int``: indicating the datafeed that was inserted at that position
 
-        - An ``str``: name given to the data when creating it (parameter
-          ``name``) or when adding it cerebro with ``cerebro.adddata(...,
+        - An ``str``: name given to the datafeed when creating it (parameter
+          ``name``) or when adding it cerebro with ``cerebro.add_datafeed(...,
           name=)``
 
-        - A ``data`` instance
+        - A ``datafeed`` instance
 
     '''
 
@@ -1614,7 +1614,7 @@ class SignalStrategy(with_metaclass(MetaSigStrategy, Strategy)):
         ('signals', []),
         ('_accumulate', False),
         ('_concurrent', False),
-        ('_data', None),
+        ('_datafeed', None),
     )
 
     def _start(self):
@@ -1693,7 +1693,7 @@ class SignalStrategy(with_metaclass(MetaSigStrategy, Strategy)):
         s_leave = not self._shortexit and s_leave
 
         # Take size and start logic
-        size = self.getposition(self._dtarget).size
+        size = self.get_position(self._dtarget).size
         if not size:
             if ls_long or l_enter:
                 self._sentinel = self.buy(self._dtarget)

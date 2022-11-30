@@ -134,20 +134,20 @@ def runstrategy():
         todate=todate)
 
     # Add the 1st data to cerebro
-    cerebro.adddata(data)
+    cerebro.add_datafeed(data)
 
     # Add the strategy
-    cerebro.addstrategy(LongShortStrategy,
+    cerebro.add_strategy(LongShortStrategy,
                         period=args.period,
                         onlylong=args.onlylong,
                         csvcross=args.csvcross,
                         stake=args.stake)
 
     # Add the commission - only stocks like a for each operation
-    cerebro.broker.setcash(args.cash)
+    cerebro.broker_or_exchange.setcash(args.cash)
 
     # Add the commission - only stocks like a for each operation
-    cerebro.broker.setcommission(commission=args.comm,
+    cerebro.broker_or_exchange.set_commission(commission=args.comm,
                                  mult=args.mult,
                                  margin=args.margin)
 
@@ -158,17 +158,17 @@ def runstrategy():
         years=bt.TimeFrame.Years)
 
     # Add the Analyzers
-    cerebro.addanalyzer(SQN)
+    cerebro.add_analyzer(SQN)
     if args.legacyannual:
-        cerebro.addanalyzer(AnnualReturn)
-        cerebro.addanalyzer(SharpeRatio, legacyannual=True)
+        cerebro.add_analyzer(AnnualReturn)
+        cerebro.add_analyzer(SharpeRatio, legacyannual=True)
     else:
-        cerebro.addanalyzer(TimeReturn, timeframe=tframes[args.tframe])
-        cerebro.addanalyzer(SharpeRatio, timeframe=tframes[args.tframe])
+        cerebro.add_analyzer(TimeReturn, timeframe=tframes[args.tframe])
+        cerebro.add_analyzer(SharpeRatio, timeframe=tframes[args.tframe])
 
-    cerebro.addanalyzer(TradeAnalyzer)
+    cerebro.add_analyzer(TradeAnalyzer)
 
-    cerebro.addwriter(bt.WriterFile, csv=args.writercsv, rounding=4)
+    cerebro.add_writer(bt.WriterFile, csv=args.writercsv, rounding=4)
 
     # And run it
     cerebro.run()

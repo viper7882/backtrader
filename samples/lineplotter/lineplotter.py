@@ -56,10 +56,10 @@ def runstrat(pargs=None):
         todate = datetime.datetime.strptime(args.todate, '%Y-%m-%d')
         dkwargs['todate'] = todate
 
-    data = bt.feeds.BacktraderCSVData(dataname=args.data, **dkwargs)
-    cerebro.adddata(data)
+    datafeed = bt.feeds.BacktraderCSVData(dataname=args.data, **dkwargs)
+    cerebro.add_datafeed(datafeed)
 
-    cerebro.addstrategy(St, ondata=args.ondata)
+    cerebro.add_strategy(St, ondata=args.ondata)
     cerebro.run(stdstats=False)
 
     # Plot if requested

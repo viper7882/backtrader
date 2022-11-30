@@ -65,8 +65,8 @@ def runstrat(args=None):
     args = parse_args(args)
 
     cerebro = bt.Cerebro()
-    cerebro.broker.set_cash(args.cash)
-    cerebro.broker.set_int2pnl(args.no_int2pnl)
+    cerebro.broker_or_exchange.set_cash(args.cash)
+    cerebro.broker_or_exchange.set_int2pnl(args.no_int2pnl)
 
     dkwargs = dict()
     if args.fromdate is not None:
@@ -79,10 +79,10 @@ def runstrat(args=None):
 
     # if dataset is None, args.data has been given
     data = bt.feeds.BacktraderCSVData(dataname=args.data, **dkwargs)
-    cerebro.adddata(data)
+    cerebro.add_datafeed(data)
 
     cerebro.signal_strategy(St)
-    cerebro.addsizer(bt.sizers.FixedSize, stake=args.stake)
+    cerebro.add_sizer(bt.sizers.FixedSize, stake=args.stake)
 
     sigtype = bt.signal.SIGNAL_LONGSHORT
     if args.long:
@@ -99,14 +99,14 @@ def runstrat(args=None):
         elif args.short:
             cerebro.add_signal(bt.signal.SIGNAL_SHORTEXIT, NoExit)
 
-    comminfo = bt.CommissionInfo(
+    comm_info = bt.CommissionInfo(
         mult=args.mult,
         margin=args.margin,
         stocklike=args.stocklike,
         interest=args.interest,
         interest_long=args.interest_long)
 
-    cerebro.broker.addcommissioninfo(comminfo)
+    cerebro.broker_or_exchange.add_commission_info(comm_info)
 
     cerebro.run()
     if args.plot:

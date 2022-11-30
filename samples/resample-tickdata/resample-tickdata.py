@@ -34,7 +34,7 @@ def runstrat():
     cerebro = bt.Cerebro(stdstats=False)
 
     # Add a strategy
-    cerebro.addstrategy(bt.Strategy)
+    cerebro.add_strategy(bt.Strategy)
 
     # Load the Data
     datapath = args.dataname or '../../datas/ticksample.csv'
@@ -56,7 +56,7 @@ def runstrat():
         monthly=bt.TimeFrame.Months)
 
     # Resample the data
-    cerebro.resampledata(
+    cerebro.resample_datafeed(
         data,
         timeframe=tframes[args.timeframe],
         compression=args.compression,
@@ -66,7 +66,7 @@ def runstrat():
 
     if args.writer:
         # add a writer
-        cerebro.addwriter(bt.WriterFile, csv=args.wrcsv)
+        cerebro.add_writer(bt.WriterFile, csv=args.wrcsv)
 
     # Run over everything
     cerebro.run()

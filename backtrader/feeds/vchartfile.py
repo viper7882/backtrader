@@ -36,7 +36,7 @@ class MetaVChartFile(bt.DataBase.__class__):
         super(MetaVChartFile, cls).__init__(name, bases, dct)
 
         # Register with the store
-        bt.stores.VChartFile.DataCls = cls
+        bt.accounts_or_stores.VChartFile.Datafeed_Cls = cls
 
 
 class VChartFile(bt.with_metaclass(MetaVChartFile, bt.DataBase)):
@@ -53,10 +53,10 @@ class VChartFile(bt.with_metaclass(MetaVChartFile, bt.DataBase)):
     def start(self):
         super(VChartFile, self).start()
         if self._store is None:
-            self._store = bt.stores.VChartFile()
+            self._store = bt.accounts_or_stores.VChartFile()
             self._store.start()
 
-        self._store.start(data=self)
+        self._store.start(datafeed=self)
 
         # Choose extension and extraction/calculation parameters
         if self.p.timeframe < bt.TimeFrame.Minutes:
@@ -125,7 +125,7 @@ class VChartFile(bt.with_metaclass(MetaVChartFile, bt.DataBase)):
             hh, mm = divmod(hhmm, 60)
             dt = dt.replace(hour=hh, minute=mm, second=ss)
         else:  # Daily Bars
-            dt = datetime.combine(dt, self.p.sessionend)
+            dt = datetime.combine(dt, self.p.session_end)
 
         self.lines.datetime[0] = date2num(dt)  # Store time
 

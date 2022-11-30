@@ -57,10 +57,10 @@ class HeikinAshi(bt.Indicator):
     _nextforce = True
 
     def __init__(self):
-        o = self.data.open
-        h = self.data.high
-        l = self.data.low
-        c = self.data.close
+        o = self.datafeed.open
+        h = self.datafeed.high
+        l = self.datafeed.low
+        c = self.datafeed.close
 
         self.l.ha_close = ha_close = (o + h + l + c) / 4.0
         self.l.ha_open = ha_open = (self.l.ha_open(-1) + ha_close(-1)) / 2.0
@@ -71,4 +71,4 @@ class HeikinAshi(bt.Indicator):
 
     def prenext(self):
         # seed recursive value
-        self.lines.ha_open[0] = (self.data.open[0] + self.data.close[0]) / 2.0
+        self.lines.ha_open[0] = (self.datafeed.open[0] + self.datafeed.close[0]) / 2.0

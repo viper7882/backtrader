@@ -126,9 +126,9 @@ class VChartData(feed.DataBase):
 
 
 class VChartFeed(feed.FeedBase):
-    DataCls = VChartData
+    Datafeed_Cls = VChartData
 
-    params = (('basepath', ''),) + DataCls.params._gettuple()
+    params = (('basepath', ''),) + Datafeed_Cls.params._gettuple()
 
     def _getdata(self, dataname, **kwargs):
         maincode = dataname[0:2]
@@ -142,4 +142,4 @@ class VChartFeed(feed.FeedBase):
         newkwargs = self.p._getkwargs()
         newkwargs.update(kwargs)
         kwargs['dataname'] = datapath
-        return self.DataCls(**kwargs)
+        return self.Datafeed_Cls(**kwargs)

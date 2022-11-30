@@ -66,9 +66,9 @@ class St(bt.Strategy):
             print(','.join(txtfields))
 
         # Data 0
-        for data in self.datas:
+        for data in self.datafeeds:
             toss = random.randint(1, 10)
-            curpos = self.getposition(data)
+            curpos = self.get_position(data)
             if curpos.size:
                 if toss > 5:
                     size = curpos.size // 2
@@ -86,7 +86,7 @@ def runstrat(args=None):
     args = parse_args(args)
 
     cerebro = bt.Cerebro()
-    cerebro.broker.set_cash(args.cash)
+    cerebro.broker_or_exchange.set_cash(args.cash)
 
     dkwargs = dict()
     if args.fromdate:
@@ -98,17 +98,17 @@ def runstrat(args=None):
         dkwargs['todate'] = todate
 
     data0 = bt.feeds.YahooFinanceCSVData(dataname=args.data0, **dkwargs)
-    cerebro.adddata(data0, name='Data0')
+    cerebro.add_datafeed(data0, name='Data0')
 
     data1 = bt.feeds.YahooFinanceCSVData(dataname=args.data1, **dkwargs)
-    cerebro.adddata(data1, name='Data1')
+    cerebro.add_datafeed(data1, name='Data1')
 
     data2 = bt.feeds.YahooFinanceCSVData(dataname=args.data2, **dkwargs)
-    cerebro.adddata(data2, name='Data2')
+    cerebro.add_datafeed(data2, name='Data2')
 
-    cerebro.addstrategy(St, printout=args.printout)
+    cerebro.add_strategy(St, printout=args.printout)
     if not args.no_pyfolio:
-        cerebro.addanalyzer(bt.analyzers.PyFolio, _name='pyfolio')
+        cerebro.add_analyzer(bt.analyzers.PyFolio, _name='pyfolio')
 
     results = cerebro.run()
     if not args.no_pyfolio:

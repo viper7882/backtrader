@@ -26,7 +26,7 @@ import os.path
 import backtrader as bt
 
 
-class VChartFile(bt.Store):
+class VChartFile(bt.Account_or_Store):
     '''Store provider for Visual Chart binary files
 
     Params:

@@ -43,8 +43,8 @@ class TradeHistory(AutoOrderedDict):
         - ``size`` (``int``): current size of the Trade
         - ``price`` (``float``): current price of the Trade
         - ``value`` (``float``): current monetary value of the Trade
-        - ``pnl`` (``float``): current profit and loss of the Trade
-        - ``pnlcomm`` (``float``): current profit and loss minus commission
+        - ``profit_and_loss_amount`` (``float``): current profit and loss of the Trade
+        - ``pnlcomm`` (``float``): current profit and loss minus commission_amount
 
       - ``event`` (``dict`` with '.' notation): Holds the event update
         - parameters
@@ -52,11 +52,11 @@ class TradeHistory(AutoOrderedDict):
         - ``order`` (``object``): the order which initiated the``update``
         - ``size`` (``int``): size of the update
         - ``price`` (``float``):price of the update
-        - ``commission`` (``float``): price of the update
+        - ``commission_amount`` (``float``): price of the update
     '''
 
     def __init__(self,
-                 status, dt, barlen, size, price, value, pnl, pnlcomm, tz, event=None):
+                 status, dt, barlen, size, price, value, profit_and_loss_amount, pnlcomm, tz, event=None):
         '''Initializes the object to the current status of the Trade'''
         super(TradeHistory, self).__init__()
         self.status.status = status
@@ -65,7 +65,7 @@ class TradeHistory(AutoOrderedDict):
         self.status.size = size
         self.status.price = price
         self.status.value = value
-        self.status.pnl = pnl
+        self.status.profit_and_loss_amount = profit_and_loss_amount
         self.status.pnlcomm = pnlcomm
         self.status.tz = tz
         if event is not None:
@@ -73,15 +73,15 @@ class TradeHistory(AutoOrderedDict):
 
     def __reduce__(self):
         return (self.__class__, (self.status.status, self.status.dt, self.status.barlen, self.status.size,
-                                 self.status.price, self.status.value, self.status.pnl, self.status.pnlcomm,
+                                 self.status.price, self.status.value, self.status.profit_and_loss_amount, self.status.pnlcomm,
                                  self.status.tz, self.event, ))
 
-    def doupdate(self, order, size, price, commission):
+    def doupdate(self, order, size, price, commission_amount):
         '''Used to fill the ``update`` part of the history entry'''
         self.event.order = order
         self.event.size = size
         self.event.price = price
-        self.event.commission = commission
+        self.event.commission_amount = commission_amount
 
         # Do not allow updates (avoids typing errors)
         self._close()
@@ -93,7 +93,7 @@ class TradeHistory(AutoOrderedDict):
 
 class Trade(object):
     '''Keeps track of the life of an trade: size, price,
-    commission (and value?)
+    commission_amount (and value?)
 
     An trade starts at 0 can be increased and reduced and can
     be considered closed if it goes back to 0.
@@ -111,10 +111,10 @@ class Trade(object):
       - ``size`` (``int``): current size of the trade
       - ``price`` (``float``): current price of the trade
       - ``value`` (``float``): current value of the trade
-      - ``commission`` (``float``): current accumulated commission
-      - ``pnl`` (``float``): current profit and loss of the trade (gross pnl)
+      - ``commission_amount`` (``float``): current accumulated commission_amount
+      - ``profit_and_loss_amount`` (``float``): current profit and loss of the trade (gross profit_and_loss_amount)
       - ``pnlcomm`` (``float``): current profit and loss of the trade minus
-        commission (net pnl)
+        commission_amount (net profit_and_loss_amount)
       - ``isclosed`` (``bool``): records if the last update closed (set size to
         null the trade
       - ``isopen`` (``bool``): records if any update has opened the trade
@@ -151,8 +151,8 @@ class Trade(object):
 
     def __str__(self):
         toprint = (
-            'ref', 'data', 'tradeid',
-            'size', 'price', 'value', 'commission', 'pnl', 'pnlcomm',
+            'ref', 'datafeed', 'tradeid',
+            'size', 'price', 'value', 'commission_amount', 'profit_and_loss_amount', 'pnlcomm',
             'justopened', 'isopen', 'isclosed',
             'baropen', 'dtopen', 'barclose', 'dtclose', 'barlen',
             'historyon', 'history',
@@ -162,18 +162,18 @@ class Trade(object):
             (':'.join((x, str(getattr(self, x)))) for x in toprint)
         )
 
-    def __init__(self, data=None, tradeid=0, historyon=False,
-                 size=0.0, price=0.0, value=0.0, commission=0.0):
+    def __init__(self, datafeed=None, tradeid=0, historyon=False,
+                 size=0.0, price=0.0, value=0.0, commission_amount=0.0):
 
         self.ref = next(self.refbasis)
-        self.data = data
+        self.datafeed = datafeed
         self.tradeid = tradeid
         self.size = size
         self.price = price
         self.value = value
-        self.commission = commission
+        self.commission_amount = commission_amount
 
-        self.pnl = 0.0
+        self.profit_and_loss_amount = 0.0
         self.pnlcomm = 0.0
 
         self.justopened = False
@@ -201,24 +201,23 @@ class Trade(object):
 
     __nonzero__ = __bool__
 
-    def getdataname(self):
+    def get_datafeed_name(self):
         '''Shortcut to retrieve the name of the data this trade references'''
-        return self.data._name
+        return self.datafeed._name
 
     def open_datetime(self, tz=None, naive=True):
         '''Returns a datetime.datetime object with the datetime in which
         the trade was opened
         '''
-        return self.data.num2date(self.dtopen, tz=tz, naive=naive)
+        return self.datafeed.num2date(self.dtopen, tz=tz, naive=naive)
 
     def close_datetime(self, tz=None, naive=True):
         '''Returns a datetime.datetime object with the datetime in which
         the trade was closed
         '''
-        return self.data.num2date(self.dtclose, tz=tz, naive=naive)
+        return self.datafeed.num2date(self.dtclose, tz=tz, naive=naive)
 
-    def update(self, order, size, price, value, commission, pnl,
-               comminfo):
+    def update(self, order, size, price, value, commission_amount, profit_and_loss_amount, commission_info):
         '''
         Updates the current trade. The logic does not check if the
         trade is reversed, which is not conceptually supported by the
@@ -244,15 +243,15 @@ class Trade(object):
             value (float): (unused) cost incurred in new size/price op
                            Not used because the value is calculated for the
                            trade
-            commission (float): incurred commission in the new size/price op
-            pnl (float): (unused) generated by the executed part
-                         Not used because the trade has an independent pnl
+            commission_amount (float): incurred commission_amount in the new size/price op
+            profit_and_loss_amount (float): (unused) generated by the executed part
+                         Not used because the trade has an independent profit_and_loss_amount
         '''
         if not size:
             return  # empty update, skip all other calculations
 
         # Commission can only increase
-        self.commission += commission
+        self.commission_amount += commission_amount
 
         # Update size and keep a reference for logic an calculations
         oldsize = self.size
@@ -262,15 +261,15 @@ class Trade(object):
         self.justopened = bool(not oldsize and size)
 
         if self.justopened:
-            self.baropen = len(self.data)
-            self.dtopen = 0.0 if order.p.simulated else self.data.datetime[0]
+            self.baropen = len(self.datafeed)
+            self.dtopen = 0.0 if order.p.simulated else self.datafeed.datetime[0]
             self.long = self.size > 0
 
         # Any size means the trade was opened
         self.isopen = bool(self.size)
 
         # Update current trade length
-        self.barlen = len(self.data) - self.baropen
+        self.barlen = len(self.datafeed) - self.baropen
 
         # record if the position was closed (set to null)
         self.isclosed = bool(oldsize and not self.size)
@@ -278,8 +277,8 @@ class Trade(object):
         # record last bar for the trade
         if self.isclosed:
             self.isopen = False
-            self.barclose = len(self.data)
-            self.dtclose = self.data.datetime[0]
+            self.barclose = len(self.datafeed)
+            self.dtclose = self.datafeed.datetime[0]
 
             self.status = self.Closed
         elif self.isopen:
@@ -292,23 +291,23 @@ class Trade(object):
             else:
                 # update the average price
                 self.price = (oldsize * self.price + size * price) / self.size
-            pnl = 0.0
+            profit_and_loss_amount = 0.0
 
         else:  # abs(self.size) < abs(oldsize)
             # position reduced/closed
-            pnl = comminfo.profitandloss(-size, self.price, price)
+            profit_and_loss_amount = commission_info.profit_and_loss(-size, self.price, price)
 
-        self.pnl += pnl
-        self.pnlcomm = self.pnl - self.commission
+        self.profit_and_loss_amount += profit_and_loss_amount
+        self.pnlcomm = self.profit_and_loss_amount - self.commission_amount
 
-        self.value = comminfo.getvaluesize(self.size, self.price)
+        self.value = commission_info.get_value_size(self.size, self.price)
 
         # Update the history if needed
         if self.historyon:
-            dt0 = self.data.datetime[0] if not order.p.simulated else 0.0
+            dt0 = self.datafeed.datetime[0] if not order.p.simulated else 0.0
             histentry = TradeHistory(
                 self.status, dt0, self.barlen,
                 self.size, self.price, self.value,
-                self.pnl, self.pnlcomm, self.data._tz)
-            histentry.doupdate(order, size, price, commission)
+                self.profit_and_loss_amount, self.pnlcomm, self.datafeed._tz)
+            histentry.doupdate(order, size, price, commission_amount)
             self.history.append(histentry)

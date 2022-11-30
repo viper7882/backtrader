@@ -33,7 +33,7 @@ class DataFiller(AbstractDataBase):
 
       - timeframe and compression to dimension the output bars
 
-      - sessionstart and sessionend
+      - sessionstart and session_end
 
     If a data feed has missing bars in between 10:31 and 10:34 and the
     timeframe is minutes, the output will be filled with bars for minutes
@@ -136,20 +136,20 @@ class DataFiller(AbstractDataBase):
             return self._copyfromdata()
 
         # previous (delivered) close
-        pclose = self.lines.close[-1]
+        closing_price = self.lines.close[-1]
         # Get time of previous (already delivered) bar
         dtime_prev = self.lines.datetime.datetime(-1)
         # Get time of current (from data source) bar
         dtime_cur = self.p.dataname.datetime.datetime(0)
 
         # Calculate session end for previous bar
-        send = datetime.combine(dtime_prev.date(), self.p.dataname.sessionend)
+        send = datetime.combine(dtime_prev.date(), self.p.dataname.session_end)
 
         if dtime_cur > send:  # if jumped boundary
             # 1. check for missing bars until boundary (end)
             dtime_prev += self._tdunit
             while dtime_prev < send:
-                self._fillbars.append((dtime_prev, pclose))
+                self._fillbars.append((dtime_prev, closing_price))
                 dtime_prev += self._tdunit
 
             # Calculate session start for new bar
@@ -159,13 +159,13 @@ class DataFiller(AbstractDataBase):
             # 2. check for missing bars from new boundary (start)
             # check gap from new sessionstart
             while sstart < dtime_cur:
-                self._fillbars.append((sstart, pclose))
+                self._fillbars.append((sstart, closing_price))
                 sstart += self._tdunit
         else:
             # no boundary jumped - check gap until current time
             dtime_prev += self._tdunit
             while dtime_prev < dtime_cur:
-                self._fillbars.append((dtime_prev, pclose))
+                self._fillbars.append((dtime_prev, closing_price))
                 dtime_prev += self._tdunit
 
         if self._fillbars:

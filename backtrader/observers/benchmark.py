@@ -45,7 +45,7 @@ class Benchmark(TimeReturn):
         Reference asset to track to allow for comparison.
 
         .. note:: this data must have been added to a ``cerebro`` instance with
-                  ``addata``, ``resampledata`` or ``replaydata``.
+                  ``add_datafeed``, ``resample_datafeed`` or ``replay_datafeed``.
 
 
       - ``_doprenext`` (default: ``False``)
@@ -67,9 +67,9 @@ class Benchmark(TimeReturn):
 
       - ``fund`` (default: ``None``)
 
-        If ``None`` the actual mode of the broker (fundmode - True/False) will
+        If ``None`` the actual mode of the broker_or_exchange (fundmode - True/False) will
         be autodetected to decide if the returns are based on the total net
-        asset value or on the fund value. See ``set_fundmode`` in the broker
+        asset value or on the fund value. See ``set_fundmode`` in the broker_or_exchange
         documentation
 
         Set it to ``True`` or ``False`` for a specific behavior
@@ -84,7 +84,7 @@ class Benchmark(TimeReturn):
     plotlines = dict(benchmark=dict(_name='Benchmark'))
 
     params = (
-        ('data', None),
+        ('datafeed', None),
         ('_doprenext', False),
         # Set to false to ensure the asset is measured at 0% in the 1st tick
         ('firstopen', False),
@@ -93,17 +93,17 @@ class Benchmark(TimeReturn):
 
     def _plotlabel(self):
         labels = super(Benchmark, self)._plotlabel()
-        labels.append(self.p.data._name)
+        labels.append(self.p.datafeed._name)
         return labels
 
     def __init__(self):
-        if self.p.data is None:  # use the 1st data in the system if none given
-            self.p.data = self.data0
+        if self.p.datafeed is None:  # use the 1st data in the system if none given
+            self.p.datafeed = self.datafeed0
 
         super(Benchmark, self).__init__()  # treturn including data parameter
         # Create a time return object without the data
         kwargs = self.p._getkwargs()
-        kwargs.update(data=None)  # to create a return for the stratey
+        kwargs.update(datafeed=None)  # to create a return for the stratey
         t = self._owner._addanalyzer_slave(bt.analyzers.TimeReturn, **kwargs)
 
         # swap for consistency

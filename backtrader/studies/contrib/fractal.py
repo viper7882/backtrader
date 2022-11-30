@@ -27,7 +27,7 @@ import backtrader as bt
 __all__ = ['Fractal']
 
 
-class Fractal(bt.ind.PeriodN):
+class Fractal(bt.indicators.PeriodN):
     '''
     References:
         [Ref 1] http://www.investopedia.com/articles/trading/06/fractals.asp
@@ -53,7 +53,7 @@ class Fractal(bt.ind.PeriodN):
         # A bearish turning point occurs when there is a pattern with the
         # highest high in the middle and two lower highs on each side. [Ref 1]
 
-        last_five_highs = self.data.high.get(size=self.p.period)
+        last_five_highs = self.datafeed.high.get(size=self.p.period)
         max_val = max(last_five_highs)
         max_idx = last_five_highs.index(max_val)
 
@@ -62,7 +62,7 @@ class Fractal(bt.ind.PeriodN):
 
         # A bullish turning point occurs when there is a pattern with the
         # lowest low in the middle and two higher lowers on each side. [Ref 1]
-        last_five_lows = self.data.low.get(size=self.p.period)
+        last_five_lows = self.datafeed.low.get(size=self.p.period)
         min_val = min(last_five_lows)
         min_idx = last_five_lows.index(min_val)
 

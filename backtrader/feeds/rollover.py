@@ -106,7 +106,7 @@ class RollOver(bt.with_metaclass(MetaRollOver, bt.DataBase)):
         ('checkcondition', None),  # callable
     )
 
-    def islive(self):
+    def is_live(self):
         '''Returns ``True`` to notify ``Cerebro`` that preloading and runonce
         should be deactivated'''
         return True

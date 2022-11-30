@@ -77,10 +77,10 @@ def runstrat():
     if args.filler or args.filler1:
         data1.addfilter(WeekDaysFiller, fillclose=args.fillclose)
 
-    cerebro.adddata(data0)
-    cerebro.adddata(data1)
+    cerebro.add_datafeed(data0)
+    cerebro.add_datafeed(data1)
 
-    cerebro.addstrategy(St, sma=args.sma)
+    cerebro.add_strategy(St, sma=args.sma)
     cerebro.run(runonce=True, preload=True)
 
     if args.plot:

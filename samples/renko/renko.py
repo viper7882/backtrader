@@ -32,7 +32,7 @@ class St(bt.Strategy):
     )
 
     def __init__(self):
-        for d in self.datas:
+        for d in self.datafeeds:
             bt.ind.RSI(d)
 
     def next(self):
@@ -61,21 +61,21 @@ def runstrat(args=None):
 
     if not args.dual:
         data0.addfilter(bt.filters.Renko, **fkwargs)
-        cerebro.adddata(data0)
+        cerebro.add_datafeed(data0)
     else:
-        cerebro.adddata(data0)
+        cerebro.add_datafeed(data0)
         data1 = data0.clone()
         data1.addfilter(bt.filters.Renko, **fkwargs)
-        cerebro.adddata(data1)
+        cerebro.add_datafeed(data1)
 
     # Broker
     cerebro.broker = bt.brokers.BackBroker(**eval('dict(' + args.broker + ')'))
 
     # Sizer
-    cerebro.addsizer(bt.sizers.FixedSize, **eval('dict(' + args.sizer + ')'))
+    cerebro.add_sizer(bt.sizers.FixedSize, **eval('dict(' + args.sizer + ')'))
 
     # Strategy
-    cerebro.addstrategy(St, **eval('dict(' + args.strat + ')'))
+    cerebro.add_strategy(St, **eval('dict(' + args.strat + ')'))
 
     # Execute
     kwargs = dict(stdstats=False)

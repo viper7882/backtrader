@@ -47,9 +47,9 @@ class LogReturns(bt.Observer):
 
       - ``fund`` (default: ``None``)
 
-        If ``None`` the actual mode of the broker (fundmode - True/False) will
+        If ``None`` the actual mode of the broker_or_exchange (fundmode - True/False) will
         be autodetected to decide if the returns are based on the total net
-        asset value or on the fund value. See ``set_fundmode`` in the broker
+        asset value or on the fund value. See ``set_fundmode`` in the broker_or_exchange
         documentation
 
         Set it to ``True`` or ``False`` for a specific behavior
@@ -76,7 +76,7 @@ class LogReturns(bt.Observer):
     def __init__(self):
         self.logret1 = self._owner._addanalyzer_slave(
             bt.analyzers.LogReturnsRolling,
-            data=self.data0, **self.p._getkwargs())
+            datafeed=self.datafeed0, **self.p._getkwargs())
 
     def next(self):
         self.lines.logret1[0] = self.logret1.rets[self.logret1.dtkey]
@@ -91,7 +91,7 @@ class LogReturns2(LogReturns):
 
         self.logret2 = self._owner._addanalyzer_slave(
             bt.analyzers.LogReturnsRolling,
-            data=self.data1, **self.p._getkwargs())
+            datafeed=self.datafeed1, **self.p._getkwargs())
 
     def next(self):
         super(LogReturns2, self).next()

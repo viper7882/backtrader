@@ -97,7 +97,7 @@ class QuandlCSV(feed.CSVDataBase):
 
         dttxt = linetokens[next(i)]  # YYYY-MM-DD
         dt = date(int(dttxt[0:4]), int(dttxt[5:7]), int(dttxt[8:10]))
-        dtnum = date2num(datetime.combine(dt, self.p.sessionend))
+        dtnum = date2num(datetime.combine(dt, self.p.session_end))
 
         self.lines.datetime[0] = dtnum
         if self.p.adjclose:

@@ -55,7 +55,7 @@ def runstrat():
     # Create a cerebro entity
     cerebro = bt.Cerebro(stdstats=False)
 
-    cerebro.addstrategy(
+    cerebro.add_strategy(
         SMAStrategy,
         # args for the strategy
         period=args.period,
@@ -84,7 +84,7 @@ def runstrat():
             compression=args.compression)
 
     # First add the original data - smaller timeframe
-    cerebro.adddata(data)
+    cerebro.add_datafeed(data)
 
     # Run over everything
     cerebro.run(preload=False)

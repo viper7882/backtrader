@@ -77,9 +77,9 @@ class MultiDataStrategy(bt.Strategy):
         self.orderid = None
 
         # Create SMA on 2nd data
-        sma = btind.MovAv.SMA(self.data1, period=self.p.period)
+        sma = btind.MovAv.SMA(self.datafeed1, period=self.p.period)
         # Create a CrossOver Signal from close an moving average
-        self.signal = btind.CrossOver(self.data1.close, sma)
+        self.signal = btind.CrossOver(self.datafeed1.close, sma)
 
     def next(self):
         if self.orderid:
@@ -87,30 +87,30 @@ class MultiDataStrategy(bt.Strategy):
 
         if self.p.printout:
             print('Self  len:', len(self))
-            print('Data0 len:', len(self.data0))
-            print('Data1 len:', len(self.data1))
-            print('Data0 len == Data1 len:',
-                  len(self.data0) == len(self.data1))
+            print('Datafeed0 len:', len(self.datafeed0))
+            print('Datafeed1 len:', len(self.datafeed1))
+            print('Datafeed0 len == Data1 len:',
+                  len(self.datafeed0) == len(self.datafeed1))
 
-            print('Data0 dt:', self.data0.datetime.datetime())
-            print('Data1 dt:', self.data1.datetime.datetime())
+            print('Datafeed0 dt:', self.data0.datetime.datetime())
+            print('Datafeed1 dt:', self.data1.datetime.datetime())
 
         if not self.position:  # not yet in market
             if self.signal > 0.0:  # cross upwards
-                self.log('BUY CREATE , %.2f' % self.data1.close[0])
+                self.log('BUY CREATE , %.2f' % self.datafeed1.close[0])
                 self.buy(size=self.p.stake)
-                self.buy(data=self.data1, size=self.p.stake)
+                self.buy(datafeed=self.datafeed1, size=self.p.stake)
 
         else:  # in the market
             if self.signal < 0.0:  # crosss downwards
                 self.log('SELL CREATE , %.2f' % self.data1.close[0])
                 self.sell(size=self.p.stake)
-                self.sell(data=self.data1, size=self.p.stake)
+                self.sell(datafeed=self.datafeed1, size=self.p.stake)
 
     def stop(self):
         print('==================================================')
-        print('Starting Value - %.2f' % self.broker.startingcash)
-        print('Ending   Value - %.2f' % self.broker.getvalue())
+        print('Starting Value - %.2f' % self.broker_or_exchange.starting_cash)
+        print('Ending   Value - %.2f' % self.broker_or_exchange.getvalue())
         print('==================================================')
 
 
@@ -131,27 +131,27 @@ def runstrategy():
         todate=todate)
 
     # Add the 1st data to cerebro
-    cerebro.adddata(data0)
+    cerebro.add_datafeed(data0)
 
     # Create the 2nd data
-    data1 = btfeeds.YahooFinanceCSVData(
+    datafeed1 = btfeeds.YahooFinanceCSVData(
         dataname=args.data1,
         fromdate=fromdate,
         todate=todate)
 
     # Add the 2nd data to cerebro
-    cerebro.adddata(data1)
+    cerebro.add_datafeed(datafeed1)
 
     # Add the strategy
-    cerebro.addstrategy(MultiDataStrategy,
+    cerebro.add_strategy(MultiDataStrategy,
                         period=args.period,
                         stake=args.stake)
 
     # Add the commission - only stocks like a for each operation
-    cerebro.broker.setcash(args.cash)
+    cerebro.broker_or_exchange.setcash(args.cash)
 
     # Add the commission - only stocks like a for each operation
-    cerebro.broker.setcommission(commission=args.commperc)
+    cerebro.broker_or_exchange.set_commission(commission=args.commperc)
 
     # And run it
     cerebro.run(runonce=not args.runnext,
@@ -166,13 +166,13 @@ def runstrategy():
 def parse_args():
     parser = argparse.ArgumentParser(description='MultiData Strategy')
 
-    parser.add_argument('--data0', '-d0',
+    parser.add_argument('--datafeed0', '-d0',
                         default='../../datas/orcl-1995-2014.txt',
-                        help='1st data into the system')
+                        help='1st datafeed into the system')
 
-    parser.add_argument('--data1', '-d1',
+    parser.add_argument('--datafeed1', '-d1',
                         default='../../datas/yhoo-1996-2014.txt',
-                        help='2nd data into the system')
+                        help='2nd datafeed into the system')
 
     parser.add_argument('--fromdate', '-f',
                         default='2003-01-01',

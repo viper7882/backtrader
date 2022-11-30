@@ -43,7 +43,7 @@ class UpDay(Indicator):
     params = (('period', 1),)
 
     def __init__(self):
-        self.lines.upday = Max(self.data - self.data(-self.p.period), 0.0)
+        self.lines.upday = Max(self.datafeed - self.datafeed(-self.p.period), 0.0)
         super(UpDay, self).__init__()
 
 
@@ -65,7 +65,7 @@ class DownDay(Indicator):
     params = (('period', 1),)
 
     def __init__(self):
-        self.lines.downday = Max(self.data(-self.p.period) - self.data, 0.0)
+        self.lines.downday = Max(self.datafeed(-self.p.period) - self.datafeed, 0.0)
         super(DownDay, self).__init__()
 
 
@@ -90,7 +90,7 @@ class UpDayBool(Indicator):
     params = (('period', 1),)
 
     def __init__(self):
-        self.lines.upday = self.data > self.data(-self.p.period)
+        self.lines.upday = self.datafeed > self.datafeed(-self.p.period)
         super(UpDayBool, self).__init__()
 
 
@@ -115,7 +115,7 @@ class DownDayBool(Indicator):
     params = (('period', 1),)
 
     def __init__(self):
-        self.lines.downday = self.data(-self.p.period) > self.data
+        self.lines.downday = self.datafeed(-self.p.period) > self.datafeed
         super(DownDayBool, self).__init__()
 
 
@@ -176,8 +176,8 @@ class RelativeStrengthIndex(Indicator):
         self.plotinfo.plotyhlines = [self.p.upperband, self.p.lowerband]
 
     def __init__(self):
-        upday = UpDay(self.data, period=self.p.lookback)
-        downday = DownDay(self.data, period=self.p.lookback)
+        upday = UpDay(self.datafeed, period=self.p.lookback)
+        downday = DownDay(self.datafeed, period=self.p.lookback)
         maup = self.p.movav(upday, period=self.p.period)
         madown = self.p.movav(downday, period=self.p.period)
         if not self.p.safediv:

@@ -49,26 +49,26 @@ class MetaAnalyzer(bt.MetaParams):
         if masterobs is not None:
             masterobs._register_analyzer(_obj)
 
-        _obj.datas = strategy.datas
+        _obj.datafeeds = strategy.datafeeds
 
-        # For each data add aliases: for first data: data and data0
-        if _obj.datas:
-            _obj.data = data = _obj.datas[0]
+        # For each datafeed add aliases: for first datafeed: datafeed and datafeed0
+        if _obj.datafeeds:
+            _obj.datafeed = datafeed = _obj.datafeeds[0]
 
-            for l, line in enumerate(data.lines):
-                linealias = data._getlinealias(l)
+            for l, line in enumerate(datafeed.lines):
+                linealias = datafeed._getlinealias(l)
                 if linealias:
-                    setattr(_obj, 'data_%s' % linealias, line)
-                setattr(_obj, 'data_%d' % l, line)
+                    setattr(_obj, 'datafeed_%s' % linealias, line)
+                setattr(_obj, 'datafeed_%d' % l, line)
 
-            for d, data in enumerate(_obj.datas):
-                setattr(_obj, 'data%d' % d, data)
+            for d, datafeed in enumerate(_obj.datafeeds):
+                setattr(_obj, 'datafeed%d' % d, datafeed)
 
-                for l, line in enumerate(data.lines):
-                    linealias = data._getlinealias(l)
+                for l, line in enumerate(datafeed.lines):
+                    linealias = datafeed._getlinealias(l)
                     if linealias:
-                        setattr(_obj, 'data%d_%s' % (d, linealias), line)
-                    setattr(_obj, 'data%d_%d' % (d, l), line)
+                        setattr(_obj, 'datafeed%d_%s' % (d, linealias), line)
+                    setattr(_obj, 'datafeed%d_%d' % (d, l), line)
 
         _obj.create_analysis()
 
@@ -97,20 +97,20 @@ class Analyzer(with_metaclass(MetaAnalyzer, object)):
       - ``self.strategy`` (giving access to the *strategy* and anything
         accessible from it)
 
-      - ``self.datas[x]`` giving access to the array of data feeds present in
+      - ``self.datafeeds[x]`` giving access to the array of data feeds present in
         the the system, which could also be accessed via the strategy reference
 
-      - ``self.data``, giving access to ``self.datas[0]``
+      - ``self.datafeed``, giving access to ``self.datafeeds[0]``
 
-      - ``self.dataX`` -> ``self.datas[X]``
+      - ``self.datafeedX`` -> ``self.datafeeds[X]``
 
-      - ``self.dataX_Y`` -> ``self.datas[X].lines[Y]``
+      - ``self.datafeedX_Y`` -> ``self.datafeeds[X].lines[Y]``
 
-      - ``self.dataX_name`` -> ``self.datas[X].name``
+      - ``self.datafeedX_name`` -> ``self.datafeeds[X].name``
 
-      - ``self.data_name`` -> ``self.datas[0].name``
+      - ``self.datafeed_name`` -> ``self.datafeeds[0].name``
 
-      - ``self.data_Y`` -> ``self.datas[0].lines[Y]``
+      - ``self.datafeed_Y`` -> ``self.datafeeds[0].lines[Y]``
 
     This is not a *Lines* object, but the methods and operation follow the same
     design
@@ -306,8 +306,8 @@ class TimeFrameAnalyzerBase(with_metaclass(MetaTimeFrameAnalyzerBase,
 
     def _start(self):
         # Override to add specific attributes
-        self.timeframe = self.p.timeframe or self.data._timeframe
-        self.compression = self.p.compression or self.data._compression
+        self.timeframe = self.p.timeframe or self.datafeed._timeframe
+        self.compression = self.p.compression or self.datafeed._compression
 
         self.dtcmp, self.dtkey = self._get_dt_cmpkey(datetime.datetime.min)
         super(TimeFrameAnalyzerBase, self)._start()

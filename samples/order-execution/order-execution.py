@@ -134,7 +134,7 @@ class OrderExecutionStrategy(bt.Strategy):
             elif self.p.exectype == 'Stop':
                 price = self.data.close * (1.0 + self.p.perc1 / 100.0)
 
-                self.buy(exectype=bt.Order.Stop, price=price, valid=valid)
+                self.buy(exectype=bt.Order.StopMarket, price=price, valid=valid)
 
                 if self.p.valid:
                     txt = 'BUY CREATE, exectype Stop, price %.2f, valid: %s'
@@ -167,9 +167,9 @@ def runstrat():
     cerebro = bt.Cerebro()
 
     data = getdata(args)
-    cerebro.adddata(data)
+    cerebro.add_datafeed(data)
 
-    cerebro.addstrategy(
+    cerebro.add_strategy(
         OrderExecutionStrategy,
         exectype=args.exectype,
         perc1=args.perc1,

@@ -29,7 +29,7 @@ from backtrader import TimeFrame, date2num, num2date
 from backtrader.utils.py3 import (integer_types, queue, string_types,
                                   with_metaclass)
 from backtrader.metabase import MetaParams
-from backtrader.stores import ibstore
+from backtrader.accounts_or_stores import ibstore
 
 
 class MetaIBData(DataBase.__class__):
@@ -39,7 +39,7 @@ class MetaIBData(DataBase.__class__):
         super(MetaIBData, cls).__init__(name, bases, dct)
 
         # Register with the store
-        ibstore.IBStore.DataCls = cls
+        ibstore.IBStore.Datafeed_Cls = cls
 
 
 class IBData(with_metaclass(MetaIBData, DataBase)):
@@ -252,7 +252,7 @@ class IBData(with_metaclass(MetaIBData, DataBase)):
         # contractdetails there, import ok, timezone found, return it
         return tz
 
-    def islive(self):
+    def is_live(self):
         '''Returns ``True`` to notify ``Cerebro`` that preloading and runonce
         should be deactivated'''
         return not self.p.historical
@@ -266,7 +266,7 @@ class IBData(with_metaclass(MetaIBData, DataBase)):
         '''Receives an environment (cerebro) and passes it over to the store it
         belongs to'''
         super(IBData, self).setenvironment(env)
-        env.addstore(self.ib)
+        env.add_account_store(self.ib)
 
     def parsecontract(self, dataname):
         '''Parses dataname generates a default contract'''
@@ -344,7 +344,7 @@ class IBData(with_metaclass(MetaIBData, DataBase)):
         contractdetails if it exists'''
         super(IBData, self).start()
         # Kickstart store and get queue to wait on
-        self.qlive = self.ib.start(data=self)
+        self.qlive = self.ib.start(datafeed=self)
         self.qhist = None
 
         self._usertvol = not self.p.rtbar
@@ -432,7 +432,7 @@ class IBData(with_metaclass(MetaIBData, DataBase)):
         else:
             self.ib.cancelRealTimeBars(self.qlive)
 
-    def haslivedata(self):
+    def has_live_data(self):
         return bool(self._storedmsg or self.qlive)
 
     def _load(self):
@@ -464,7 +464,7 @@ class IBData(with_metaclass(MetaIBData, DataBase)):
                         timeframe=self._timeframe,
                         compression=self._compression,
                         what=self.p.what, useRTH=self.p.useRTH, tz=self._tz,
-                        sessionend=self.p.sessionend)
+                        session_end=self.p.session_end)
 
                     if self._laststatus != self.DELAYED:
                         self.put_notification(self.DELAYED)
@@ -563,7 +563,7 @@ class IBData(with_metaclass(MetaIBData, DataBase)):
                     contract=self.contract, enddate=dtend, begindate=dtbegin,
                     timeframe=self._timeframe, compression=self._compression,
                     what=self.p.what, useRTH=self.p.useRTH, tz=self._tz,
-                    sessionend=self.p.sessionend)
+                    session_end=self.p.session_end)
 
                 self._state = self._ST_HISTORBACK
                 self._statelivereconn = False  # no longer in live
@@ -643,7 +643,7 @@ class IBData(with_metaclass(MetaIBData, DataBase)):
                 contract=self.contract, enddate=dtend, begindate=dtbegin,
                 timeframe=self._timeframe, compression=self._compression,
                 what=self.p.what, useRTH=self.p.useRTH, tz=self._tz,
-                sessionend=self.p.sessionend)
+                session_end=self.p.session_end)
 
             self._state = self._ST_HISTORBACK
             return True  # continue before

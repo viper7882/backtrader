@@ -129,9 +129,9 @@ def runstrat(args=None):
         dkwargs['todate'] = todate
 
     data0 = bt.feeds.YahooFinanceCSVData(dataname=args.data0, **dkwargs)
-    cerebro.adddata(data0)
+    cerebro.add_datafeed(data0)
 
-    cerebro.addstrategy(TALibStrategy, ind=args.ind, doji=not args.no_doji)
+    cerebro.add_strategy(TALibStrategy, ind=args.ind, doji=not args.no_doji)
 
     cerebro.run(runcone=not args.use_next, stdstats=False)
     if args.plot:

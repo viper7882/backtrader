@@ -52,7 +52,7 @@ class DaySplitter_Close(bt.with_metaclass(bt.MetaParams, object)):
         absolute terms from 0.0 to 1.0, has to be assigned to the *closing*
         tick. The rest will be assigned to the ``OHLX`` tick.
 
-    **This filter is meant to be used together with** ``cerebro.replaydata``
+    **This filter is meant to be used together with** ``cerebro.replay_datafeed``
 
     '''
     params = (
@@ -61,12 +61,12 @@ class DaySplitter_Close(bt.with_metaclass(bt.MetaParams, object)):
 
     # replaying = True
 
-    def __init__(self, data):
+    def __init__(self, datafeed):
         self.lastdt = None
 
-    def __call__(self, data):
+    def __call__(self, datafeed):
         # Make a copy of the new bar and remove it from stream
-        datadt = data.datetime.date()  # keep the date
+        datadt = datafeed.datetime.date()  # keep the date
 
         if self.lastdt == datadt:
             return False  # skip bars that come again in the filter
@@ -74,38 +74,38 @@ class DaySplitter_Close(bt.with_metaclass(bt.MetaParams, object)):
         self.lastdt = datadt  # keep ref to last seen bar
 
         # Make a copy of current data for ohlbar
-        ohlbar = [data.lines[i][0] for i in range(data.size())]
+        ohlbar = [datafeed.lines[i][0] for i in range(datafeed.size())]
         closebar = ohlbar[:]  # Make a copy for the close
 
         # replace close price with o-h-l average
-        ohlprice = ohlbar[data.Open] + ohlbar[data.High] + ohlbar[data.Low]
-        ohlbar[data.Close] = ohlprice / 3.0
+        ohlprice = ohlbar[datafeed.Open] + ohlbar[datafeed.High] + ohlbar[datafeed.Low]
+        ohlbar[datafeed.Close] = ohlprice / 3.0
 
-        vol = ohlbar[data.Volume]  # adjust volume
-        ohlbar[data.Volume] = vohl = int(vol * (1.0 - self.p.closevol))
+        vol = ohlbar[datafeed.Volume]  # adjust volume
+        ohlbar[datafeed.Volume] = vohl = int(vol * (1.0 - self.p.closevol))
 
-        oi = ohlbar[data.OpenInterest]  # adjust open interst
-        ohlbar[data.OpenInterest] = 0
+        oi = ohlbar[datafeed.OpenInterest]  # adjust open interst
+        ohlbar[datafeed.OpenInterest] = 0
 
         # Adjust times
-        dt = datetime.datetime.combine(datadt, data.p.sessionstart)
-        ohlbar[data.DateTime] = data.date2num(dt)
+        dt = datetime.datetime.combine(datadt, datafeed.p.sessionstart)
+        ohlbar[datafeed.DateTime] = datafeed.date2num(dt)
 
         # Ajust closebar to generate a single tick -> close price
-        closebar[data.Open] = cprice = closebar[data.Close]
-        closebar[data.High] = cprice
-        closebar[data.Low] = cprice
-        closebar[data.Volume] = vol - vohl
-        ohlbar[data.OpenInterest] = oi
+        closebar[datafeed.Open] = cprice = closebar[datafeed.Close]
+        closebar[datafeed.High] = cprice
+        closebar[datafeed.Low] = cprice
+        closebar[datafeed.Volume] = vol - vohl
+        ohlbar[datafeed.OpenInterest] = oi
 
         # Adjust times
-        dt = datetime.datetime.combine(datadt, data.p.sessionend)
-        closebar[data.DateTime] = data.date2num(dt)
+        dt = datetime.datetime.combine(datadt, datafeed.p.session_end)
+        closebar[datafeed.DateTime] = datafeed.date2num(dt)
 
         # Update stream
-        data.backwards(force=True)  # remove the copied bar from stream
-        data._add2stack(ohlbar)  # add ohlbar to stack
+        datafeed.backwards(force=True)  # remove the copied bar from stream
+        datafeed._add2stack(ohlbar)  # add ohlbar to stack
         # Add 2nd part to stash to delay processing to next round
-        data._add2stack(closebar, stash=True)
+        datafeed._add2stack(closebar, stash=True)
 
         return False  # initial tick can be further processed from stack

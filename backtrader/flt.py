@@ -37,18 +37,18 @@ class Filter(with_metaclass(MetaParams, object)):
 
     _firsttime = True
 
-    def __init__(self, data):
+    def __init__(self, datafeed):
         pass
 
-    def __call__(self, data):
+    def __call__(self, datafeed):
         if self._firsttime:
-            self.nextstart(data)
+            self.nextstart(datafeed)
             self._firsttime = False
 
-        self.next(data)
+        self.next(datafeed)
 
-    def nextstart(self, data):
+    def nextstart(self, datafeed):
         pass
 
-    def next(self, data):
+    def next(self, datafeed):
         pass

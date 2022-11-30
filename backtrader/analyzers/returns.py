@@ -66,9 +66,9 @@ class Returns(TimeFrameAnalyzerBase):
 
       - ``fund`` (default: ``None``)
 
-        If ``None`` the actual mode of the broker (fundmode - True/False) will
+        If ``None`` the actual mode of the broker_or_exchange (fundmode - True/False) will
         be autodetected to decide if the returns are based on the total net
-        asset value or on the fund value. See ``set_fundmode`` in the broker
+        asset value or on the fund value. See ``set_fundmode`` in the broker_or_exchange
         documentation
 
         Set it to ``True`` or ``False`` for a specific behavior
@@ -104,14 +104,14 @@ class Returns(TimeFrameAnalyzerBase):
     def start(self):
         super(Returns, self).start()
         if self.p.fund is None:
-            self._fundmode = self.strategy.broker.fundmode
+            self._fundmode = self.strategy.broker_or_exchange.fundmode
         else:
             self._fundmode = self.p.fund
 
         if not self._fundmode:
-            self._value_start = self.strategy.broker.getvalue()
+            self._value_start = self.strategy.broker_or_exchange.get_value()
         else:
-            self._value_start = self.strategy.broker.fundvalue
+            self._value_start = self.strategy.broker_or_exchange.fundvalue
 
         self._tcount = 0
 
@@ -119,9 +119,9 @@ class Returns(TimeFrameAnalyzerBase):
         super(Returns, self).stop()
 
         if not self._fundmode:
-            self._value_end = self.strategy.broker.getvalue()
+            self._value_end = self.strategy.broker_or_exchange.get_value()
         else:
-            self._value_end = self.strategy.broker.fundvalue
+            self._value_end = self.strategy.broker_or_exchange.fundvalue
 
         # Compound return
         try:
@@ -142,7 +142,7 @@ class Returns(TimeFrameAnalyzerBase):
         # Annualized normalized return
         tann = self.p.tann or self._TANN.get(self.timeframe, None)
         if tann is None:
-            tann = self._TANN.get(self.data._timeframe, 1.0)  # assign default
+            tann = self._TANN.get(self.datafeed._timeframe, 1.0)  # assign default
 
         if ravg > float('-inf'):
             self.rets['rnorm'] = rnorm = math.expm1(ravg * tann)

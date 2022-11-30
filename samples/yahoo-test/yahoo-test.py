@@ -37,7 +37,7 @@ def runstrat():
     cerebro = bt.Cerebro(stdstats=False)
 
     # Add a strategy
-    cerebro.addstrategy(bt.Strategy)
+    cerebro.add_strategy(bt.Strategy)
 
     # Get the dates from the args
     fromdate = datetime.datetime.strptime(args.fromdate, '%Y-%m-%d')
@@ -49,14 +49,14 @@ def runstrat():
         todate=todate)
 
     # Add the resample data instead of the original
-    cerebro.adddata(data)
+    cerebro.add_datafeed(data)
 
     # Add a simple moving average if requirested
-    cerebro.addindicator(btind.SMA, period=args.period)
+    cerebro.add_indicator(btind.SMA, period=args.period)
 
     # Add a writer with CSV
     if args.writer:
-        cerebro.addwriter(bt.WriterFile, csv=args.wrcsv)
+        cerebro.add_writer(bt.WriterFile, csv=args.wrcsv)
 
     # Run over everything
     cerebro.run()

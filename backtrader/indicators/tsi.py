@@ -63,7 +63,7 @@ class TrueStrengthIndicator(bt.Indicator):
     lines = ('tsi',)
 
     def __init__(self):
-        pc = self.data - self.data(-self.p.pchange)
+        pc = self.datafeed - self.datafeed(-self.p.pchange)
 
         sm1 = self.p._movav(pc, period=self.p.period1)
         sm12 = self.p._movav(sm1, period=self.p.period2)

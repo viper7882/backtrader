@@ -60,7 +60,7 @@ class ManualStopOrStopTrail(BaseStrategy):
 
         if not self.p.trail:
             stop_price = order.executed.price * (1.0 - self.p.stop_loss)
-            self.sell(exectype=bt.Order.Stop, price=stop_price)
+            self.sell(exectype=bt.Order.StopMarket, price=stop_price)
         else:
             self.sell(exectype=bt.Order.StopTrail, trailamount=self.p.trail)
 
@@ -78,7 +78,7 @@ class ManualStopOrStopTrailCheat(BaseStrategy):
 
     def __init__(self):
         super().__init__()
-        self.broker.set_coc(True)
+        self.broker_or_exchange.set_coc(True)
 
     def notify_order(self, order):
         if not order.status == order.Completed:
@@ -98,7 +98,7 @@ class ManualStopOrStopTrailCheat(BaseStrategy):
 
             if not self.p.trail:
                 stop_price = self.data.close[0] * (1.0 - self.p.stop_loss)
-                self.sell(exectype=bt.Order.Stop, price=stop_price)
+                self.sell(exectype=bt.Order.StopMarket, price=stop_price)
             else:
                 self.sell(exectype=bt.Order.StopTrail,
                           trailamount=self.p.trail)
@@ -147,7 +147,7 @@ class AutoStopOrStopTrail(BaseStrategy):
             # Setting parent=buy_order ... sends both together
             if not self.p.trail:
                 stop_price = self.data.close[0] * (1.0 - self.p.stop_loss)
-                self.sell(exectype=bt.Order.Stop, price=stop_price,
+                self.sell(exectype=bt.Order.StopMarket, price=stop_price,
                           parent=self.buy_order)
             else:
                 self.sell(exectype=bt.Order.StopTrail,
@@ -178,17 +178,17 @@ def runstrat(args=None):
             kwargs[d] = datetime.datetime.strptime(a, strpfmt)
 
     data0 = bt.feeds.BacktraderCSVData(dataname=args.data0, **kwargs)
-    cerebro.adddata(data0)
+    cerebro.add_datafeed(data0)
 
     # Broker
     cerebro.broker = bt.brokers.BackBroker(**eval('dict(' + args.broker + ')'))
 
     # Sizer
-    cerebro.addsizer(bt.sizers.FixedSize, **eval('dict(' + args.sizer + ')'))
+    cerebro.add_sizer(bt.sizers.FixedSize, **eval('dict(' + args.sizer + ')'))
 
     # Strategy
     StClass = APPROACHES[args.approach]
-    cerebro.addstrategy(StClass, **eval('dict(' + args.strat + ')'))
+    cerebro.add_strategy(StClass, **eval('dict(' + args.strat + ')'))
 
     # Execute
     cerebro.run(**eval('dict(' + args.cerebro + ')'))

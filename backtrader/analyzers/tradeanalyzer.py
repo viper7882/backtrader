@@ -104,11 +104,11 @@ class TradeAnalyzer(Analyzer):
                 trades.streak[wlname].longest = \
                     max(ls, trades.streak[wlname].current)
 
-            trpnl = trades.pnl
-            trpnl.gross.total += trade.pnl
-            trpnl.gross.average = trades.pnl.gross.total / trades.total.closed
+            trpnl = trades.profit_and_loss_amount
+            trpnl.gross.total += trade.profit_and_loss_amount
+            trpnl.gross.average = trades.profit_and_loss_amount.gross.total / trades.total.closed
             trpnl.net.total += trade.pnlcomm
-            trpnl.net.average = trades.pnl.net.total / trades.total.closed
+            trpnl.net.average = trades.profit_and_loss_amount.net.total / trades.total.closed
 
             # Won/Lost statistics
             for wlname in ['won', 'lost']:
@@ -117,7 +117,7 @@ class TradeAnalyzer(Analyzer):
 
                 trwl.total += wl  # won.total / lost.total
 
-                trwlpnl = trwl.pnl
+                trwlpnl = trwl.profit_and_loss_amount
                 pnlcomm = trade.pnlcomm * wl
 
                 trwlpnl.total += pnlcomm
@@ -133,8 +133,8 @@ class TradeAnalyzer(Analyzer):
                 ls = res['t' + tname]
 
                 trls.total += ls  # long.total / short.total
-                trls.pnl.total += trade.pnlcomm * ls
-                trls.pnl.average = trls.pnl.total / (trls.total or 1.0)
+                trls.profit_and_loss_amount.total += trade.pnlcomm * ls
+                trls.profit_and_loss_amount.average = trls.profit_and_loss_amount.total / (trls.total or 1.0)
 
                 for wlname in ['won', 'lost']:
                     wl = res[wlname]
@@ -142,13 +142,13 @@ class TradeAnalyzer(Analyzer):
 
                     trls[wlname] += wl * ls  # long.won / short.won
 
-                    trls.pnl[wlname].total += pnlcomm
-                    trls.pnl[wlname].average = \
-                        trls.pnl[wlname].total / (trls[wlname] or 1.0)
+                    trls.profit_and_loss_amount[wlname].total += pnlcomm
+                    trls.profit_and_loss_amount[wlname].average = \
+                        trls.profit_and_loss_amount[wlname].total / (trls[wlname] or 1.0)
 
-                    wm = trls.pnl[wlname].max or 0.0
+                    wm = trls.profit_and_loss_amount[wlname].max or 0.0
                     func = max if wlname == 'won' else min
-                    trls.pnl[wlname].max = func(wm, pnlcomm)
+                    trls.profit_and_loss_amount[wlname].max = func(wm, pnlcomm)
 
             # Length
             trades.len.total += trade.barlen

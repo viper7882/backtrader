@@ -163,6 +163,7 @@ def num2date(x, tz=None, naive=True):
     """
 
     ix = int(x)
+    assert ix != 0.0
     dt = datetime.datetime.fromordinal(ix)
     remainder = float(x) - ix
     hour, remainder = divmod(HOURS_PER_DAY * remainder, 1)

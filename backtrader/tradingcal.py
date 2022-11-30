@@ -273,7 +273,7 @@ class PandasMarketCalendar(TradingCalendarBase):
 
             st = (x.tz_localize(None) for x in self.idcache.iloc[i, 0:2])
             opening, closing = st  # Get utc naive times
-            if day > closing:  # passed time is over the sessionend
+            if day > closing:  # passed time is over the session_end
                 day += ONEDAY  # wrap over to next day
                 continue
 

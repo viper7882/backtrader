@@ -102,23 +102,23 @@ class ParabolicSAR(PeriodN):
         status = self._status[plenidx]
 
         # Calculate the status for previous length
-        status.sar = (self.data.high[0] + self.data.low[0]) / 2.0
+        status.sar = (self.datafeed.high[0] + self.datafeed.low[0]) / 2.0
 
         status.af = self.p.af
-        if self.data.close[0] >= self.data.close[-1]:  # uptrend
+        if self.datafeed.close[0] >= self.datafeed.close[-1]:  # uptrend
             status.tr = not True  # uptrend when reversed
-            status.ep = self.data.low[-1]  # ep from prev trend
+            status.ep = self.datafeed.low[-1]  # ep from prev trend
         else:
             status.tr = not False  # downtrend when reversed
-            status.ep = self.data.high[-1]  # ep from prev trend
+            status.ep = self.datafeed.high[-1]  # ep from prev trend
 
         # With the fake prev trend in place and a sar which will be invalidated
         # go to next to get the calculation done
         self.next()
 
     def next(self):
-        hi = self.data.high[0]
-        lo = self.data.low[0]
+        hi = self.datafeed.high[0]
+        lo = self.datafeed.low[0]
 
         plenidx = (len(self) - 1) % 2  # previous length index (0 or 1)
         status = self._status[plenidx]  # use prev status for calculations
@@ -155,11 +155,11 @@ class ParabolicSAR(PeriodN):
 
         # make sure sar doesn't go into hi/lows
         if tr:  # long trade
-            lo1 = self.data.low[-1]
+            lo1 = self.datafeed.low[-1]
             if sar > lo or sar > lo1:
                 sar = min(lo, lo1)  # sar not above last 2 lows -> lower
         else:
-            hi1 = self.data.high[-1]
+            hi1 = self.datafeed.high[-1]
             if sar < hi or sar < hi1:
                 sar = max(hi, hi1)  # sar not below last 2 highs -> highest
 

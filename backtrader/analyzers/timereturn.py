@@ -50,7 +50,7 @@ class TimeReturn(TimeFrameAnalyzerBase):
         Reference asset to track instead of the portfolio value.
 
         .. note:: this data must have been added to a ``cerebro`` instance with
-                  ``addata``, ``resampledata`` or ``replaydata``
+                  ``addata``, ``resample_datafeed`` or ``replay_datafeed``
 
       - ``firstopen`` (default: ``True``)
 
@@ -72,9 +72,9 @@ class TimeReturn(TimeFrameAnalyzerBase):
 
       - ``fund`` (default: ``None``)
 
-        If ``None`` the actual mode of the broker (fundmode - True/False) will
+        If ``None`` the actual mode of the broker_or_exchange (fundmode - True/False) will
         be autodetected to decide if the returns are based on the total net
-        asset value or on the fund value. See ``set_fundmode`` in the broker
+        asset value or on the fund value. See ``set_fundmode`` in the broker_or_exchange
         documentation
 
         Set it to ``True`` or ``False`` for a specific behavior
@@ -88,7 +88,7 @@ class TimeReturn(TimeFrameAnalyzerBase):
     '''
 
     params = (
-        ('data', None),
+        ('datafeed', None),
         ('firstopen', True),
         ('fund', None),
     )
@@ -96,44 +96,44 @@ class TimeReturn(TimeFrameAnalyzerBase):
     def start(self):
         super(TimeReturn, self).start()
         if self.p.fund is None:
-            self._fundmode = self.strategy.broker.fundmode
+            self._fundmode = self.strategy.broker_or_exchange.fundmode
         else:
             self._fundmode = self.p.fund
 
         self._value_start = 0.0
         self._lastvalue = None
-        if self.p.data is None:
+        if self.p.datafeed is None:
             # keep the initial portfolio value if not tracing a data
             if not self._fundmode:
-                self._lastvalue = self.strategy.broker.getvalue()
+                self._lastvalue = self.strategy.broker_or_exchange.get_value()
             else:
-                self._lastvalue = self.strategy.broker.fundvalue
+                self._lastvalue = self.strategy.broker_or_exchange.fundvalue
 
     def notify_fund(self, cash, value, fundvalue, shares):
         if not self._fundmode:
             # Record current value
-            if self.p.data is None:
+            if self.p.datafeed is None:
                 self._value = value  # the portofolio value if tracking no data
             else:
-                self._value = self.p.data[0]  # the data value if tracking data
+                self._value = self.p.datafeed[0]  # the data value if tracking data
         else:
-            if self.p.data is None:
+            if self.p.datafeed is None:
                 self._value = fundvalue  # the fund value if tracking no data
             else:
-                self._value = self.p.data[0]  # the data value if tracking data
+                self._value = self.p.datafeed[0]  # the data value if tracking data
 
     def on_dt_over(self):
         # next is called in a new timeframe period
-        # if self.p.data is None or len(self.p.data) > 1:
-        if self.p.data is None or self._lastvalue is not None:
+        # if self.p.datafeed is None or len(self.p.datafeed) > 1:
+        if self.p.datafeed is None or self._lastvalue is not None:
             self._value_start = self._lastvalue  # update value_start to last
 
         else:
             # The 1st tick has no previous reference, use the opening price
             if self.p.firstopen:
-                self._value_start = self.p.data.open[0]
+                self._value_start = self.p.datafeed.open[0]
             else:
-                self._value_start = self.p.data[0]
+                self._value_start = self.p.datafeed[0]
 
     def next(self):
         # Calculate the return

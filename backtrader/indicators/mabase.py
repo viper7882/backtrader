@@ -33,17 +33,17 @@ class MovingAverage(object):
 
     Instantiating a SimpleMovingAverage can be achieved as follows::
 
-      sma = MovingAverage.Simple(self.data, period)
+      sma = MovingAverage.Simple(self.datafeed, period)
 
     Or using the shorter aliases::
 
-      sma = MovAv.SMA(self.data, period)
+      sma = MovAv.SMA(self.datafeed, period)
 
     or with the full (forwards and backwards) names:
 
-      sma = MovAv.SimpleMovingAverage(self.data, period)
+      sma = MovAv.SimpleMovingAverage(self.datafeed, period)
 
-      sma = MovAv.MovingAverageSimple(self.data, period)
+      sma = MovAv.MovingAverageSimple(self.datafeed, period)
 
     '''
     _movavs = []

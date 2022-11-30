@@ -56,12 +56,12 @@ class StandardDeviation(Indicator):
         return plabels
 
     def __init__(self):
-        if len(self.datas) > 1:
-            mean = self.data1
+        if len(self.datafeeds) > 1:
+            mean = self.datafeed1
         else:
-            mean = self.p.movav(self.data, period=self.p.period)
+            mean = self.p.movav(self.datafeed, period=self.p.period)
 
-        meansq = self.p.movav(pow(self.data, 2), period=self.p.period)
+        meansq = self.p.movav(pow(self.datafeed, 2), period=self.p.period)
         sqmean = pow(mean, 2)
 
         if self.p.safepow:
@@ -98,10 +98,10 @@ class MeanDeviation(Indicator):
         return plabels
 
     def __init__(self):
-        if len(self.datas) > 1:
-            mean = self.data1
+        if len(self.datafeeds) > 1:
+            mean = self.datafeed1
         else:
-            mean = self.p.movav(self.data, period=self.p.period)
+            mean = self.p.movav(self.datafeed, period=self.p.period)
 
-        absdev = abs(self.data - mean)
+        absdev = abs(self.datafeed - mean)
         self.lines.meandev = self.p.movav(absdev, period=self.p.period)

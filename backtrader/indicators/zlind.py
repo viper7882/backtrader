@@ -76,7 +76,7 @@ class ZeroLagIndicator(MovingAverageBase):
     def next(self):
         leasterror = MAXINT  # 1000000 in original code
         bestec = ema = self.ema[0]  # seed value 1st time for ec
-        price = self.data[0]
+        price = self.datafeed[0]
         ec1 = self.lines.ec[-1]
         alpha, alpha1 = self.ema.alpha, self.ema.alpha1
 

@@ -71,7 +71,7 @@ class St(bt.Strategy):
 
         tlen = 0
         self.loglendetails('-- Evaluating Datas')
-        for i, data in enumerate(self.datas):
+        for i, data in enumerate(self.datafeeds):
             tdata = 0
             for line in data.lines:
                 tdata += len(line.array)
@@ -124,9 +124,9 @@ def runstrat():
     args = parse_args()
 
     cerebro = bt.Cerebro()
-    data = btfeeds.YahooFinanceCSVData(dataname=args.data)
-    cerebro.adddata(data)
-    cerebro.addstrategy(
+    datafeed = btfeeds.YahooFinanceCSVData(dataname=args.data)
+    cerebro.add_datafeed(datafeed)
+    cerebro.add_strategy(
         St, datalines=args.datalines, lendetails=args.lendetails)
 
     cerebro.run(runonce=False, exactbars=args.save)

@@ -101,8 +101,8 @@ class Indicator(with_metaclass(MetaIndicator, IndicatorBase)):
     def preonce_via_prenext(self, start, end):
         # generic implementation if prenext is overridden but preonce is not
         for i in range(start, end):
-            for data in self.datas:
-                data.advance()
+            for datafeed in self.datafeeds:
+                datafeed.advance()
 
             for indicator in self._lineiterators[LineIterator.IndType]:
                 indicator.advance()
@@ -114,8 +114,8 @@ class Indicator(with_metaclass(MetaIndicator, IndicatorBase)):
         # nextstart has been overriden, but oncestart has not and the code is
         # here. call the overriden nextstart
         for i in range(start, end):
-            for data in self.datas:
-                data.advance()
+            for datafeed in self.datafeeds:
+                datafeed.advance()
 
             for indicator in self._lineiterators[LineIterator.IndType]:
                 indicator.advance()
@@ -126,8 +126,8 @@ class Indicator(with_metaclass(MetaIndicator, IndicatorBase)):
     def once_via_next(self, start, end):
         # Not overridden, next must be there ...
         for i in range(start, end):
-            for data in self.datas:
-                data.advance()
+            for datafeed in self.datafeeds:
+                datafeed.advance()
 
             for indicator in self._lineiterators[LineIterator.IndType]:
                 indicator.advance()
@@ -152,8 +152,8 @@ class MtLinePlotterIndicator(Indicator.__class__):
         _obj, args, kwargs =  \
             super(MtLinePlotterIndicator, cls).donew(*args, **kwargs)
 
-        _obj.owner = _obj.data.owner._clock
-        _obj.data.lines[0].addbinding(_obj.lines[0])
+        _obj.owner = _obj.datafeed.owner._clock
+        _obj.datafeed.lines[0].addbinding(_obj.lines[0])
 
         # Return the object and arguments to the chain
         return _obj, args, kwargs

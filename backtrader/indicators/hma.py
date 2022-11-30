@@ -56,8 +56,8 @@ class HullMovingAverage(MovingAverageBase):
     params = (('_movav', MovAv.WMA),)
 
     def __init__(self):
-        wma = self.p._movav(self.data, period=self.params.period)
-        wma2 = 2.0 * self.p._movav(self.data, period=self.params.period // 2)
+        wma = self.p._movav(self.datafeed, period=self.params.period)
+        wma2 = 2.0 * self.p._movav(self.datafeed, period=self.params.period // 2)
 
         sqrtperiod = pow(self.params.period, 0.5)
         self.lines.hma = self.p._movav(wma2 - wma, period=int(sqrtperiod))

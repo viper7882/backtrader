@@ -41,7 +41,7 @@ class Momentum(Indicator):
     plotinfo = dict(plothlines=[0.0])
 
     def __init__(self):
-        self.l.momentum = self.data - self.data(-self.p.period)
+        self.l.momentum = self.datafeed - self.datafeed(-self.p.period)
         super(Momentum, self).__init__()
 
 
@@ -72,7 +72,7 @@ class MomentumOscillator(Indicator):
         self.plotinfo.plothlines = [self.p.band]
 
     def __init__(self):
-        self.l.momosc = 100.0 * (self.data / self.data(-self.p.period))
+        self.l.momosc = 100.0 * (self.datafeed / self.datafeed(-self.p.period))
         super(MomentumOscillator, self).__init__()
 
 
@@ -95,8 +95,8 @@ class RateOfChange(Indicator):
     params = (('period', 12),)
 
     def __init__(self):
-        dperiod = self.data(-self.p.period)
-        self.l.roc = (self.data - dperiod) / dperiod
+        dperiod = self.datafeed(-self.p.period)
+        self.l.roc = (self.datafeed - dperiod) / dperiod
         super(RateOfChange, self).__init__()
 
 
@@ -122,5 +122,5 @@ class RateOfChange100(Indicator):
     params = (('period', 12),)
 
     def __init__(self):
-        self.l.roc100 = 100.0 * ROC(self.data, period=self.p.period)
+        self.l.roc100 = 100.0 * ROC(self.datafeed, period=self.p.period)
         super(RateOfChange100, self).__init__()

@@ -27,37 +27,36 @@ from datetime import date, datetime, timedelta
 import threading
 
 from backtrader.feed import DataBase
-from backtrader import (TimeFrame, num2date, date2num, BrokerBase,
-                        Order, BuyOrder, SellOrder, OrderBase, OrderData)
+from backtrader import (TimeFrame, num2date, date2num, Broker_or_Exchange_Base,
+                        Order, Buy_Order, Sell_Order, OrderBase, OrderData)
 from backtrader.utils.py3 import bytes, with_metaclass, MAXFLOAT
 from backtrader.metabase import MetaParams
-from backtrader.comminfo import CommInfoBase
+from backtrader.commission_info import CommInfoBase
 from backtrader.position import Position
-from backtrader.stores import oandastore
+from backtrader.accounts_or_stores import oandastore
 from backtrader.utils import AutoDict, AutoOrderedDict
-from backtrader.comminfo import CommInfoBase
 
 
 class OandaCommInfo(CommInfoBase):
-    def getvaluesize(self, size, price):
+    def get_value_size(self, size, price):
         # In real life the margin approaches the price
         return abs(size) * price
 
-    def getoperationcost(self, size, price):
+    def get_operating_cost(self, size, price):
         '''Returns the needed amount of cash an operation would cost'''
         # Same reasoning as above
         return abs(size) * price
 
 
-class MetaOandaBroker(BrokerBase.__class__):
+class MetaOandaBroker(Broker_or_Exchange_Base.__class__):
     def __init__(cls, name, bases, dct):
         '''Class has already been created ... register'''
         # Initialize the class
         super(MetaOandaBroker, cls).__init__(name, bases, dct)
-        oandastore.OandaStore.BrokerCls = cls
+        oandastore.OandaStore.Broker_or_Exchange_Cls = cls
 
 
-class OandaBroker(with_metaclass(MetaOandaBroker, BrokerBase)):
+class OandaBroker(with_metaclass(MetaOandaBroker, Broker_or_Exchange_Base)):
     '''Broker implementation for Oanda.
 
     This class maps the orders/positions from Oanda to the
@@ -65,15 +64,15 @@ class OandaBroker(with_metaclass(MetaOandaBroker, BrokerBase)):
 
     Params:
 
-      - ``use_positions`` (default:``True``): When connecting to the broker
-        provider use the existing positions to kickstart the broker.
+      - ``use_positions`` (default:``True``): When connecting to the broker_or_exchange
+        provider use the existing positions to kickstart the broker_or_exchange.
 
         Set to ``False`` during instantiation to disregard any existing
         position
     '''
     params = (
         ('use_positions', True),
-        ('commission', OandaCommInfo(mult=1.0, stocklike=False)),
+        ('commission', OandaCommInfo(mult=1.0, stock_like=False)),
     )
 
     def __init__(self, **kwargs):
@@ -87,15 +86,15 @@ class OandaBroker(with_metaclass(MetaOandaBroker, BrokerBase)):
         self.opending = collections.defaultdict(list)  # pending transmission
         self.brackets = dict()  # confirmed brackets
 
-        self.startingcash = self.cash = 0.0
-        self.startingvalue = self.value = 0.0
+        self.starting_cash = self.cash = 0.0
+        self.starting_value = self.value = 0.0
         self.positions = collections.defaultdict(Position)
 
     def start(self):
         super(OandaBroker, self).start()
-        self.o.start(broker=self)
-        self.startingcash = self.cash = cash = self.o.get_cash()
-        self.startingvalue = self.value = self.o.get_value()
+        self.o.start(broker_or_exchange=self)
+        self.starting_cash = self.cash = cash = self.o.get_cash()
+        self.starting_value = self.value = self.o.get_value()
 
         if self.p.use_positions:
             for p in self.o.get_positions():
@@ -107,16 +106,16 @@ class OandaBroker(with_metaclass(MetaOandaBroker, BrokerBase)):
                 price = p['avgPrice']
                 self.positions[p['instrument']] = Position(size, price)
 
-    def data_started(self, data):
-        pos = self.getposition(data)
+    def data_started(self, datafeed):
+        pos = self.get_position(datafeed)
 
         if pos.size < 0:
-            order = SellOrder(data=data,
+            order = Sell_Order(datafeed=datafeed,
                               size=pos.size, price=pos.price,
-                              exectype=Order.Market,
+                              execution_type=Order.Market,
                               simulated=True)
 
-            order.addcomminfo(self.getcommissioninfo(data))
+            order.add_commission_info(self.get_commission_info(datafeed))
             order.execute(0, pos.size, pos.price,
                           0, 0.0, 0.0,
                           pos.size, 0.0, 0.0,
@@ -127,12 +126,12 @@ class OandaBroker(with_metaclass(MetaOandaBroker, BrokerBase)):
             self.notify(order)
 
         elif pos.size > 0:
-            order = BuyOrder(data=data,
+            order = Buy_Order(datafeed=datafeed,
                              size=pos.size, price=pos.price,
-                             exectype=Order.Market,
+                             execution_type=Order.Market,
                              simulated=True)
 
-            order.addcomminfo(self.getcommissioninfo(data))
+            order.add_commission_info(self.get_commission_info(datafeed))
             order.execute(0, pos.size, pos.price,
                           0, 0.0, 0.0,
                           pos.size, 0.0, 0.0,
@@ -146,18 +145,18 @@ class OandaBroker(with_metaclass(MetaOandaBroker, BrokerBase)):
         super(OandaBroker, self).stop()
         self.o.stop()
 
-    def getcash(self):
+    def get_cash(self):
         # This call cannot block if no answer is available from oanda
         self.cash = cash = self.o.get_cash()
         return cash
 
-    def getvalue(self, datas=None):
+    def get_value(self, datafeeds=None):
         self.value = self.o.get_value()
         return self.value
 
-    def getposition(self, data, clone=True):
-        # return self.o.getposition(data._dataname, clone=clone)
-        pos = self.positions[data._dataname]
+    def get_position(self, datafeed, clone=True):
+        # return self.o.getposition(datafeed._dataname, clone=clone)
+        pos = self.positions[datafeed._dataname]
         if clone:
             pos = pos.clone()
 
@@ -254,23 +253,23 @@ class OandaBroker(with_metaclass(MetaOandaBroker, BrokerBase)):
                 self.put_notification(msg, order, price, size)
                 return
 
-        data = order.data
-        pos = self.getposition(data, clone=False)
-        psize, pprice, opened, closed = pos.update(size, price)
+        datafeed = order.datafeed
+        pos = self.get_position(datafeed, clone=False)
+        position_size, position_average_price, opened, closed = pos.update(size, price)
 
-        comminfo = self.getcommissioninfo(data)
+        commission_info = self.get_commission_info(datafeed)
 
-        closedvalue = closedcomm = 0.0
-        openedvalue = openedcomm = 0.0
-        margin = pnl = 0.0
+        closed_value = closed_commission = 0.0
+        opened_value = opened_commission = 0.0
+        margin = profit_and_loss_amount = 0.0
 
-        order.execute(data.datetime[0], size, price,
-                      closed, closedvalue, closedcomm,
-                      opened, openedvalue, openedcomm,
-                      margin, pnl,
-                      psize, pprice)
+        order.execute(datafeed.datetime[0], size, price,
+                      closed, closed_value, closed_commission,
+                      opened, opened_value, opened_commission,
+                      margin, profit_and_loss_amount,
+                      position_size, position_average_price)
 
-        if order.executed.remsize:
+        if order.executed.remaining_size:
             order.partial()
             self.notify(order)
         else:
@@ -303,38 +302,38 @@ class OandaBroker(with_metaclass(MetaOandaBroker, BrokerBase)):
         self.opending[pref].append(order)
         return order
 
-    def buy(self, owner, data,
-            size, price=None, plimit=None,
-            exectype=None, valid=None, tradeid=0, oco=None,
-            trailamount=None, trailpercent=None,
+    def buy(self, owner, datafeed,
+            size, price=None, price_limit=None,
+            execution_type=None, valid=None, tradeid=0, oco=None,
+            trailing_amount=None, trailing_percent=None,
             parent=None, transmit=True,
             **kwargs):
 
-        order = BuyOrder(owner=owner, data=data,
-                         size=size, price=price, pricelimit=plimit,
-                         exectype=exectype, valid=valid, tradeid=tradeid,
-                         trailamount=trailamount, trailpercent=trailpercent,
+        order = Buy_Order(owner=owner, datafeed=datafeed,
+                         size=size, price=price, pricelimit=price_limit,
+                         execution_type=execution_type, valid=valid, tradeid=tradeid,
+                         trailing_amount=trailing_amount, trailing_percent=trailing_percent,
                          parent=parent, transmit=transmit)
 
-        order.addinfo(**kwargs)
-        order.addcomminfo(self.getcommissioninfo(data))
+        order.add_info(**kwargs)
+        order.add_commission_info(self.get_commission_info(datafeed))
         return self._transmit(order)
 
-    def sell(self, owner, data,
-             size, price=None, plimit=None,
-             exectype=None, valid=None, tradeid=0, oco=None,
-             trailamount=None, trailpercent=None,
+    def sell(self, owner, datafeed,
+             size, price=None, price_limit=None,
+             execution_type=None, valid=None, tradeid=0, oco=None,
+             trailing_amount=None, trailing_percent=None,
              parent=None, transmit=True,
              **kwargs):
 
-        order = SellOrder(owner=owner, data=data,
-                          size=size, price=price, pricelimit=plimit,
-                          exectype=exectype, valid=valid, tradeid=tradeid,
-                          trailamount=trailamount, trailpercent=trailpercent,
+        order = Sell_Order(owner=owner, datafeed=datafeed,
+                          size=size, price=price, pricelimit=price_limit,
+                          execution_type=execution_type, valid=valid, tradeid=tradeid,
+                          trailing_amount=trailing_amount, trailing_percent=trailing_percent,
                           parent=parent, transmit=transmit)
 
-        order.addinfo(**kwargs)
-        order.addcomminfo(self.getcommissioninfo(data))
+        order.add_info(**kwargs)
+        order.add_commission_info(self.get_commission_info(datafeed))
         return self._transmit(order)
 
     def cancel(self, order):

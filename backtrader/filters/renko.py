@@ -72,8 +72,8 @@ class Renko(Filter):
         ('roundstart', True),
     )
 
-    def nextstart(self, data):
-        o = data.open[0]
+    def nextstart(self, datafeed):
+        o = datafeed.open[0]
         o = round(o / self.p.align, 0) * self.p.align  # aligned
         self._size = self.p.size or float(o // self.p.autosize)
         if self.p.roundstart:
@@ -82,10 +82,10 @@ class Renko(Filter):
         self._top = o + self._size
         self._bot = o - self._size
 
-    def next(self, data):
-        c = data.close[0]
-        h = data.high[0]
-        l = data.low[0]
+    def next(self, datafeed):
+        c = datafeed.close[0]
+        h = datafeed.high[0]
+        l = datafeed.low[0]
 
         if self.p.hilo:
             hiprice = h
@@ -106,12 +106,12 @@ class Renko(Filter):
 
             self._top = top
 
-            data.open[0] = bot
-            data.low[0] = bot
-            data.high[0] = top
-            data.close[0] = top
-            data.volume[0] = 0.0
-            data.openinterest[0] = 0.0
+            datafeed.open[0] = bot
+            datafeed.low[0] = bot
+            datafeed.high[0] = top
+            datafeed.close[0] = top
+            datafeed.volume[0] = 0.0
+            datafeed.openinterest[0] = 0.0
             return False  # length of data stream is unaltered
 
         elif loprice <= self._bot:
@@ -127,13 +127,13 @@ class Renko(Filter):
 
             self._bot = bot
 
-            data.open[0] = top
-            data.low[0] = top
-            data.high[0] = bot
-            data.close[0] = bot
-            data.volume[0] = 0.0
-            data.openinterest[0] = 0.0
+            datafeed.open[0] = top
+            datafeed.low[0] = top
+            datafeed.high[0] = bot
+            datafeed.close[0] = bot
+            datafeed.volume[0] = 0.0
+            datafeed.openinterest[0] = 0.0
             return False  # length of data stream is unaltered
 
-        data.backwards()
+        datafeed.backwards()
         return True  # length of stream was changed, get new bar

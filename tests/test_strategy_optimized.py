@@ -80,7 +80,7 @@ class TestStrategy(bt.Strategy):
         self.cross = btind.CrossOver(self.data.close, self.sma, plot=True)
 
     def start(self):
-        self.broker.setcommission(commission=2.0, mult=10.0, margin=1000.0)
+        self.broker_or_exchange.set_commission(commission=2.0, mult=10.0, margin=1000.0)
         self.tstart = time_clock()
         self.buy_create_idx = itertools.count()
 
@@ -93,12 +93,12 @@ class TestStrategy(bt.Strategy):
             self.log(('Time used: %s  - Period % d - '
                       'Start value: %.2f - End value: %.2f') %
                      (str(tused), self.p.period,
-                      self.broker.startingcash, self.broker.getvalue()))
+                      self.broker_or_exchange.starting_cash, self.broker_or_exchange.getvalue()))
 
-        value = '%.2f' % self.broker.getvalue()
+        value = '%.2f' % self.broker_or_exchange.getvalue()
         _chkvalues.append(value)
 
-        cash = '%.2f' % self.broker.getcash()
+        cash = '%.2f' % self.broker_or_exchange.get_cash()
         _chkcash.append(cash)
 
     def next(self):

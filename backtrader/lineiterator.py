@@ -46,11 +46,11 @@ MONTHLY_DATE_FORMAT = "%Y-%m"
 TIME_FORMAT_WITH_S_PRECISION = "%H:%M:%S"
 DATE_TIME_FORMAT_WITH_S_PRECISION = DEFAULT_DATE_FORMAT + " " + TIME_FORMAT_WITH_S_PRECISION
 
-def dump_datas(function, lineno, datas, data_source_name, filtered_data_by_name=None, ohlcv=False):
+def dump_datas(function, lineno, datafeeds, data_source_name, filtered_data_by_name=None, ohlcv=False):
     datetime_format = DATE_TIME_FORMAT_WITH_S_PRECISION
 
-    print("{} Line: {}: DEBUG: len of {}.datas: {}".format(
-            function, lineno, data_source_name, len(datas),
+    print("{} Line: {}: DEBUG: len of {}.datafeeds: {}".format(
+            function, lineno, data_source_name, len(datafeeds),
         ))
 
     subscribed_keys = ['_opstage', 'close[0]', 'datetime.datetime(0)', 'lines.datetime.idx', ]
@@ -59,59 +59,59 @@ def dump_datas(function, lineno, datas, data_source_name, filtered_data_by_name=
         subscribed_keys.remove('close[0]')
         subscribed_keys += ['datetime.datetime(0)', 'open[0]', 'high[0]', 'low[0]', 'close[0]', 'volume[0]', ]
 
-    for data in datas:
+    for datafeed in datafeeds:
         if filtered_data_by_name is not None:
-            if data._name != filtered_data_by_name:
+            if datafeed._name != filtered_data_by_name:
                 continue
 
-        msg = "{} Line: {}: INFO: {}.data._name: {}, ".format(
-            function, lineno, data_source_name, data._name,
+        msg = "{} Line: {}: INFO: {}.datafeed._name: {}, ".format(
+            function, lineno, data_source_name, datafeed._name,
         )
 
         for subscribed_key in subscribed_keys:
             # INFO: Special handling for datetime.datetime(0)
             if subscribed_key == 'datetime.datetime(0)':
-                if data.datetime.idx >= 0:
-                    data_dt = data.datetime.datetime(0)
+                if datafeed.datetime.idx >= 0:
+                    data_dt = datafeed.datetime.datetime(0)
                     if data_dt is not None:
                         msg += "{}: {}, len={}, ".format(
-                            subscribed_key, data_dt.strftime(datetime_format), len(data.datetime))
+                            subscribed_key, data_dt.strftime(datetime_format), len(datafeed.datetime))
                     else:
                         msg += "{}: {}, len=0, ".format(subscribed_key, NA)
                 else:
                     msg += "{}: {}, ".format(subscribed_key, NA)
-            elif subscribed_key == 'lines.datetime._minperiod':
-                msg += "{}: {}, ".format(subscribed_key, data.lines.datetime._minperiod)
+            elif subscribed_key == 'lines.datetime._min_period':
+                msg += "{}: {}, ".format(subscribed_key, datafeed.lines.datetime._min_period)
             elif subscribed_key == 'lines.datetime.idx':
-                msg += "{}: {}, ".format(subscribed_key, data.lines.datetime.idx)
+                msg += "{}: {}, ".format(subscribed_key, datafeed.lines.datetime.idx)
             elif subscribed_key == 'close[0]':
-                if data.close.idx >= 0:
-                    msg += "{}: {}, ".format(subscribed_key, data.close[0])
+                if datafeed.close.idx >= 0:
+                    msg += "{}: {}, ".format(subscribed_key, datafeed.close[0])
                 else:
                     msg += "{}: {}, ".format(subscribed_key, NA)
             elif subscribed_key == 'open[0]':
-                if data.close.idx >= 0:
-                    msg += "{}: {}, ".format(subscribed_key, data.open[0])
+                if datafeed.close.idx >= 0:
+                    msg += "{}: {}, ".format(subscribed_key, datafeed.open[0])
                 else:
                     msg += "{}: {}, ".format(subscribed_key, NA)
             elif subscribed_key == 'high[0]':
-                if data.close.idx >= 0:
-                    msg += "{}: {}, ".format(subscribed_key, data.high[0])
+                if datafeed.close.idx >= 0:
+                    msg += "{}: {}, ".format(subscribed_key, datafeed.high[0])
                 else:
                     msg += "{}: {}, ".format(subscribed_key, NA)
             elif subscribed_key == 'low[0]':
-                if data.close.idx >= 0:
-                    msg += "{}: {}, ".format(subscribed_key, data.low[0])
+                if datafeed.close.idx >= 0:
+                    msg += "{}: {}, ".format(subscribed_key, datafeed.low[0])
                 else:
                     msg += "{}: {}, ".format(subscribed_key, NA)
             elif subscribed_key == 'volume[0]':
-                if data.close.idx >= 0:
-                    msg += "{}: {}, ".format(subscribed_key, data.volume[0])
+                if datafeed.close.idx >= 0:
+                    msg += "{}: {}, ".format(subscribed_key, datafeed.volume[0])
                 else:
                     msg += "{}: {}, ".format(subscribed_key, NA)
 
-            if subscribed_key in dir(data):
-                msg += "{}: {}, ".format(subscribed_key, getattr(data, subscribed_key))
+            if subscribed_key in dir(datafeed):
+                msg += "{}: {}, ".format(subscribed_key, getattr(datafeed, subscribed_key))
 
         # INFO: Strip ", " from the string
         print(msg[:-2])
@@ -126,20 +126,20 @@ class MetaLineIterator(LineSeries.__class__):
         # influence minperiod - Moved here to support LineNum below
         _obj._lineiterators = collections.defaultdict(list)
 
-        # Scan args for datas ... if none are found,
+        # Scan args for datafeeds ... if none are found,
         # use the _owner (to have a clock)
         mindatas = _obj._mindatas
         lastarg = 0
-        _obj.datas = []
+        _obj.datafeeds = []
         for arg in args:
             if isinstance(arg, LineRoot):
-                _obj.datas.append(LineSeriesMaker(arg))
+                _obj.datafeeds.append(LineSeriesMaker(arg))
 
             elif not mindatas:
                 break  # found not data and must not be collected
             else:
                 try:
-                    _obj.datas.append(LineSeriesMaker(LineNum(arg)))
+                    _obj.datafeeds.append(LineSeriesMaker(LineNum(arg)))
                 except:
                     # Not a LineNum and is not a LineSeries - bail out
                     break
@@ -149,39 +149,39 @@ class MetaLineIterator(LineSeries.__class__):
 
         newargs = args[lastarg:]
 
-        # If no datas have been passed to an indicator ... use the
-        # main datas of the owner, easing up adding "self.data" ...
-        if not _obj.datas and isinstance(_obj, (IndicatorBase, ObserverBase)):
-            _obj.datas = _obj._owner.datas[0:mindatas]
+        # If no datafeeds have been passed to an indicator ... use the
+        # main datafeeds of the owner, easing up adding "self.datafeed" ...
+        if not _obj.datafeeds and isinstance(_obj, (IndicatorBase, ObserverBase)):
+            _obj.datafeeds = _obj._owner.datafeeds[0:mindatas]
 
         # Create a dictionary to be able to check for presence
         # lists in python use "==" operator when testing for presence with "in"
         # which doesn't really check for presence but for equality
-        _obj.ddatas = {x: None for x in _obj.datas}
+        _obj.ddatas = {x: None for x in _obj.datafeeds}
 
         # For each found data add access member -
-        # for the first data 2 (data and data0)
-        if _obj.datas:
-            _obj.data = data = _obj.datas[0]
+        # for the first data 2 (data and datafeed0)
+        if _obj.datafeeds:
+            _obj.datafeed = datafeed = _obj.datafeeds[0]
 
-            for l, line in enumerate(data.lines):
-                linealias = data._getlinealias(l)
+            for l, line in enumerate(datafeed.lines):
+                linealias = datafeed._getlinealias(l)
                 if linealias:
-                    setattr(_obj, 'data_%s' % linealias, line)
-                setattr(_obj, 'data_%d' % l, line)
+                    setattr(_obj, 'datafeed_%s' % linealias, line)
+                setattr(_obj, 'datafeed_%d' % l, line)
 
-            for d, data in enumerate(_obj.datas):
-                setattr(_obj, 'data%d' % d, data)
+            for d, datafeed in enumerate(_obj.datafeeds):
+                setattr(_obj, 'datafeed%d' % d, datafeed)
 
-                for l, line in enumerate(data.lines):
-                    linealias = data._getlinealias(l)
+                for l, line in enumerate(datafeed.lines):
+                    linealias = datafeed._getlinealias(l)
                     if linealias:
-                        setattr(_obj, 'data%d_%s' % (d, linealias), line)
-                    setattr(_obj, 'data%d_%d' % (d, l), line)
+                        setattr(_obj, 'datafeed%d_%s' % (d, linealias), line)
+                    setattr(_obj, 'datafeed%d_%d' % (d, l), line)
 
         # Parameter values have now been set before __init__
         _obj.dnames = DotDict([(d._name, d)
-                               for d in _obj.datas if getattr(d, '_name', '')])
+                               for d in _obj.datafeeds if getattr(d, '_name', '')])
 
         return _obj, newargs, kwargs
 
@@ -189,23 +189,23 @@ class MetaLineIterator(LineSeries.__class__):
         _obj, args, kwargs = \
             super(MetaLineIterator, cls).dopreinit(_obj, *args, **kwargs)
 
-        # if no datas were found use, use the _owner (to have a clock)
-        _obj.datas = _obj.datas or [_obj._owner]
+        # if no datafeeds were found use, use the _owner (to have a clock)
+        _obj.datafeeds = _obj.datafeeds or [_obj._owner]
 
         # 1st data source is our ticking clock
-        _obj._clock = _obj.datas[0]
+        _obj._clock = _obj.datafeeds[0]
 
-        # To automatically set the period Start by scanning the found datas
-        # No calculation can take place until all datas have yielded "data"
+        # To automatically set the period Start by scanning the found datafeeds
+        # No calculation can take place until all datafeeds have yielded "data"
         # A data could be an indicator and it could take x bars until
         # something is produced
-        _obj._minperiod = \
-            max([x._minperiod for x in _obj.datas if x is not None] or [_obj._minperiod])
+        _obj._min_period = \
+            max([x._min_period for x in _obj.datafeeds if x is not None] or [_obj._min_period])
 
-        # The lines carry at least the same minperiod as
-        # that provided by the datas
+        # The lines carry at least the same min period as
+        # that provided by the datafeeds
         for line in _obj.lines:
-            line.addminperiod(_obj._minperiod)
+            line.add_min_period(_obj._min_period)
 
         return _obj, args, kwargs
 
@@ -213,16 +213,16 @@ class MetaLineIterator(LineSeries.__class__):
         _obj, args, kwargs = \
             super(MetaLineIterator, cls).dopostinit(_obj, *args, **kwargs)
 
-        # my minperiod is as large as the minperiod of my lines
-        _obj._minperiod = max([x._minperiod for x in _obj.lines])
+        # my min period is as large as the min period of my lines
+        _obj._min_period = max([x._min_period for x in _obj.lines])
 
         # Recalc the period
         _obj._periodrecalc()
 
         # Register (my)self as indicator to owner once
-        # _minperiod has been calculated
+        # _min_period has been calculated
         if _obj._owner is not None:
-            _obj._owner.addindicator(_obj)
+            _obj._owner.add_indicator(_obj)
 
         return _obj, args, kwargs
 
@@ -253,15 +253,15 @@ class LineIterator(with_metaclass(MetaLineIterator, LineSeries)):
         # lines (directly or indirectly after some operations)
         # An example is Kaufman's Adaptive Moving Average
         indicators = self._lineiterators[LineIterator.IndType]
-        indperiods = [ind._minperiod for ind in indicators]
-        indminperiod = max(indperiods or [self._minperiod])
+        indperiods = [ind._min_period for ind in indicators]
+        indminperiod = max(indperiods or [self._min_period])
         self.updateminperiod(indminperiod)
 
     def _stage2(self):
         super(LineIterator, self)._stage2()
 
-        for data in self.datas:
-            data._stage2()
+        for datafeed in self.datafeeds:
+            datafeed._stage2()
 
         for lineiterators in self._lineiterators.values():
             for lineiterator in lineiterators:
@@ -270,8 +270,8 @@ class LineIterator(with_metaclass(MetaLineIterator, LineSeries)):
     def _stage1(self):
         super(LineIterator, self)._stage1()
 
-        for data in self.datas:
-            data._stage1()
+        for datafeed in self.datafeeds:
+            datafeed._stage1()
 
         for lineiterators in self._lineiterators.values():
             for lineiterator in lineiterators:
@@ -287,7 +287,7 @@ class LineIterator(with_metaclass(MetaLineIterator, LineSeries)):
     def getobservers(self):
         return self._lineiterators[LineIterator.ObsType]
 
-    def addindicator(self, indicator):
+    def add_indicator(self, indicator):
         # store in right queue
         self._lineiterators[indicator._ltype].append(indicator)
 
@@ -353,7 +353,7 @@ class LineIterator(with_metaclass(MetaLineIterator, LineSeries)):
             #     dump_datas(
             #         inspect.getframeinfo(inspect.currentframe()).function,
             #         inspect.getframeinfo(inspect.currentframe()).lineno,
-            #         indicator.datas,
+            #         indicator.datafeeds,
             #         type(indicator).__name__,
             #         filtered_data_by_name="1m_Long",
             #     )
@@ -372,7 +372,7 @@ class LineIterator(with_metaclass(MetaLineIterator, LineSeries)):
             #     dump_datas(
             #         inspect.getframeinfo(inspect.currentframe()).function,
             #         inspect.getframeinfo(inspect.currentframe()).lineno,
-            #         indicator.datas,
+            #         indicator.datafeeds,
             #         type(indicator).__name__,
             #         filtered_data_by_name="1m_Long",
             #     )
@@ -381,51 +381,51 @@ class LineIterator(with_metaclass(MetaLineIterator, LineSeries)):
         self._notify()
 
         if self._ltype == LineIterator.StratType:
-            # supporting datas with different lengths
-            minperstatus = self._getminperstatus()
+            # supporting datafeeds with different lengths
+            min_per_status = self._get_min_per_status()
 
-            # print("{} Line: {}: INFO: minperstatus: {}".format(
+            # print("{} Line: {}: INFO: min_per_status: {}".format(
             #     inspect.getframeinfo(inspect.currentframe()).function,
             #     inspect.getframeinfo(inspect.currentframe()).lineno,
-            #     minperstatus,
+            #     min_per_status,
             # ))
 
-            if minperstatus < 0:
+            if min_per_status < 0:
                 # if debug:
-                #     print("{} Line: {}: DEBUG: minperstatus: {} < 0, run strategy.next()".format(
+                #     print("{} Line: {}: DEBUG: min_per_status: {} < 0, run strategy.next()".format(
                 #         inspect.getframeinfo(inspect.currentframe()).function,
                 #         inspect.getframeinfo(inspect.currentframe()).lineno,
-                #         minperstatus,
+                #         min_per_status,
                 #     ))
                 self.pre_process_next()
                 self.next()
                 self.post_process_next()
-            elif minperstatus == 0:
-                # minperstatus = self._getminperstatus()
+            elif min_per_status == 0:
+                # min_per_status = self._get_min_per_status()
                 # if debug:
-                #     print("{} Line: {}: DEBUG: minperstatus: {} == 0, run strategy.nextstart()".format(
+                #     print("{} Line: {}: DEBUG: min_per_status: {} == 0, run strategy.nextstart()".format(
                 #         inspect.getframeinfo(inspect.currentframe()).function,
                 #         inspect.getframeinfo(inspect.currentframe()).lineno,
-                #         minperstatus,
+                #         min_per_status,
                 #     ))
                 self.nextstart()  # only called for the 1st value
             else:
-                # minperstatus = self._getminperstatus()
+                # min_per_status = self._get_min_per_status()
                 # if debug:
-                #     print("{} Line: {}: DEBUG: else minperstatus: {}, run strategy.prenext()".format(
+                #     print("{} Line: {}: DEBUG: else min_per_status: {}, run strategy.prenext()".format(
                 #         inspect.getframeinfo(inspect.currentframe()).function,
                 #         inspect.getframeinfo(inspect.currentframe()).lineno,
-                #         minperstatus,
+                #         min_per_status,
                 #     ))
                 self.prenext()
         else:
-            # assume indicators and others operate on same length datas
+            # assume indicators and others operate on same length datafeeds
             # although the above operation can be generalized
-            if clock_len > self._minperiod:
+            if clock_len > self._min_period:
                 self.pre_process_next()
                 self.next()
                 self.post_process_next()
-            elif clock_len == self._minperiod:
+            elif clock_len == self._min_period:
                 self.nextstart()  # only called for the 1st value
             elif clock_len:
                 self.prenext()
@@ -446,8 +446,8 @@ class LineIterator(with_metaclass(MetaLineIterator, LineSeries)):
         for observer in self._lineiterators[LineIterator.ObsType]:
             observer.forward(size=self.buflen())
 
-        for data in self.datas:
-            data.home()
+        for datafeed in self.datafeeds:
+            datafeed.home()
 
         for indicator in self._lineiterators[LineIterator.IndType]:
             indicator.home()
@@ -460,9 +460,9 @@ class LineIterator(with_metaclass(MetaLineIterator, LineSeries)):
         # These 3 remain empty for a strategy and therefore play no role
         # because a strategy will always be executed on a next basis
         # indicators are each called with its min period
-        self.preonce(0, self._minperiod - 1)
-        self.oncestart(self._minperiod - 1, self._minperiod)
-        self.once(self._minperiod, self.buflen())
+        self.preonce(0, self._min_period - 1)
+        self.oncestart(self._min_period - 1, self._min_period)
+        self.once(self._min_period, self.buflen())
 
         for line in self.lines:
             line.oncebinding()
@@ -479,14 +479,14 @@ class LineIterator(with_metaclass(MetaLineIterator, LineSeries)):
     def prenext(self):
         '''
         This method will be called before the minimum period of all
-        datas/indicators have been meet for the strategy to start executing
+        datafeeds/indicators have been meet for the strategy to start executing
         '''
         pass
 
     def nextstart(self):
         '''
         This method will be called once, exactly when the minimum period for
-        all datas/indicators have been meet. The default behavior is to call
+        all datafeeds/indicators have been meet. The default behavior is to call
         next
         '''
 
@@ -504,11 +504,11 @@ class LineIterator(with_metaclass(MetaLineIterator, LineSeries)):
     def next(self):
         '''
         This method will be called for all remaining data points when the
-        minimum period for all datas/indicators have been meet.
+        minimum period for all datafeeds/indicators have been meet.
         '''
         pass
 
-    def _addnotification(self, *args, **kwargs):
+    def _add_notification(self, *args, **kwargs):
         pass
 
     def _notify(self):
@@ -526,9 +526,9 @@ class LineIterator(with_metaclass(MetaLineIterator, LineSeries)):
         for obj in self._lineiterators[self.IndType]:
             obj.qbuffer(savemem=1)
 
-        # Tell datas to adjust buffer to minimum period
-        for data in self.datas:
-            data.minbuffer(self._minperiod)
+        # Tell datafeeds to adjust buffer to minimum period
+        for datafeed in self.datafeeds:
+            datafeed.minbuffer(self._min_period)
 
 
 # This 3 subclasses can be used for identification purposes within LineIterator
@@ -587,11 +587,11 @@ class MultiCoupler(LineIterator):
         self.dvals = [float('NaN')] * self.dsize
 
     def next(self):
-        if len(self.data) > self.dlen:
+        if len(self.datafeed) > self.dlen:
             self.dlen += 1
 
             for i in range(self.dsize):
-                self.dvals[i] = self.data.lines[i][0]
+                self.dvals[i] = self.datafeed.lines[i][0]
 
         for i in range(self.dsize):
             self.lines[i][0] = self.dvals[i]
@@ -628,7 +628,7 @@ def LinesCoupler(cdata, clock=None, **kwargs):
             if nclock is not None:
                 clock = nclock
             else:
-                nclock = getattr(clock, 'data', None)
+                nclock = getattr(clock, 'datafeed', None)
                 if nclock is not None:
                     clock = nclock
 

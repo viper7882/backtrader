@@ -45,7 +45,7 @@ class DoubleExponentialMovingAverage(MovingAverageBase):
     params = (('_movav', MovAv.EMA),)
 
     def __init__(self):
-        ema = self.p._movav(self.data, period=self.p.period)
+        ema = self.p._movav(self.datafeed, period=self.p.period)
         ema2 = self.p._movav(ema, period=self.p.period)
         self.lines.dema = 2.0 * ema - ema2
 
@@ -75,7 +75,7 @@ class TripleExponentialMovingAverage(MovingAverageBase):
     params = (('_movav', MovAv.EMA),)
 
     def __init__(self):
-        ema1 = self.p._movav(self.data, period=self.p.period)
+        ema1 = self.p._movav(self.datafeed, period=self.p.period)
         ema2 = self.p._movav(ema1, period=self.p.period)
         ema3 = self.p._movav(ema2, period=self.p.period)
 

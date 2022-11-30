@@ -60,8 +60,8 @@ class TheStrategy(bt.Strategy):
             if order.status == order.Completed:
                 tfields = [self.p.myname,
                            len(self),
-                           order.data.datetime.date(),
-                           order.data._name,
+                           order.datafeed.datetime.date(),
+                           order.datafeed._name,
                            'BUY' * order.isbuy() or 'SELL',
                            order.executed.size, order.executed.price]
 
@@ -95,30 +95,30 @@ class TheStrategy(bt.Strategy):
         tfields = [self.p.myname,
                    len(self),
                    self.data.datetime.date(),
-                   self.getposition(self.data0).size]
-        if len(self.datas) > 1:
-            tfields.append(self.getposition(self.data1).size)
+                   self.get_position(self.datafeed0).size]
+        if len(self.datafeeds) > 1:
+            tfields.append(self.get_position(self.data1).size)
 
         print(','.join(str(x) for x in tfields))
 
         buysize = self.p.stake // 2  # let each signal buy half
         if self.macdsig[0] > 0.0:
-            self.buy(data=self.dtarget, size=buysize)
+            self.buy(datafeed=self.dtarget, size=buysize)
 
         if self.smasig[0] > 0.0:
-            self.buy(data=self.dtarget, size=buysize)
+            self.buy(datafeed=self.dtarget, size=buysize)
 
-        size = self.getposition(self.dtarget).size
+        size = self.get_position(self.dtarget).size
 
         # if 2x in the market, let each potential close ... close 1/2
         if size == self.p.stake:
             size //= 2
 
         if self.macdsig[0] < 0.0:
-            self.close(data=self.dtarget, size=size)
+            self.close(datafeed=self.dtarget, size=size)
 
         if self.smasig[0] < 0.0:
-            self.close(data=self.dtarget, size=size)
+            self.close(datafeed=self.dtarget, size=size)
 
 
 class TheStrategy2(TheStrategy):
@@ -140,7 +140,7 @@ def runstrat(args=None):
     args = parse_args(args)
 
     cerebro = bt.Cerebro()
-    cerebro.broker.set_cash(args.cash)
+    cerebro.broker_or_exchange.set_cash(args.cash)
 
     dkwargs = dict()
     if args.fromdate is not None:
@@ -152,20 +152,20 @@ def runstrat(args=None):
         dkwargs['todate'] = todate
 
     # if dataset is None, args.data has been given
-    data0 = bt.feeds.YahooFinanceCSVData(dataname=args.data0, **dkwargs)
-    cerebro.adddata(data0, name='MyData0')
+    datafeed0 = bt.feeds.YahooFinanceCSVData(dataname=args.data0, **dkwargs)
+    cerebro.add_datafeed(datafeed0, name='MyData0')
 
     st0kwargs = dict()
     if args.st0 is not None:
         tmpdict = eval('dict(' + args.st0 + ')')  # args were passed
         st0kwargs.update(tmpdict)
 
-    cerebro.addstrategy(TheStrategy,
+    cerebro.add_strategy(TheStrategy,
                         myname='St1', dtarget='MyData0', **st0kwargs)
 
     if args.copydata:
-        data1 = data0.copyas('MyData1')
-        cerebro.adddata(data1)
+        datafeed1 = datafeed0.copyas('MyData1')
+        cerebro.add_datafeed(datafeed1)
         dtarget = 'MyData1'
 
     else:  # use same target
@@ -176,7 +176,7 @@ def runstrat(args=None):
         tmpdict = eval('dict(' + args.st1 + ')')  # args were passed
         st1kwargs.update(tmpdict)
 
-    cerebro.addstrategy(TheStrategy2,
+    cerebro.add_strategy(TheStrategy2,
                         myname='St2', dtarget=dtarget, **st1kwargs)
 
     results = cerebro.run()
@@ -197,9 +197,9 @@ def parse_args(pargs=None):
         description='Sample for Tharp example with MACD')
 
     # pgroup = parser.add_mutually_exclusive_group(required=True)
-    parser.add_argument('--data0', required=False,
+    parser.add_argument('--datafeed0', required=False,
                         default='../../datas/yhoo-1996-2014.txt',
-                        help='Specific data0 to be read in')
+                        help='Specific datafeed0 to be read in')
 
     parser.add_argument('--fromdate', required=False,
                         default='2005-01-01',

@@ -26,7 +26,7 @@ import math
 from ..observer import Observer
 
 
-class BuySell(Observer):
+class Buy_and_Sell(Observer):
     '''
     This observer keeps track of the individual buy/sell orders (individual
     executions) and will plot them on the chart along the data around the
@@ -62,10 +62,10 @@ class BuySell(Observer):
         sell = list()
 
         for order in self._owner._orderspending:
-            if order.data is not self.data or not order.executed.size:
+            if order.datafeed is not self.datafeed or not order.executed.size:
                 continue
 
-            if order.isbuy():
+            if order.is_buy():
                 buy.append(order.executed.price)
             else:
                 sell.append(order.executed.price)
@@ -88,7 +88,7 @@ class BuySell(Observer):
         if not self.p.barplot:
             self.lines.buy[0] = value
         elif value == value:  # Not NaN
-            pbuy = self.data.low[0] * (1 - self.p.bardist)
+            pbuy = self.datafeed.low[0] * (1 - self.p.bardist)
             self.lines.buy[0] = pbuy
 
         # Update buylen values
@@ -110,7 +110,7 @@ class BuySell(Observer):
         if not self.p.barplot:
             self.lines.sell[0] = value
         elif value == value:  # Not NaN
-            psell = self.data.high[0] * (1 + self.p.bardist)
+            psell = self.datafeed.high[0] * (1 + self.p.bardist)
             self.lines.sell[0] = psell
 
         # Update selllen values

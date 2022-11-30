@@ -101,13 +101,13 @@ def btrun(pargs=''):
         cp = int(cp)  # convert any value to int
         tf = TIMEFRAMES.get(tf, None)
 
-    for data in getdatas(args):
+    for datafeed in getdatas(args):
         if args.resample is not None:
-            cerebro.resampledata(data, timeframe=tf, compression=cp)
+            cerebro.resample_datafeed(datafeed, timeframe=tf, compression=cp)
         elif args.replay is not None:
-            cerebro.replaydata(data, timeframe=tf, compression=cp)
+            cerebro.replay_datafeed(datafeed, timeframe=tf, compression=cp)
         else:
-            cerebro.adddata(data)
+            cerebro.add_datafeed(datafeed)
 
     # get and add signals
     signals = getobjects(args.signals, bt.Indicator, bt.signals, issignal=True)
@@ -118,25 +118,25 @@ def btrun(pargs=''):
     # get and add strategies
     strategies = getobjects(args.strategies, bt.Strategy, bt.strategies)
     for strat, kwargs in strategies:
-        cerebro.addstrategy(strat, **kwargs)
+        cerebro.add_strategy(strat, **kwargs)
 
     inds = getobjects(args.indicators, bt.Indicator, bt.indicators)
     for ind, kwargs in inds:
-        cerebro.addindicator(ind, **kwargs)
+        cerebro.add_indicator(ind, **kwargs)
 
     obs = getobjects(args.observers, bt.Observer, bt.observers)
     for ob, kwargs in obs:
-        cerebro.addobserver(ob, **kwargs)
+        cerebro.add_system_wide_observer(ob, **kwargs)
 
     ans = getobjects(args.analyzers, bt.Analyzer, bt.analyzers)
     for an, kwargs in ans:
-        cerebro.addanalyzer(an, **kwargs)
+        cerebro.add_analyzer(an, **kwargs)
 
-    setbroker(args, cerebro)
+    set_broker_or_exchange(args, cerebro)
 
     for wrkwargs_str in args.writers or []:
         wrkwargs = eval('dict(' + wrkwargs_str + ')')
-        cerebro.addwriter(bt.WriterFile, **wrkwargs)
+        cerebro.add_writer(bt.WriterFile, **wrkwargs)
 
     ans = getfunctions(args.hooks, bt.Cerebro)
     for hook, kwargs in ans:
@@ -169,11 +169,11 @@ def btrun(pargs=''):
         cerebro.plot(**pkwargs)
 
 
-def setbroker(args, cerebro):
-    broker = cerebro.getbroker()
+def set_broker_or_exchange(args, cerebro):
+    broker_or_exchange = cerebro.get_broker_or_exchange()
 
     if args.cash is not None:
-        broker.setcash(args.cash)
+        broker_or_exchange.set_cash(args.cash)
 
     commkwargs = dict()
     if args.commission is not None:
@@ -188,15 +188,15 @@ def setbroker(args, cerebro):
         commkwargs['interest_long'] = args.interest_long
 
     if commkwargs:
-        broker.setcommission(**commkwargs)
+        broker_or_exchange.set_commission(**commkwargs)
 
     if args.slip_perc is not None:
-        cerebro.broker.set_slippage_perc(args.slip_perc,
+        cerebro.broker_or_exchange.set_slippage_perc(args.slip_perc,
                                          slip_open=args.slip_open,
                                          slip_match=not args.no_slip_match,
                                          slip_out=args.slip_out)
     elif args.slip_fixed is not None:
-        cerebro.broker.set_slippage_fixed(args.slip_fixed,
+        cerebro.broker_or_exchange.set_slippage_fixed(args.slip_fixed,
                                           slip_open=args.slip_open,
                                           slip_match=not args.no_slip_match,
                                           slip_out=args.slip_out)
@@ -234,13 +234,13 @@ def getdatas(args):
     if args.compression is not None:
         dfkwargs['compression'] = args.compression
 
-    datas = list()
-    for dname in args.data:
+    ret_datafeeds = list()
+    for dname in args.datafeed:
         dfkwargs['dataname'] = dname
-        data = dfcls(**dfkwargs)
-        datas.append(data)
+        datafeeds = dfcls(**dfkwargs)
+        ret_datafeeds.append(datafeed)
 
-    return datas
+    return ret_datafeeds
 
 
 def getmodclasses(mod, clstype, clsname=None):
@@ -421,7 +421,7 @@ def parse_args(pargs=''):
 
     group = parser.add_argument_group(title='Data options')
     # Data options
-    group.add_argument('--data', '-d', action='append', required=True,
+    group.add_argument('--datafeed', '-d', action='append', required=True,
                        help='Data files to be added to the system')
 
     group = parser.add_argument_group(title='Cerebro options')
@@ -498,7 +498,7 @@ def parse_args(pargs=''):
               'If module is omitted then hookfunction will be sought\n'
               'as the built-in cerebro method. Example:\n'
               '\n'
-              '  - :addtz:tz=America/St_Johns\n'
+              '  - :add_timezone:tz=America/St_Johns\n'
               '\n'
               'If name is omitted, then the 1st function found in the\n'
               'mod will be used. Such as in:\n'
@@ -678,16 +678,16 @@ def parse_args(pargs=''):
               '\n'
               'kwargs is optional\n'
               '\n'
-              'It creates a system wide writer which outputs run data\n'
+              'It creates a system wide writer which outputs run datafeed\n'
               '\n'
               'Please see the documentation for the available kwargs')
     )
 
-    # Broker/Commissions
+    # Broker_or_Exchange/Commissions
     group = parser.add_argument_group(title='Cash and Commission Scheme Args')
     group.add_argument('--cash', '-cash', required=False, type=float,
-                       help='Cash to set to the broker')
-    group.add_argument('--commission', '-comm', required=False, type=float,
+                       help='Cash to set to the broker_or_exchange')
+    group.add_argument('--commission', '-commission', required=False, type=float,
                        help='Commission value to set')
     group.add_argument('--margin', '-marg', required=False, type=float,
                        help='Margin type to set')
@@ -727,7 +727,7 @@ def parse_args(pargs=''):
         '--plot', '-p', nargs='?',
         metavar='kwargs',
         default=False, const=True, required=False,
-        help=('Plot the read data applying any kwargs passed\n'
+        help=('Plot the read datafeed applying any kwargs passed\n'
               '\n'
               'For example:\n'
               '\n'

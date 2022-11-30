@@ -73,7 +73,7 @@ class SMAStrategy(bt.Strategy):
         # txt.append('{:f}'.format(self.sma_small[0]))
         print(', '.join(txt))
 
-        if len(self.datas) > 1 and len(self.data1):
+        if len(self.datafeeds) > 1 and len(self.data1):
             txt = list()
             txt.append('Data1')
             txt.append('%04d' % len(self.data1))
@@ -98,9 +98,9 @@ def runstrat():
 
     # Add a strategy
     if not args.indicators:
-        cerebro.addstrategy(bt.Strategy)
+        cerebro.add_strategy(bt.Strategy)
     else:
-        cerebro.addstrategy(
+        cerebro.add_strategy(
             SMAStrategy,
 
             # args for the strategy
@@ -155,10 +155,10 @@ def runstrat():
                     data2.addfilter(ResamplerMonthly)
 
     # First add the original data - smaller timeframe
-    cerebro.adddata(data)
+    cerebro.add_datafeed(data)
 
     # And then the large timeframe
-    cerebro.adddata(data2)
+    cerebro.add_datafeed(data2)
 
     # Run over everything
     cerebro.run(runonce=not args.runnext,

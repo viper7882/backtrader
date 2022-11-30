@@ -121,9 +121,9 @@ def runstrat(pargs=None):
 
     dfcls = DATAFORMATS[args.format]
     data = dfcls(dataname=args.infile, **dfkwargs)
-    cerebro.adddata(data)
+    cerebro.add_datafeed(data)
 
-    cerebro.addstrategy(RewriteStrategy,
+    cerebro.add_strategy(RewriteStrategy,
                         separator=args.separator,
                         outfile=args.outfile)
 

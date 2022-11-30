@@ -55,10 +55,10 @@ class CalendarDays(with_metaclass(metabase.MetaParams, object)):
     ONEDAY = timedelta(days=1)
     lastdt = date.max
 
-    def __init__(self, data):
+    def __init__(self, datafeed):
         pass
 
-    def __call__(self, data):
+    def __call__(self, datafeed):
         '''
         If the data has a gap larger than 1 day amongst bars, the missing bars
         are added to the stream.
@@ -70,51 +70,51 @@ class CalendarDays(with_metaclass(metabase.MetaParams, object)):
           - False (always): this filter does not remove bars from the stream
 
         '''
-        dt = data.datetime.date()
+        dt = datafeed.datetime.date()
         if (dt - self.lastdt) > self.ONEDAY:  # gap in place
-            self._fillbars(data, dt, self.lastdt)
+            self._fillbars(datafeed, dt, self.lastdt)
 
         self.lastdt = dt
         return False  # no bar has been removed from the stream
 
-    def _fillbars(self, data, dt, lastdt):
+    def _fillbars(self, datafeed, dt, lastdt):
         '''
         Fills one by one bars as needed from time_start to time_end
 
         Invalidates the control dtime_prev if requested
         '''
-        tm = data.datetime.time(0)  # get time part
+        tm = datafeed.datetime.time(0)  # get time part
 
         # Same price for all bars
         if self.p.fill_price > 0:
             price = self.p.fill_price
         elif not self.p.fill_price:
-            price = data.close[-1]
+            price = datafeed.close[-1]
         elif self.p.fill_price == -1:
-            price = (data.high[-1] + data.low[-1]) / 2.0
+            price = (datafeed.high[-1] + datafeed.low[-1]) / 2.0
 
         while lastdt < dt:
             lastdt += self.ONEDAY
 
             # Prepare an array of the needed size
-            bar = [float('Nan')] * data.size()
+            bar = [float('Nan')] * datafeed.size()
             # Fill the datetime
-            bar[data.DateTime] = data.date2num(datetime.combine(lastdt, tm))
+            bar[datafeed.DateTime] = datafeed.date2num(datetime.combine(lastdt, tm))
 
             # Fill price fields
-            for pricetype in [data.Open, data.High, data.Low, data.Close]:
+            for pricetype in [datafeed.Open, datafeed.High, datafeed.Low, datafeed.Close]:
                 bar[pricetype] = price
 
             # Fill volume and open interest
-            bar[data.Volume] = self.p.fill_vol
-            bar[data.OpenInterest] = self.p.fill_oi
+            bar[datafeed.Volume] = self.p.fill_vol
+            bar[datafeed.OpenInterest] = self.p.fill_oi
 
             # Fill extra lines the data feed may have defined beyond DateTime
-            for i in range(data.DateTime + 1, data.size()):
-                bar[i] = data.lines[i][0]
+            for i in range(datafeed.DateTime + 1, datafeed.size()):
+                bar[i] = datafeed.lines[i][0]
 
             # Add this constructed bar to the stack of the stream
-            data._add2stack(bar)
+            datafeed._add2stack(bar)
 
         # Save to stack the bar that signaled the gap
-        data._save2stack(erase=True)
+        datafeed._save2stack(erase=True)

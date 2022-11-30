@@ -53,10 +53,10 @@ def runstrat():
 
     cerebro = bt.Cerebro()
     data = btfeeds.BacktraderCSVData(dataname=args.data)
-    cerebro.adddata(data)
-    cerebro.resampledata(data, timeframe=bt.TimeFrame.Months)
+    cerebro.add_datafeed(data)
+    cerebro.resample_datafeed(data, timeframe=bt.TimeFrame.Months)
 
-    cerebro.addstrategy(St,
+    cerebro.add_strategy(St,
                         usepp1=args.usepp1,
                         plot_on_daily=args.plot_on_daily)
     cerebro.run(runonce=False)

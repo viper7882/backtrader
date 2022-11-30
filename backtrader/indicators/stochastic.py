@@ -42,9 +42,9 @@ class _StochasticBase(Indicator):
         self.plotinfo.plotyhlines = [self.p.upperband, self.p.lowerband]
 
     def __init__(self):
-        highesthigh = Highest(self.data.high, period=self.p.period)
-        lowestlow = Lowest(self.data.low, period=self.p.period)
-        knum = self.data.close - lowestlow
+        highesthigh = Highest(self.datafeed.high, period=self.p.period)
+        lowestlow = Lowest(self.datafeed.low, period=self.p.period)
+        knum = self.datafeed.close - lowestlow
         kden = highesthigh - lowestlow
         if self.p.safediv:
             self.k = 100.0 * DivByZero(knum, kden, zero=self.p.safezero)

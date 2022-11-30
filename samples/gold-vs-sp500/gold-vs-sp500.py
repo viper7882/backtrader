@@ -80,12 +80,12 @@ def runstrat(args=None):
 
     # Data feeds
     data0 = YahooData(dataname=args.data0, **kwargs)
-    # cerebro.adddata(data0)
-    cerebro.resampledata(data0, timeframe=bt.TimeFrame.Weeks)
+    # cerebro.add_datafeed(data0)
+    cerebro.resample_datafeed(data0, timeframe=bt.TimeFrame.Weeks)
 
     data1 = YahooData(dataname=args.data1, **kwargs)
-    # cerebro.adddata(data1)
-    cerebro.resampledata(data1, timeframe=bt.TimeFrame.Weeks)
+    # cerebro.add_datafeed(data1)
+    cerebro.resample_datafeed(data1, timeframe=bt.TimeFrame.Weeks)
     data1.plotinfo.plotmaster = data0
 
     # Broker
@@ -94,14 +94,14 @@ def runstrat(args=None):
 
     # Sizer
     kwargs = eval('dict(' + args.sizer + ')')
-    cerebro.addsizer(bt.sizers.FixedSize, **kwargs)
+    cerebro.add_sizer(bt.sizers.FixedSize, **kwargs)
 
     # Strategy
     if True:
         kwargs = eval('dict(' + args.strat + ')')
-        cerebro.addstrategy(MACrossOver, **kwargs)
+        cerebro.add_strategy(MACrossOver, **kwargs)
 
-    cerebro.addobserver(bt.observers.LogReturns2,
+    cerebro.add_system_wide_observer(bt.observers.LogReturns2,
                         timeframe=bt.TimeFrame.Weeks,
                         compression=20)
 

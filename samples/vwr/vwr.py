@@ -40,7 +40,7 @@ def runstrat(pargs=None):
     cerebro = bt.Cerebro()
 
     if args.cash is not None:
-        cerebro.broker.set_cash(args.cash)
+        cerebro.broker_or_exchange.set_cash(args.cash)
 
     dkwargs = dict()
     # Get the dates from the args
@@ -53,9 +53,9 @@ def runstrat(pargs=None):
 
     # Create the 1st data
     data = bt.feeds.BacktraderCSVData(dataname=args.data, **dkwargs)
-    cerebro.adddata(data)  # Add the data to cerebro
+    cerebro.add_datafeed(data)  # Add the data to cerebro
 
-    cerebro.addstrategy(bt.strategies.SMA_CrossOver)  # Add the strategy
+    cerebro.add_strategy(bt.strategies.SMA_CrossOver)  # Add the strategy
 
     lrkwargs = dict()
     if args.tframe is not None:
@@ -64,7 +64,7 @@ def runstrat(pargs=None):
     if args.tann is not None:
         lrkwargs['tann'] = args.tann
 
-    cerebro.addanalyzer(bt.analyzers.Returns, **lrkwargs)  # Returns
+    cerebro.add_analyzer(bt.analyzers.Returns, **lrkwargs)  # Returns
 
     vwrkwargs = dict()
     if args.tframe is not None:
@@ -79,17 +79,17 @@ def runstrat(pargs=None):
     if args.tau is not None:
         vwrkwargs['tau'] = args.tau
 
-    cerebro.addanalyzer(bt.analyzers.SQN)  # VWR Analyzer
-    cerebro.addanalyzer(bt.analyzers.SharpeRatio_A)  # VWR Analyzer
-    cerebro.addanalyzer(bt.analyzers.VWR, **vwrkwargs)  # VWR Analyzer
+    cerebro.add_analyzer(bt.analyzers.SQN)  # VWR Analyzer
+    cerebro.add_analyzer(bt.analyzers.SharpeRatio_A)  # VWR Analyzer
+    cerebro.add_analyzer(bt.analyzers.VWR, **vwrkwargs)  # VWR Analyzer
     # Sample time return analyzers
-    cerebro.addanalyzer(bt.analyzers.TimeReturn,
+    cerebro.add_analyzer(bt.analyzers.TimeReturn,
                         timeframe=bt.TimeFrame.Months)
-    cerebro.addanalyzer(bt.analyzers.TimeReturn,
+    cerebro.add_analyzer(bt.analyzers.TimeReturn,
                         timeframe=bt.TimeFrame.Years)
 
     # Add a writer to get output
-    cerebro.addwriter(bt.WriterFile, csv=args.writercsv, rounding=4)
+    cerebro.add_writer(bt.WriterFile, csv=args.writercsv, rounding=4)
 
     cerebro.run()  # And run it
 

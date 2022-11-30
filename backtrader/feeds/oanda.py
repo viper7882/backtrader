@@ -28,7 +28,7 @@ from backtrader import TimeFrame, date2num, num2date
 from backtrader.utils.py3 import (integer_types, queue, string_types,
                                   with_metaclass)
 from backtrader.metabase import MetaParams
-from backtrader.stores import oandastore
+from backtrader.accounts_or_stores import oandastore
 
 
 class MetaOandaData(DataBase.__class__):
@@ -38,7 +38,7 @@ class MetaOandaData(DataBase.__class__):
         super(MetaOandaData, cls).__init__(name, bases, dct)
 
         # Register with the store
-        oandastore.OandaStore.DataCls = cls
+        oandastore.OandaStore.Datafeed_Cls = cls
 
 
 class OandaData(with_metaclass(MetaOandaData, DataBase)):
@@ -162,7 +162,7 @@ class OandaData(with_metaclass(MetaOandaData, DataBase)):
         # Effective way to overcome the non-notification?
         return self._TOFFSET
 
-    def islive(self):
+    def is_live(self):
         '''Returns ``True`` to notify ``Cerebro`` that preloading and runonce
         should be deactivated'''
         return True
@@ -175,7 +175,7 @@ class OandaData(with_metaclass(MetaOandaData, DataBase)):
         '''Receives an environment (cerebro) and passes it over to the store it
         belongs to'''
         super(OandaData, self).setenvironment(env)
-        env.addstore(self.o)
+        env.add_account_store(self.o)
 
     def start(self):
         '''Starts the Oanda connecction and gets the real contract and
@@ -189,7 +189,7 @@ class OandaData(with_metaclass(MetaOandaData, DataBase)):
         self._state = self._ST_OVER
 
         # Kickstart store and get queue to wait on
-        self.o.start(data=self)
+        self.o.start(datafeed=self)
 
         # check if the granularity is supported
         otf = self.o.get_granularity(self._timeframe, self._compression)
@@ -254,7 +254,7 @@ class OandaData(with_metaclass(MetaOandaData, DataBase)):
         super(OandaData, self).stop()
         self.o.stop()
 
-    def haslivedata(self):
+    def has_live_data(self):
         return bool(self._storedmsg or self.qlive)  # do not return the objs
 
     def _load(self):

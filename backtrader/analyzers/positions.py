@@ -67,17 +67,17 @@ class PositionsValue(bt.Analyzer):
 
     def start(self):
         if self.p.headers:
-            headers = [d._name or 'Data%d' % i
-                       for i, d in enumerate(self.datas)]
+            headers = [datafeed._name or 'Datafeed%d' % i
+                       for i, datafeed in enumerate(self.datafeeds)]
             self.rets['Datetime'] = headers + ['cash'] * self.p.cash
 
-        tf = min(d._timeframe for d in self.datas)
+        tf = min(datafeed._timeframe for datafeed in self.datafeeds)
         self._usedate = tf >= bt.TimeFrame.Days
 
     def next(self):
-        pvals = [self.strategy.broker.get_value([d]) for d in self.datas]
+        pvals = [self.strategy.broker_or_exchange.get_value([datafeed]) for datafeed in self.datafeeds]
         if self.p.cash:
-            pvals.append(self.strategy.broker.get_cash())
+            pvals.append(self.strategy.broker_or_exchange.get_cash())
 
         if self._usedate:
             self.rets[self.strategy.datetime.date()] = pvals

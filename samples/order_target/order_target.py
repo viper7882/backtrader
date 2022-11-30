@@ -66,11 +66,11 @@ class TheStrategy(bt.Strategy):
     def next(self):
         dt = self.data.datetime.date()
 
-        portfolio_value = self.broker.get_value()
+        portfolio_value = self.broker_or_exchange.get_value()
         print('%04d - %s - Position Size:     %02d - Value %.2f' %
               (len(self), dt.isoformat(), self.position.size, portfolio_value))
 
-        data_value = self.broker.get_value([self.data])
+        data_value = self.broker_or_exchange.get_value([self.data])
 
         if self.p.use_target_value:
             print('%04d - %s - data value %.2f' %
@@ -116,7 +116,7 @@ def runstrat(args=None):
     args = parse_args(args)
 
     cerebro = bt.Cerebro()
-    cerebro.broker.setcash(args.cash)
+    cerebro.broker_or_exchange.setcash(args.cash)
 
     dkwargs = dict()
     if args.fromdate is not None:
@@ -126,10 +126,10 @@ def runstrat(args=None):
 
     # data
     data = bt.feeds.YahooFinanceCSVData(dataname=args.data, **dkwargs)
-    cerebro.adddata(data)
+    cerebro.add_datafeed(data)
 
     # strategy
-    cerebro.addstrategy(TheStrategy,
+    cerebro.add_strategy(TheStrategy,
                         use_target_size=args.target_size,
                         use_target_value=args.target_value,
                         use_target_percent=args.target_percent)

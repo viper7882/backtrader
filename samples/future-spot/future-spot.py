@@ -61,7 +61,7 @@ def runstrat(args=None):
     dataname = '../../datas/2006-day-001.txt'  # data feed
 
     data0 = bt.feeds.BacktraderCSVData(dataname=dataname, name='data0')
-    cerebro.adddata(data0)
+    cerebro.add_datafeed(data0)
 
     data1 = bt.feeds.BacktraderCSVData(dataname=dataname, name='data1')
     data1.addfilter(close_changer)
@@ -70,14 +70,14 @@ def runstrat(args=None):
     data1.plotinfo.plotmaster = data0
     if args.sameaxis:
         data1.plotinfo.sameaxis = True
-    cerebro.adddata(data1)
+    cerebro.add_datafeed(data1)
 
-    cerebro.addstrategy(St)  # sample strategy
+    cerebro.add_strategy(St)  # sample strategy
 
-    cerebro.addobserver(bt.obs.Broker)  # removed below with stdstats=False
-    cerebro.addobserver(bt.obs.Trades)  # removed below with stdstats=False
+    cerebro.add_system_wide_observer(bt.obs.Broker)  # removed below with stdstats=False
+    cerebro.add_system_wide_observer(bt.obs.Trades)  # removed below with stdstats=False
 
-    cerebro.broker.set_coc(True)
+    cerebro.broker_or_exchange.set_coc(True)
     cerebro.run(stdstats=False)  # execute
     cerebro.plot(volume=False)  # and plot
 

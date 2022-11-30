@@ -85,11 +85,11 @@ class TestStrategy(bt.Strategy):
 
     def start(self):
         if not self.p.stocklike:
-            self.broker.setcommission(commission=2.0, mult=10.0, margin=1000.0)
+            self.broker_or_exchange.set_commission(commission=2.0, mult=10.0, margin=1000.0)
 
         if self.p.printdata:
             self.log('-------------------------', nodate=True)
-            self.log('Starting portfolio value: %.2f' % self.broker.getvalue(),
+            self.log('Starting portfolio value: %.2f' % self.broker_or_exchange.getvalue(),
                      nodate=True)
 
         self.tstart = time_clock()
@@ -103,8 +103,8 @@ class TestStrategy(bt.Strategy):
         tused = time_clock() - self.tstart
         if self.p.printdata:
             self.log('Time used: %s' % str(tused))
-            self.log('Final portfolio value: %.2f' % self.broker.getvalue())
-            self.log('Final cash value: %.2f' % self.broker.getcash())
+            self.log('Final portfolio value: %.2f' % self.broker_or_exchange.getvalue())
+            self.log('Final cash value: %.2f' % self.broker_or_exchange.get_cash())
             self.log('-------------------------')
         else:
             pass

@@ -37,9 +37,9 @@ class DrawDown(bt.Analyzer):
 
       - ``fund`` (default: ``None``)
 
-        If ``None`` the actual mode of the broker (fundmode - True/False) will
+        If ``None`` the actual mode of the broker_or_exchange (fundmode - True/False) will
         be autodetected to decide if the returns are based on the total net
-        asset value or on the fund value. See ``set_fundmode`` in the broker
+        asset value or on the fund value. See ``set_fundmode`` in the broker_or_exchange
         documentation
 
         Set it to ``True`` or ``False`` for a specific behavior
@@ -67,7 +67,7 @@ class DrawDown(bt.Analyzer):
     def start(self):
         super(DrawDown, self).start()
         if self.p.fund is None:
-            self._fundmode = self.strategy.broker.fundmode
+            self._fundmode = self.strategy.broker_or_exchange.fundmode
         else:
             self._fundmode = self.p.fund
 
@@ -133,9 +133,9 @@ class TimeDrawDown(bt.TimeFrameAnalyzerBase):
 
       - ``fund`` (default: ``None``)
 
-        If ``None`` the actual mode of the broker (fundmode - True/False) will
+        If ``None`` the actual mode of the broker_or_exchange (fundmode - True/False) will
         be autodetected to decide if the returns are based on the total net
-        asset value or on the fund value. See ``set_fundmode`` in the broker
+        asset value or on the fund value. See ``set_fundmode`` in the broker_or_exchange
         documentation
 
         Set it to ``True`` or ``False`` for a specific behavior
@@ -164,7 +164,7 @@ class TimeDrawDown(bt.TimeFrameAnalyzerBase):
     def start(self):
         super(TimeDrawDown, self).start()
         if self.p.fund is None:
-            self._fundmode = self.strategy.broker.fundmode
+            self._fundmode = self.strategy.broker_or_exchange.fundmode
         else:
             self._fundmode = self.p.fund
         self.dd = 0.0
@@ -175,9 +175,9 @@ class TimeDrawDown(bt.TimeFrameAnalyzerBase):
 
     def on_dt_over(self):
         if not self._fundmode:
-            value = self.strategy.broker.getvalue()
+            value = self.strategy.broker_or_exchange.get_value()
         else:
-            value = self.strategy.broker.fundvalue
+            value = self.strategy.broker_or_exchange.fundvalue
 
         # update the maximum seen peak
         if value > self.peak:

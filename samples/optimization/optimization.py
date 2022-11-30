@@ -59,7 +59,7 @@ def runstrat():
                          optreturn=not args.no_optreturn)
 
     # Add a strategy
-    cerebro.optstrategy(
+    cerebro.optimize_strategy(
         OptimizeStrategy,
         smaperiod=range(args.ma_low, args.ma_high),
         macdperiod1=range(args.m1_low, args.m1_high),
@@ -78,7 +78,7 @@ def runstrat():
         todate=todate)
 
     # Add the Data Feed to Cerebro
-    cerebro.adddata(data)
+    cerebro.add_datafeed(data)
 
     # clock the start of the process
     tstart = time.clock()

@@ -26,10 +26,10 @@ import backtrader.feeds as btfeeds
 
 if __name__ == '__main__':
     cerebro = bt.Cerebro(stdstats=True)
-    cerebro.addstrategy(bt.Strategy)
+    cerebro.add_strategy(bt.Strategy)
 
     data = bt.feeds.BacktraderCSVData(dataname='../../datas/2006-day-001.txt')
-    cerebro.adddata(data)
+    cerebro.add_datafeed(data)
 
     cerebro.run()
     cerebro.plot()

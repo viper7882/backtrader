@@ -41,7 +41,7 @@ class PeriodN(Indicator):
 
     def __init__(self):
         super(PeriodN, self).__init__()
-        self.addminperiod(self.p.period)
+        self.add_min_period(self.p.period)
 
 
 class OperationN(PeriodN):
@@ -58,11 +58,11 @@ class OperationN(PeriodN):
       - line = func(data, period)
     '''
     def next(self):
-        self.line[0] = self.func(self.data.get(size=self.p.period))
+        self.line[0] = self.func(self.datafeed.get(size=self.p.period))
 
     def once(self, start, end):
         dst = self.line.array
-        src = self.data.array
+        src = self.datafeed.array
         period = self.p.period
         func = self.func
 
@@ -316,14 +316,14 @@ class Accum(Indicator):
     # initial look-back value is needed
 
     def nextstart(self):
-        self.line[0] = self.p.seed + self.data[0]
+        self.line[0] = self.p.seed + self.datafeed[0]
 
     def next(self):
-        self.line[0] = self.line[-1] + self.data[0]
+        self.line[0] = self.line[-1] + self.datafeed[0]
 
     def oncestart(self, start, end):
         dst = self.line.array
-        src = self.data.array
+        src = self.datafeed.array
         prev = self.p.seed
 
         for i in range(start, end):
@@ -331,7 +331,7 @@ class Accum(Indicator):
 
     def once(self, start, end):
         dst = self.line.array
-        src = self.data.array
+        src = self.datafeed.array
         prev = dst[start - 1]
 
         for i in range(start, end):
@@ -353,10 +353,10 @@ class Average(PeriodN):
 
     def next(self):
         self.line[0] = \
-            math.fsum(self.data.get(size=self.p.period)) / self.p.period
+            math.fsum(self.datafeed.get(size=self.p.period)) / self.p.period
 
     def once(self, start, end):
-        src = self.data.array
+        src = self.datafeed.array
         dst = self.line.array
         period = self.p.period
 
@@ -394,14 +394,14 @@ class ExponentialSmoothing(Average):
         super(ExponentialSmoothing, self).next()
 
     def next(self):
-        self.line[0] = self.line[-1] * self.alpha1 + self.data[0] * self.alpha
+        self.line[0] = self.line[-1] * self.alpha1 + self.datafeed[0] * self.alpha
 
     def oncestart(self, start, end):
         # Fetch the seed value from the base class calculation
         super(ExponentialSmoothing, self).once(start, end)
 
     def once(self, start, end):
-        darray = self.data.array
+        darray = self.datafeed.array
         larray = self.line.array
         alpha = self.alpha
         alpha1 = self.alpha1
@@ -436,15 +436,15 @@ class ExponentialSmoothingDynamic(ExponentialSmoothing):
         # Hack: alpha is a "line" and carries a minperiod which is not being
         # considered because this indicator makes no line assignment. It has
         # therefore to be considered manually
-        minperioddiff = max(0, self.alpha._minperiod - self.p.period)
+        minperioddiff = max(0, self.alpha._min_period - self.p.period)
         self.lines[0].incminperiod(minperioddiff)
 
     def next(self):
         self.line[0] = \
-            self.line[-1] * self.alpha1[0] + self.data[0] * self.alpha[0]
+            self.line[-1] * self.alpha1[0] + self.datafeed[0] * self.alpha[0]
 
     def once(self, start, end):
-        darray = self.data.array
+        darray = self.datafeed.array
         larray = self.line.array
         alpha = self.alpha.array
         alpha1 = self.alpha1.array
@@ -478,17 +478,17 @@ class WeightedAverage(PeriodN):
         super(WeightedAverage, self).__init__()
 
     def next(self):
-        data = self.data.get(size=self.p.period)
-        dataweighted = map(operator.mul, data, self.p.weights)
+        datafeed = self.datafeed.get(size=self.p.period)
+        dataweighted = map(operator.mul, datafeed, self.p.weights)
         self.line[0] = self.p.coef * math.fsum(dataweighted)
 
     def once(self, start, end):
-        darray = self.data.array
+        darray = self.datafeed.array
         larray = self.line.array
         period = self.p.period
         coef = self.p.coef
         weights = self.p.weights
 
         for i in range(start, end):
-            data = darray[i - period + 1: i + 1]
-            larray[i] = coef * math.fsum(map(operator.mul, data, weights))
+            datafeed = darray[i - period + 1: i + 1]
+            larray[i] = coef * math.fsum(map(operator.mul, datafeed, weights))

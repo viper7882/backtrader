@@ -54,16 +54,16 @@ def runstrat(pargs=None):
     args = parse_args(pargs)
 
     cerebro = bt.Cerebro()
-    cerebro.broker.set_cash(args.cash)
+    cerebro.broker_or_exchange.set_cash(args.cash)
 
     data0 = bt.feeds.YahooFinanceData(
         dataname=args.data,
         fromdate=datetime.datetime.strptime(args.fromdate, '%Y-%m-%d'),
         todate=datetime.datetime.strptime(args.todate, '%Y-%m-%d'))
-    cerebro.adddata(data0)
+    cerebro.add_datafeed(data0)
 
-    cerebro.addstrategy(SmaCross, **(eval('dict(' + args.strat + ')')))
-    cerebro.addsizer(bt.sizers.FixedSize, stake=args.stake)
+    cerebro.add_strategy(SmaCross, **(eval('dict(' + args.strat + ')')))
+    cerebro.add_sizer(bt.sizers.FixedSize, stake=args.stake)
 
     cerebro.run()
     if args.plot:

@@ -67,7 +67,7 @@ def test_run(main=False):
     commission = value * commrate
 
     tr.update(order=order, size=size, price=price, value=value,
-              commission=commission, pnl=0.0, comminfo=FakeCommInfo())
+              commission=commission, pnl=0.0, comm_info=FakeCommInfo())
 
     assert not tr.isclosed
     assert tr.size == size
@@ -83,7 +83,7 @@ def test_run(main=False):
     upcomm = abs(value) * commrate
 
     tr.update(order=order, size=upsize, price=upprice, value=upvalue,
-              commission=upcomm, pnl=0.0, comminfo=FakeCommInfo())
+              commission=upcomm, pnl=0.0, comm_info=FakeCommInfo())
 
     assert not tr.isclosed
     assert tr.size == size + upsize
@@ -101,7 +101,7 @@ def test_run(main=False):
     upcomm = abs(value) * commrate
 
     tr.update(order=order, size=upsize, price=upprice, value=upvalue,
-              commission=upcomm, pnl=0.0, comminfo=FakeCommInfo())
+              commission=upcomm, pnl=0.0, comm_info=FakeCommInfo())
 
     assert not tr.isclosed
     assert tr.size == size + upsize
@@ -119,7 +119,7 @@ def test_run(main=False):
     upcomm = abs(value) * commrate
 
     tr.update(order=order, size=upsize, price=upprice, value=upvalue,
-              commission=upcomm, pnl=0.0, comminfo=FakeCommInfo())
+              commission=upcomm, pnl=0.0, comm_info=FakeCommInfo())
 
     assert tr.isclosed
     assert tr.size == size + upsize

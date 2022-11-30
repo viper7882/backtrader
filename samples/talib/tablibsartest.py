@@ -48,9 +48,9 @@ def runstrat(args=None):
         dkwargs['todate'] = todate
 
     data0 = bt.feeds.YahooFinanceCSVData(dataname=args.data0, **dkwargs)
-    cerebro.adddata(data0)
+    cerebro.add_datafeed(data0)
 
-    cerebro.addstrategy(TALibStrategy)
+    cerebro.add_strategy(TALibStrategy)
     cerebro.run(runonce=not args.use_next, stdstats=False)
     if args.plot:
         pkwargs = dict(style='candle')

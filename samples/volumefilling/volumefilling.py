@@ -91,9 +91,9 @@ class St(bt.Strategy):
 
 
 FILLERS = {
-    'FixedSize': bt.broker.fillers.FixedSize,
-    'FixedBarPerc': bt.broker.fillers.FixedBarPerc,
-    'BarPointPerc': bt.broker.fillers.BarPointPerc,
+    'FixedSize': bt.broker_or_exchange.fillers.FixedSize,
+    'FixedBarPerc': bt.broker_or_exchange.fillers.FixedBarPerc,
+    'BarPointPerc': bt.broker_or_exchange.fillers.BarPointPerc,
 }
 
 
@@ -112,18 +112,18 @@ def runstrat():
     data = bt.feeds.BacktraderCSVData(dataname=args.data, **datakwargs)
 
     cerebro = bt.Cerebro()
-    cerebro.adddata(data)
+    cerebro.add_datafeed(data)
 
-    cerebro.broker.set_cash(args.cash)
+    cerebro.broker_or_exchange.set_cash(args.cash)
     if args.filler is not None:
         fillerkwargs = dict()
         if args.filler_args is not None:
             fillerkwargs = eval('dict(' + args.filler_args + ')')
 
         filler = FILLERS[args.filler](**fillerkwargs)
-        cerebro.broker.set_filler(filler)
+        cerebro.broker_or_exchange.set_filler(filler)
 
-    cerebro.addstrategy(St, stakeperc=args.stakeperc, opbreak=args.opbreak)
+    cerebro.add_strategy(St, stakeperc=args.stakeperc, opbreak=args.opbreak)
 
     cerebro.run()
     if args.plot:

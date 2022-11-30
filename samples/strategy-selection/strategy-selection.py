@@ -55,10 +55,10 @@ def runstrat(pargs=None):
 
     cerebro = bt.Cerebro()
     data = bt.feeds.BacktraderCSVData(dataname=args.data)
-    cerebro.adddata(data)
+    cerebro.add_datafeed(data)
 
-    cerebro.addanalyzer(bt.analyzers.Returns)
-    cerebro.optstrategy(StFetcher, idx=[0, 1])
+    cerebro.add_analyzer(bt.analyzers.Returns)
+    cerebro.optimize_strategy(StFetcher, idx=[0, 1])
     results = cerebro.run(maxcpus=args.maxcpus, optreturn=args.optreturn)
 
     strats = [x[0] for x in results]  # flatten the result

@@ -68,7 +68,7 @@ class Transactions(bt.Analyzer):
             self.rets[self.p._pfheaders[0]] = [list(self.p._pfheaders[1:])]
 
         self._positions = collections.defaultdict(Position)
-        self._idnames = list(enumerate(self.strategy.getdatanames()))
+        self._idnames = list(enumerate(self.strategy.get_datafeed_names()))
 
     def notify_order(self, order):
         # An order could have several partial executions per cycle (unlikely
@@ -80,12 +80,12 @@ class Transactions(bt.Analyzer):
         if order.status not in [Order.Partial, Order.Completed]:
             return  # It's not an execution
 
-        pos = self._positions[order.data._name]
-        for exbit in order.executed.iterpending():
-            if exbit is None:
+        pos = self._positions[order.datafeed._name]
+        for execution_bit in order.executed.iterate_pending():
+            if execution_bit is None:
                 break  # end of pending reached
 
-            pos.update(exbit.size, exbit.price)
+            pos.update(execution_bit.size, execution_bit.price)
 
     def next(self):
         # super(Transactions, self).next()  # let dtkey update

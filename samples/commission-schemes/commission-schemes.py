@@ -37,7 +37,7 @@ class SMACrossOver(bt.Strategy):
 
     def log(self, txt, dt=None):
         ''' Logging function fot this strategy'''
-        dt = dt or self.datas[0].datetime.date(0)
+        dt = dt or self.datafeeds[0].datetime.date(0)
         print('%s, %s' % (dt.isoformat(), txt))
 
     def notify_order(self, order):
@@ -97,13 +97,13 @@ def runstrategy():
         todate=todate)
 
     # Add the 1st data to cerebro
-    cerebro.adddata(data)
+    cerebro.add_datafeed(data)
 
     # Add a strategy
-    cerebro.addstrategy(SMACrossOver, period=args.period, stake=args.stake)
+    cerebro.add_strategy(SMACrossOver, period=args.period, stake=args.stake)
 
     # Add the commission - only stocks like a for each operation
-    cerebro.broker.setcash(args.cash)
+    cerebro.broker_or_exchange.setcash(args.cash)
 
     commtypes = dict(
         none=None,
@@ -111,7 +111,7 @@ def runstrategy():
         fixed=bt.CommInfoBase.COMM_FIXED)
 
     # Add the commission - only stocks like a for each operation
-    cerebro.broker.setcommission(commission=args.comm,
+    cerebro.broker_or_exchange.set_commission(commission=args.comm,
                                  mult=args.mult,
                                  margin=args.margin,
                                  percabs=not args.percrel,

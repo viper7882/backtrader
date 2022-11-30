@@ -31,8 +31,8 @@ class _PriceOscBase(Indicator):
     plotinfo = dict(plothlines=[0.0])
 
     def __init__(self):
-        self.ma1 = self.p._movav(self.data, period=self.p.period1)
-        self.ma2 = self.p._movav(self.data, period=self.p.period2)
+        self.ma1 = self.p._movav(self.datafeed, period=self.p.period1)
+        self.ma2 = self.p._movav(self.datafeed, period=self.p.period2)
         self.lines[0] = self.ma1 - self.ma2
 
         super(_PriceOscBase, self).__init__()

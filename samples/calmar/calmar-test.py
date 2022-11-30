@@ -57,17 +57,17 @@ def runstrat(args=None):
 
     # Data feed
     data0 = bt.feeds.YahooFinanceCSVData(dataname=args.data0, **kwargs)
-    cerebro.adddata(data0)
+    cerebro.add_datafeed(data0)
 
     # Broker
     cerebro.broker = bt.brokers.BackBroker(**eval('dict(' + args.broker + ')'))
 
-    cerebro.addanalyzer(bt.analyzers.Calmar)
+    cerebro.add_analyzer(bt.analyzers.Calmar)
     # Sizer
-    cerebro.addsizer(bt.sizers.FixedSize, **eval('dict(' + args.sizer + ')'))
+    cerebro.add_sizer(bt.sizers.FixedSize, **eval('dict(' + args.sizer + ')'))
 
     # Strategy
-    cerebro.addstrategy(St, **eval('dict(' + args.strat + ')'))
+    cerebro.add_strategy(St, **eval('dict(' + args.strat + ')'))
 
     # Execute
     st0 = cerebro.run(**eval('dict(' + args.cerebro + ')'))[0]

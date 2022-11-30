@@ -21,9 +21,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-
 from copy import copy
-
 
 class Position(object):
     '''
@@ -37,13 +35,19 @@ class Position(object):
     The Position instances can be tested using len(position) to see if size
     is not null
     '''
+    Position_Types = ["Long", "Short", "Long or Short"]
+    LONG_POSITION, SHORT_POSITION, LONG_OR_SHORT_POSITION = range(len(Position_Types))
+
+    # INFO: Crypto currency specific types
+    USDT_Perpetual__Position_Types = [Position_Types[LONG_POSITION], Position_Types[SHORT_POSITION]]
+    USDC_Perpetual__Position_Types = [Position_Types[LONG_POSITION], Position_Types[SHORT_POSITION]]
 
     def __str__(self):
         items = list()
         items.append('--- Position Begin')
         items.append('- Size: {}'.format(self.size))
         items.append('- Price: {}'.format(self.price))
-        items.append('- Price orig: {}'.format(self.price_orig))
+        items.append('- Original Price: {}'.format(self.price_orig))
         items.append('- Closed: {}'.format(self.upclosed))
         items.append('- Opened: {}'.format(self.upopened))
         items.append('- Adjbase: {}'.format(self.adjbase))

@@ -48,7 +48,7 @@ class AnnualReturn(Analyzer):
     '''
 
     def stop(self):
-        # Must have stats.broker
+        # Must have stats.broker_or_exchange
         cur_year = -1
 
         value_start = 0.0
@@ -58,9 +58,9 @@ class AnnualReturn(Analyzer):
         self.rets = list()
         self.ret = OrderedDict()
 
-        for i in range(len(self.data) - 1, -1, -1):
-            dt = self.data.datetime.date(-i)
-            value_cur = self.strategy.stats.broker.value[-i]
+        for i in range(len(self.datafeed) - 1, -1, -1):
+            dt = self.datafeed.datetime.date(-i)
+            value_cur = self.strategy.stats.broker_or_exchange.value[-i]
 
             if dt.year > cur_year:
                 if cur_year >= 0:

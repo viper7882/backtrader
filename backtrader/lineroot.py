@@ -69,7 +69,7 @@ class LineRoot(with_metaclass(MetaLineRoot, object)):
         Rich Comparison operator definition
     '''
     _OwnerCls = None
-    _minperiod = 1
+    _min_period = 1
     _opstage = 1
 
     IndType, StratType, ObsType = range(3)
@@ -107,7 +107,7 @@ class LineRoot(with_metaclass(MetaLineRoot, object)):
         by a strategy
         to not wait for all indicators to produce a value
         '''
-        self._minperiod = minperiod
+        self._min_period = minperiod
 
     def updateminperiod(self, minperiod):
         '''
@@ -115,9 +115,9 @@ class LineRoot(with_metaclass(MetaLineRoot, object)):
         calculated elsewhere
         and has to take over if greater that self's
         '''
-        self._minperiod = max(self._minperiod, minperiod)
+        self._min_period = max(self._min_period, minperiod)
 
-    def addminperiod(self, minperiod):
+    def add_min_period(self, minperiod):
         '''
         Add a minperiod to own ... to be defined by subclasses
         '''
@@ -311,13 +311,13 @@ class LineMultiple(LineRoot):
         for line in self.lines:
             line._stage2()
 
-    def addminperiod(self, minperiod):
+    def add_min_period(self, minperiod):
         '''
         The passed minperiod is fed to the lines
         '''
         # pass it down to the lines
         for line in self.lines:
-            line.addminperiod(minperiod)
+            line.add_min_period(minperiod)
 
     def incminperiod(self, minperiod):
         '''
@@ -346,14 +346,14 @@ class LineSingle(LineRoot):
     '''
     Base class for LineXXX instances that hold a single line
     '''
-    def addminperiod(self, minperiod):
+    def add_min_period(self, minperiod):
         '''
         Add the minperiod (substracting the overlapping 1 minimum period)
         '''
-        self._minperiod += minperiod - 1
+        self._min_period += minperiod - 1
 
     def incminperiod(self, minperiod):
         '''
         Increment the minperiod with no considerations
         '''
-        self._minperiod += minperiod
+        self._min_period += minperiod

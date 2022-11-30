@@ -126,7 +126,7 @@ class IBStore(with_metaclass(MetaSingleton, object)):
       - ``notifyall`` (default: ``False``)
 
         If ``False`` only ``error`` messages will be sent to the
-        ``notify_store`` methods of ``Cerebro`` and ``Strategy``.
+        ``notify_account_or_store`` methods of ``Cerebro`` and ``Strategy``.
 
         If ``True``, each and every message received from TWS will be notified
 
@@ -170,8 +170,8 @@ class IBStore(with_metaclass(MetaSingleton, object)):
     # starting at 1) is set by TWS
     REQIDBASE = 0x01000000
 
-    BrokerCls = None  # broker class will autoregister
-    DataCls = None  # data class will auto register
+    Broker_or_Exchange_Cls = None  # broker_or_exchange class will autoregister
+    Datafeed_Cls = None  # data class will auto register
 
     params = (
         ('host', '127.0.0.1'),
@@ -187,14 +187,14 @@ class IBStore(with_metaclass(MetaSingleton, object)):
     )
 
     @classmethod
-    def getdata(cls, *args, **kwargs):
-        '''Returns ``DataCls`` with args, kwargs'''
-        return cls.DataCls(*args, **kwargs)
+    def instantiate_datafeed(cls, *args, **kwargs):
+        '''Returns ``Datafeed_Cls`` with args, kwargs'''
+        return cls.Datafeed_Cls(*args, **kwargs)
 
     @classmethod
-    def getbroker(cls, *args, **kwargs):
-        '''Returns broker with *args, **kwargs from registered ``BrokerCls``'''
-        return cls.BrokerCls(*args, **kwargs)
+    def get_broker_or_exchange(cls, *args, **kwargs):
+        '''Returns broker_or_exchange with *args, **kwargs from registered ``Broker_or_Exchange_Cls``'''
+        return cls.Broker_or_Exchange_Cls(*args, **kwargs)
 
     def __init__(self):
         super(IBStore, self).__init__()
@@ -211,8 +211,8 @@ class IBStore(with_metaclass(MetaSingleton, object)):
         self.dontreconnect = False  # for non-recoverable connect errors
 
         self._env = None  # reference to cerebro for general notifications
-        self.broker = None  # broker instance
-        self.datas = list()  # datas that have registered over start
+        self.broker_or_exchange = None  # broker_or_exchange instance
+        self.datafeeds = list()  # datas that have registered over start
         self.ccount = 0  # requests to start (from cerebro or datas)
 
         self._lock_tmoffset = threading.Lock()
@@ -225,14 +225,14 @@ class IBStore(with_metaclass(MetaSingleton, object)):
 
         self.histexreq = dict()  # holds segmented historical requests
         self.histfmt = dict()  # holds datetimeformat for request
-        self.histsend = dict()  # holds sessionend (data time) for request
-        self.histtz = dict()  # holds sessionend (data time) for request
+        self.histsend = dict()  # holds session_end (data time) for request
+        self.histtz = dict()  # holds session_end (data time) for request
 
         self.acc_cash = AutoDict()  # current total cash per account
         self.acc_value = AutoDict()  # current total value per account
         self.acc_upds = AutoDict()  # current account valueinfos per account
 
-        self.port_update = False  # indicate whether to signal to broker
+        self.port_update = False  # indicate whether to signal to broker_or_exchange
 
         self.positions = collections.defaultdict(Position)  # actual positions
 
@@ -297,21 +297,21 @@ class IBStore(with_metaclass(MetaSingleton, object)):
         for barsize in self.revdur:
             self.revdur[barsize].sort(key=key2fn)
 
-    def start(self, data=None, broker=None):
+    def start(self, datafeed=None, broker_or_exchange=None):
         self.reconnect(fromstart=True)  # reconnect should be an invariant
 
         # Datas require some processing to kickstart data reception
-        if data is not None:
-            self._env = data._env
+        if datafeed is not None:
+            self._env = datafeed._env
             # For datas simulate a queue with None to kickstart co
-            self.datas.append(data)
+            self.datafeed.append(datafeed)
 
             # if connection fails, get a fake registration that will force the
             # datas to try to reconnect or else bail out
             return self.getTickerQueue(start=True)
 
-        elif broker is not None:
-            self.broker = broker
+        elif broker_or_exchange is not None:
+            self.broker_or_exchange = broker_or_exchange
 
     def stop(self):
         try:
@@ -400,8 +400,8 @@ class IBStore(with_metaclass(MetaSingleton, object)):
     def startdatas(self):
         # kickstrat datas, not returning until all of them have been done
         ts = list()
-        for data in self.datas:
-            t = threading.Thread(target=data.reqdata)
+        for datafeed in self.datafeeds:
+            t = threading.Thread(target=datafeed.reqdata)
             t.start()
             ts.append(t)
 
@@ -412,8 +412,8 @@ class IBStore(with_metaclass(MetaSingleton, object)):
         # stop subs and force datas out of the loop (in LIFO order)
         qs = list(self.qs.values())
         ts = list()
-        for data in self.datas:
-            t = threading.Thread(target=data.canceldata)
+        for datafeed in self.datafeeds:
+            t = threading.Thread(target=datafeed.canceldata)
             t.start()
             ts.append(t)
 
@@ -530,8 +530,8 @@ class IBStore(with_metaclass(MetaSingleton, object)):
             # Given the myriad of errorCodes, start by assuming is an order
             # error and if not, the checks there will let it go
             if msg.id < self.REQIDBASE:
-                if self.broker is not None:
-                    self.broker.push_ordererror(msg)
+                if self.broker_or_exchange is not None:
+                    self.broker_or_exchange.push_ordererror(msg)
             else:
                 # Cancel the queue if a "data" reqId error is given: sanity
                 q = self.qs[msg.id]
@@ -663,7 +663,7 @@ class IBStore(with_metaclass(MetaSingleton, object)):
 
     def reqHistoricalDataEx(self, contract, enddate, begindate,
                             timeframe, compression,
-                            what=None, useRTH=False, tz='', sessionend=None,
+                            what=None, useRTH=False, tz='', session_end=None,
                             tickerId=None):
         '''
         Extension of the raw reqHistoricalData proxy, which takes two dates
@@ -686,13 +686,13 @@ class IBStore(with_metaclass(MetaSingleton, object)):
         if begindate is None:
             duration = self.getmaxduration(timeframe, compression)
             if duration is None:
-                err = ('No duration for historical data request for '
+                err = ('No duration for historical datafeed request for '
                        'timeframe/compresison')
                 self.notifs.put((err, (), kwargs))
                 return self.getTickerQueue(start=True)
             barsize = self.tfcomp_to_size(timeframe, compression)
             if barsize is None:
-                err = ('No supported barsize for historical data request for '
+                err = ('No supported barsize for historical datafeed request for '
                        'timeframe/compresison')
                 self.notifs.put((err, (), kwargs))
                 return self.getTickerQueue(start=True)
@@ -700,7 +700,7 @@ class IBStore(with_metaclass(MetaSingleton, object)):
             return self.reqHistoricalData(contract=contract, enddate=enddate,
                                           duration=duration, barsize=barsize,
                                           what=what, useRTH=useRTH, tz=tz,
-                                          sessionend=sessionend)
+                                          session_end=session_end)
 
         # Check if the requested timeframe/compression is supported by IB
         durations = self.getdurations(timeframe, compression)
@@ -729,11 +729,11 @@ class IBStore(with_metaclass(MetaSingleton, object)):
             self.histexreq[tickerId] = dict(
                 contract=contract, enddate=enddate, begindate=intdate,
                 timeframe=timeframe, compression=compression,
-                what=what, useRTH=useRTH, tz=tz, sessionend=sessionend)
+                what=what, useRTH=useRTH, tz=tz, session_end=session_end)
 
         barsize = self.tfcomp_to_size(timeframe, compression)
         self.histfmt[tickerId] = timeframe >= TimeFrame.Days
-        self.histsend[tickerId] = sessionend
+        self.histsend[tickerId] = session_end
         self.histtz[tickerId] = tz
 
         if contract.m_secType in ['CASH', 'CFD']:
@@ -759,7 +759,7 @@ class IBStore(with_metaclass(MetaSingleton, object)):
         return q
 
     def reqHistoricalData(self, contract, enddate, duration, barsize,
-                          what=None, useRTH=False, tz='', sessionend=None):
+                          what=None, useRTH=False, tz='', session_end=None):
         '''Proxy to reqHistorical Data'''
 
         # get a ticker/queue for identification/data delivery
@@ -777,7 +777,7 @@ class IBStore(with_metaclass(MetaSingleton, object)):
         # split barsize "x time", look in sizes for (tf, comp) get tf
         tframe = self._sizes[barsize.split()[1]][0]
         self.histfmt[tickerId] = tframe >= TimeFrame.Days
-        self.histsend[tickerId] = sessionend
+        self.histsend[tickerId] = session_end
         self.histtz[tickerId] = tz
 
         self.conn.reqHistoricalData(
@@ -954,19 +954,19 @@ class IBStore(with_metaclass(MetaSingleton, object)):
         else:
             dtstr = msg.date  # Format when string req: YYYYMMDD[  HH:MM:SS]
             if self.histfmt[tickerId]:
-                sessionend = self.histsend[tickerId]
+                session_end = self.histsend[tickerId]
                 dt = datetime.strptime(dtstr, '%Y%m%d')
-                dteos = datetime.combine(dt, sessionend)
+                eos_dt = datetime.combine(dt, session_end)
                 tz = self.histtz[tickerId]
                 if tz:
-                    dteostz = tz.localize(dteos)
+                    dteostz = tz.localize(eos_dt)
                     dteosutc = dteostz.astimezone(UTC).replace(tzinfo=None)
                     # When requesting for example daily bars, the current day
                     # will be returned with the already happened data. If the
                     # session end were added, the new ticks wouldn't make it
                     # through, because they happen before the end of time
                 else:
-                    dteosutc = dteos
+                    dteosutc = eos_dt
 
                 if dteosutc <= datetime.utcnow():
                     dt = dteosutc
@@ -1304,22 +1304,22 @@ class IBStore(with_metaclass(MetaSingleton, object)):
     @ibregister
     def openOrder(self, msg):
         '''Receive the event ``openOrder`` events'''
-        self.broker.push_orderstate(msg)
+        self.broker_or_exchange.push_orderstate(msg)
 
     @ibregister
     def execDetails(self, msg):
         '''Receive execDetails'''
-        self.broker.push_execution(msg.execution)
+        self.broker_or_exchange.push_execution(msg.execution)
 
     @ibregister
     def orderStatus(self, msg):
         '''Receive the event ``orderStatus``'''
-        self.broker.push_orderstatus(msg)
+        self.broker_or_exchange.push_orderstatus(msg)
 
     @ibregister
     def commissionReport(self, msg):
         '''Receive the event commissionReport'''
-        self.broker.push_commissionreport(msg.commissionReport)
+        self.broker_or_exchange.push_commissionreport(msg.commissionReport)
 
     def reqPositions(self):
         '''Proxy to reqPositions'''
@@ -1350,7 +1350,7 @@ class IBStore(with_metaclass(MetaSingleton, object)):
         self._event_accdownload.set()
         if False:
             if self.port_update:
-                self.broker.push_portupdate()
+                self.broker_or_exchange.push_portupdate()
 
                 self.port_update = False
 
@@ -1366,17 +1366,17 @@ class IBStore(with_metaclass(MetaSingleton, object)):
                 position = self.positions[msg.contract.m_conId]
                 if not position.fix(msg.position, msg.averageCost):
                     err = ('The current calculated position and '
-                           'the position reported by the broker do not match. '
+                           'the position reported by the broker_or_exchange do not match. '
                            'Operation can continue, but the trades '
                            'calculated in the strategy may be wrong')
 
                     self.notifs.put((err, (), {}))
 
-                # Flag signal to broker at the end of account download
+                # Flag signal to broker_or_exchange at the end of account download
                 # self.port_update = True
-                self.broker.push_portupdate()
+                self.broker_or_exchange.push_portupdate()
 
-    def getposition(self, contract, clone=False):
+    def get_position(self, contract, clone=False):
         # Lock access to the position dicts. This is called from main thread
         # and updates could be happening in the background
         with self._lock_pos:

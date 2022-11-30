@@ -52,9 +52,9 @@ class WilliamsR(Indicator):
         self.plotinfo.plotyhlines = [self.p.upperband, self.p.lowerband]
 
     def __init__(self):
-        h = Highest(self.data.high, period=self.p.period)
-        l = Lowest(self.data.low, period=self.p.period)
-        c = self.data.close
+        h = Highest(self.datafeed.high, period=self.p.period)
+        l = Lowest(self.datafeed.low, period=self.p.period)
+        c = self.datafeed.close
 
         self.lines.percR = -100.0 * (h - c) / (h - l)
 
@@ -78,11 +78,11 @@ class WilliamsAD(Indicator):
     lines = ('ad',)
 
     def __init__(self):
-        upday = UpDay(self.data.close)
-        downday = DownDay(self.data.close)
+        upday = UpDay(self.datafeed.close)
+        downday = DownDay(self.datafeed.close)
 
-        adup = If(upday, self.data.close - TrueLow(self.data), 0.0)
-        addown = If(downday, self.data.close - TrueHigh(self.data), 0.0)
+        adup = If(upday, self.datafeed.close - TrueLow(self.datafeed), 0.0)
+        addown = If(downday, self.datafeed.close - TrueHigh(self.datafeed), 0.0)
 
         self.lines.ad = Accum(adup + addown)
 

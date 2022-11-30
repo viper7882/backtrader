@@ -46,7 +46,7 @@ class ExponentialMovingAverage(MovingAverageBase):
         # Before super to ensure mixins (right-hand side in subclassing)
         # can see the assignment operation and operate on the line
         self.lines[0] = es = ExponentialSmoothing(
-            self.data,
+            self.datafeed,
             period=self.p.period,
             alpha=2.0 / (1.0 + self.p.period))
 

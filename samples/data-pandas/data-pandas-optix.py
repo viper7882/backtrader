@@ -59,7 +59,7 @@ def runstrat():
     cerebro = bt.Cerebro(stdstats=False)
 
     # Add a strategy
-    cerebro.addstrategy(StrategyOptix)
+    cerebro.add_strategy(StrategyOptix)
 
     # Get a pandas dataframe
     datapath = ('../../datas/2006-day-001-optix.txt')
@@ -82,7 +82,7 @@ def runstrat():
     # Pass it to the backtrader datafeed and add it to the cerebro
     data = PandasDataOptix(dataname=dataframe)
 
-    cerebro.adddata(data)
+    cerebro.add_datafeed(data)
 
     # Run over everything
     cerebro.run()

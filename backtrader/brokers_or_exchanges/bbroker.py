@@ -25,21 +25,21 @@ import collections
 import datetime
 
 import backtrader as bt
-from backtrader.comminfo import CommInfoBase
-from backtrader.order import Order, BuyOrder, SellOrder
+from backtrader.commission_info import CommInfoBase
+from backtrader.order import Order, Buy_Order, Sell_Order
 from backtrader.position import Position
 from backtrader.utils.py3 import string_types, integer_types
 
 __all__ = ['BackBroker', 'BrokerBack']
 
 
-class BackBroker(bt.BrokerBase):
+class BackBroker(bt.Broker_or_Exchange_Base):
     '''Broker Simulator
 
       The simulation supports different order types, checking a submitted order
       cash requirements against current cash, keeping track of cash and value
       for each iteration of ``cerebro`` and keeping the current position on
-      different datas.
+      different datafeeds.
 
       *cash* is adjusted on each iteration for instruments like ``futures`` for
        which a price change implies in real brokers the addition/substracion of
@@ -56,33 +56,33 @@ class BackBroker(bt.BrokerBase):
         - ``Limit``: executes if the given limit price is seen during the
           session
 
-        - ``Stop``: executes a ``Market`` order if the given stop price is seen
+        - ``StopMarket``: executes a ``Market`` order if the given stop price is seen
 
         - ``StopLimit``: sets a ``Limit`` order in motion if the given stop
           price is seen
 
-      Because the broker is instantiated by ``Cerebro`` and there should be
-      (mostly) no reason to replace the broker, the params are not controlled
+      Because the broker_or_exchange is instantiated by ``Cerebro`` and there should be
+      (mostly) no reason to replace the broker_or_exchange, the params are not controlled
       by the user for the instance.  To change this there are two options:
 
         1. Manually create an instance of this class with the desired params
-           and use ``cerebro.broker = instance`` to set the instance as the
-           broker for the ``run`` execution
+           and use ``cerebro.broker_or_exchange = instance`` to set the instance as the
+           broker_or_exchange for the ``run`` execution
 
         2. Use the ``set_xxx`` to set the value using
-           ``cerebro.broker.set_xxx`` where ```xxx`` stands for the name of the
+           ``cerebro.broker_or_exchange.set_xxx`` where ```xxx`` stands for the name of the
            parameter to set
 
         .. note::
 
-           ``cerebro.broker`` is a *property* supported by the ``getbroker``
-           and ``setbroker`` methods of ``Cerebro``
+           ``cerebro.broker_or_exchange`` is a *property* supported by the ``instantiate__broker_or_exchange``
+           and ``set_broker_or_exchange`` methods of ``Cerebro``
 
       Params:
 
         - ``cash`` (default: ``10000``): starting cash
 
-        - ``commission`` (default: ``CommInfoBase(percabs=True)``)
+        - ``commission`` (default: ``CommInfoBase(percent_abs=True)``)
           base commission scheme which applies to all assets
 
         - ``checksubmit`` (default: ``True``)
@@ -101,7 +101,7 @@ class BackBroker(bt.BrokerBase):
 
             - ``order``: obviously the order in execution. This provides access
               to the *data* (and with it the *ohlc* and *volume* values), the
-              *execution type*, remaining size (``order.executed.remsize``) and
+              *execution type*, remaining size (``order.executed.remaining_size``) and
               others.
 
               Please check the ``Order`` documentation and reference for things
@@ -110,13 +110,13 @@ class BackBroker(bt.BrokerBase):
             - ``price`` the price at which the order is going to be executed in
               the ``ago`` bar
 
-            - ``ago``: index meant to be used with ``order.data`` for the
+            - ``ago``: index meant to be used with ``order.datafeed`` for the
               extraction of the *ohlc* and *volume* prices. In most cases this
               will be ``0`` but on a corner case for ``Close`` orders, this
               will be ``-1``.
 
               In order to get the bar volume (for example) do: ``volume =
-              order.data.volume[ago]``
+              order.datafeed.volume[ago]``
 
           The callable must return the *executed size* (a value >= 0)
 
@@ -152,10 +152,10 @@ class BackBroker(bt.BrokerBase):
 
         - ``slip_match`` (default: ``True``)
 
-          If ``True`` the broker will offer a match by capping slippage at
+          If ``True`` the broker_or_exchange will offer a match by capping slippage at
           ``high/low`` prices in case they would be exceeded.
 
-          If ``False`` the broker will not match the order with the current
+          If ``False`` the broker_or_exchange will not match the order with the current
           prices and will try execution during the next iteration
 
         - ``slip_limit`` (default: ``True``)
@@ -189,7 +189,7 @@ class BackBroker(bt.BrokerBase):
           *Cheat-On-Open* Setting this to ``True`` with ``set_coo`` enables
            matching a ``Market`` order to the opening price, by for example
            using a timer with ``cheat`` set to ``True``, because such a timer
-           gets executed before the broker has evaluated
+           gets executed before the broker_or_exchange has evaluated
 
         - ``int2pnl`` (default: ``True``)
 
@@ -201,7 +201,7 @@ class BackBroker(bt.BrokerBase):
 
         - ``shortcash`` (default: ``True``)
 
-          If True then cash will be increased when a stocklike asset is shorted
+          If True then cash will be increased when a stock_like asset is shorted
           and the calculated value for the asset will be negative.
 
           If ``False`` then the cash will be deducted as operation cost and the
@@ -250,7 +250,7 @@ class BackBroker(bt.BrokerBase):
 
     def init(self):
         super(BackBroker, self).init()
-        self.startingcash = self.cash = self.p.cash
+        self.starting_cash = self.cash = self.p.cash
         self._value = self.cash
         self._valuemkt = 0.0  # no open position
 
@@ -360,17 +360,15 @@ class BackBroker(bt.BrokerBase):
     seteosbar = set_eosbar
 
     def get_cash(self):
-        '''Returns the current cash (alias: ``getcash``)'''
+        '''Returns the current cash'''
         return self.cash
 
-    getcash = get_cash
-
     def set_cash(self, cash):
-        '''Sets the cash parameter (alias: ``setcash``)'''
-        self.startingcash = self.cash = self.p.cash = cash
+        '''Sets the cash parameter'''
+        self.p.cash = cash
+        self.cash = self.p.cash
+        self.starting_cash = self.cash  
         self._value = cash
-
-    setcash = set_cash
 
     def add_cash(self, cash):
         '''Add/Remove cash to the system (use a negative value to remove)'''
@@ -402,29 +400,27 @@ class BackBroker(bt.BrokerBase):
             self._bracketize(order, cancel=True)
         return True
 
-    def get_value(self, datas=None, mkt=False, lever=True):
+    def get_value(self, datafeeds=None, mkt=False, lever=True):
         '''
         params: lever default value has been changed from False to True because backtrader is calling
-        broker.getvalue() without lever parameter. In reality, the return value should include leverage
+        broker_or_exchange.get_value() without lever parameter. In reality, the return value should include leverage
         instead of without leverage.
 
-        Returns the portfolio value of the given datas (if datas is ``None``, then
-        the total portfolio value will be returned (alias: ``getvalue``)
+        Returns the portfolio value of the given datafeeds (if datafeeds is ``None``, then
+        the total portfolio value will be returned
         '''
-        if datas is None:
+        if datafeeds is None:
             if mkt:
                 return self._valuemkt if not lever else self._valuemktlever
 
             return self._value if not lever else self._valuelever
 
-        return self._get_value(datas=datas, lever=lever)
+        return self._get_value(datafeeds=datafeeds, lever=lever)
 
-    getvalue = get_value
+    def get_value_lever(self, datafeeds=None, mkt=False, lever=True):
+        return self.get_value(datafeeds=datafeeds, mkt=mkt, lever=True)
 
-    def get_value_lever(self, datas=None, mkt=False, lever=True):
-        return self.get_value(datas=datas, mkt=mkt, lever=True)
-
-    def _get_value(self, datas=None, lever=False):
+    def _get_value(self, datafeeds=None, lever=False):
         pos_value = 0.0
         pos_value_unlever = 0.0
         unrealized = 0.0
@@ -434,21 +430,21 @@ class BackBroker(bt.BrokerBase):
             self._fundshares += c / self._fundval
             self.cash += c
 
-        for data in datas or self.positions:
-            comminfo = self.getcommissioninfo(data)
-            position = self.positions[data]
+        for datafeed in datafeeds or self.positions:
+            commission_info = self.get_commission_info(datafeed)
+            position = self.positions[datafeed]
             # use valuesize:  returns raw value, rather than negative adj val
             if not self.p.shortcash:
-                dvalue = comminfo.getvalue(position, data.close[0])
+                dvalue = commission_info.get_value(position, datafeed.close[0])
             else:
-                dvalue = comminfo.getvaluesize(position.size, data.close[0])
+                dvalue = commission_info.get_value_size(position.size, datafeed.close[0])
 
-            dunrealized = comminfo.profitandloss(position.size, position.price,
-                                                 data.close[0])
-            if datas and len(datas) == 1:
+            dunrealized = commission_info.profit_and_loss(position.size, position.price,
+                                                 datafeed.close[0])
+            if datafeeds and len(datafeeds) == 1:
                 if lever and dvalue > 0:
                     dvalue -= dunrealized
-                    return (dvalue / comminfo.get_leverage()) + dunrealized
+                    return (dvalue / commission_info.get_leverage()) + dunrealized
                 return dvalue  # raw data value requested, short selling is neg
 
             if not self.p.shortcash:
@@ -459,7 +455,7 @@ class BackBroker(bt.BrokerBase):
 
             if dvalue > 0:  # long position - unlever
                 dvalue -= dunrealized
-                pos_value_unlever += (dvalue / comminfo.get_leverage())
+                pos_value_unlever += (dvalue / commission_info.get_leverage())
                 pos_value_unlever += dunrealized
             else:
                 pos_value_unlever += dvalue
@@ -509,10 +505,10 @@ class BackBroker(bt.BrokerBase):
 
         return os
 
-    def getposition(self, data):
+    def get_position(self, datafeed):
         '''Returns the current position status (a ``Position`` instance) for
         the given ``data``'''
-        return self.positions[data]
+        return self.positions[datafeed]
 
     def orderstatus(self, order):
         try:
@@ -570,10 +566,10 @@ class BackBroker(bt.BrokerBase):
             if self._take_children(order) is None:  # children not taken
                 continue
 
-            comminfo = self.getcommissioninfo(order.data)
+            commission_info = self.get_commission_info(order.datafeed)
 
             position = positions.setdefault(
-                order.data, self.positions[order.data].clone())
+                order.datafeed, self.positions[order.datafeed].clone())
 
             # pseudo-execute the order to get the remaining cash after exec
             cash = self._execute(order, cash=cash, position=position)
@@ -652,42 +648,42 @@ class BackBroker(bt.BrokerBase):
 
         self.set_cash(float(f[2]))
 
-    def buy(self, owner, data,
-            size, price=None, plimit=None,
-            exectype=None, valid=None, tradeid=0, oco=None,
-            trailamount=None, trailpercent=None,
+    def buy(self, owner, datafeed,
+            size, price=None, price_limit=None,
+            execution_type=None, valid=None, tradeid=0, oco=None,
+            trailing_amount=None, trailing_percent=None,
             parent=None, transmit=True,
             histnotify=False, _checksubmit=True,
             **kwargs):
 
-        order = BuyOrder(owner=owner, data=data,
-                         size=size, price=price, pricelimit=plimit,
-                         exectype=exectype, valid=valid, tradeid=tradeid,
-                         trailamount=trailamount, trailpercent=trailpercent,
+        order = Buy_Order(owner=owner, datafeed=datafeed,
+                         size=size, price=price, pricelimit=price_limit,
+                         execution_type=execution_type, valid=valid, tradeid=tradeid,
+                         trailing_amount=trailing_amount, trailing_percent=trailing_percent,
                          parent=parent, transmit=transmit,
                          histnotify=histnotify)
 
-        order.addinfo(**kwargs)
+        order.add_info(**kwargs)
         self._ocoize(order, oco)
 
         return self.submit(order, check=_checksubmit)
 
-    def sell(self, owner, data,
-             size, price=None, plimit=None,
-             exectype=None, valid=None, tradeid=0, oco=None,
-             trailamount=None, trailpercent=None,
+    def sell(self, owner, datafeed,
+             size, price=None, price_limit=None,
+             execution_type=None, valid=None, tradeid=0, oco=None,
+             trailing_amount=None, trailing_percent=None,
              parent=None, transmit=True,
              histnotify=False, _checksubmit=True,
              **kwargs):
 
-        order = SellOrder(owner=owner, data=data,
-                          size=size, price=price, pricelimit=plimit,
-                          exectype=exectype, valid=valid, tradeid=tradeid,
-                          trailamount=trailamount, trailpercent=trailpercent,
+        order = Sell_Order(owner=owner, datafeed=datafeed,
+                          size=size, price=price, pricelimit=price_limit,
+                          execution_type=execution_type, valid=valid, tradeid=tradeid,
+                          trailing_amount=trailing_amount, trailing_percent=trailing_percent,
                           parent=parent, transmit=transmit,
                           histnotify=histnotify)
 
-        order.addinfo(**kwargs)
+        order.add_info(**kwargs)
         self._ocoize(order, oco)
 
         return self.submit(order, check=_checksubmit)
@@ -700,103 +696,103 @@ class BackBroker(bt.BrokerBase):
 
         if self.p.filler is None or ago is None:
             # Order gets full size or pseudo-execution
-            size = order.executed.remsize
+            size = order.executed.remaining_size
         else:
             # Execution depends on volume filler
             size = self.p.filler(order, price, ago)
-            if not order.isbuy():
+            if not order.is_buy():
                 size = -size
 
-        # Get comminfo object for the data
-        comminfo = self.getcommissioninfo(order.data)
+        # Get commission_info object for the data
+        commission_info = self.get_commission_info(order.datafeed)
 
         # Check if something has to be compensated
-        if order.data._compensate is not None:
-            data = order.data._compensate
-            cinfocomp = self.getcommissioninfo(data)  # for actual commission
+        if order.datafeed._compensate is not None:
+            datafeed = order.datafeed._compensate
+            cinfocomp = self.get_commission_info(datafeed)  # for actual commission
         else:
-            data = order.data
-            cinfocomp = comminfo
+            datafeed = order.datafeed
+            cinfocomp = commission_info
 
         # Adjust position with operation size
         if ago is not None:
             # Real execution with date
-            position = self.positions[data]
+            position = self.positions[datafeed]
             pprice_orig = position.price
 
-            psize, pprice, opened, closed = position.pseudoupdate(size, price)
+            position_size, position_average_price, opened, closed = position.pseudoupdate(size, price)
 
             # if part/all of a position has been closed, then there has been
             # a profitandloss ... record it
-            pnl = comminfo.profitandloss(-closed, pprice_orig, price)
+            profit_and_loss_amount = commission_info.profit_and_loss(-closed, pprice_orig, price)
             cash = self.cash
         else:
-            pnl = 0
+            profit_and_loss_amount = 0
             if not self.p.coo:
                 price = pprice_orig = order.created.price
             else:
                 # When doing cheat on open, the price to be considered for a
                 # market order is the opening price and not the default closing
                 # price with which the order was created
-                if order.exectype == Order.Market:
-                    price = pprice_orig = order.data.open[0]
+                if order.execution_type == Order.Market:
+                    price = pprice_orig = order.datafeed.open[0]
                 else:
                     price = pprice_orig = order.created.price
 
-            psize, pprice, opened, closed = position.update(size, price)
+            position_size, position_average_price, opened, closed = position.update(size, price)
 
         # "Closing" totally or partially is possible. Cash may be re-injected
         if closed:
             # Adjust to returned value for closed items & acquired opened items
             if self.p.shortcash:
-                closedvalue = comminfo.getvaluesize(-closed, pprice_orig)
+                closed_value = commission_info.get_value_size(-closed, pprice_orig)
             else:
-                closedvalue = comminfo.getoperationcost(closed, pprice_orig)
+                closed_value = commission_info.get_operating_cost(closed, pprice_orig)
 
-            closecash = closedvalue
-            if closedvalue > 0:  # long position closed
-                closecash /= comminfo.get_leverage()  # inc cash with lever
+            closecash = closed_value
+            if closed_value > 0:  # long position closed
+                closecash /= commission_info.get_leverage()  # inc cash with lever
 
-            cash += closecash + pnl * comminfo.stocklike
+            cash += closecash + profit_and_loss_amount * commission_info.stock_like
             # Calculate and substract commission
-            closedcomm = comminfo.getcommission(closed, price)
-            cash -= closedcomm
+            closed_commission = commission_info.get_commission_rate(closed, price)
+            cash -= closed_commission
 
             if ago is not None:
                 # Cashadjust closed contracts: prev close vs exec price
                 # The operation can inject or take cash out
-                cash += comminfo.cashadjust(-closed,
+                cash += commission_info.cash_adjust(-closed,
                                             position.adjbase,
                                             price)
 
                 # Update system cash
                 self.cash = cash
         else:
-            closedvalue = closedcomm = 0.0
+            closed_value = closed_commission = 0.0
 
         popened = opened
         if opened:
             if self.p.shortcash:
-                openedvalue = comminfo.getvaluesize(opened, price)
+                opened_value = commission_info.get_value_size(opened, price)
             else:
-                openedvalue = comminfo.getoperationcost(opened, price)
+                opened_value = commission_info.get_operating_cost(opened, price)
 
-            opencash = openedvalue
-            if openedvalue > 0:  # long position being opened
-                opencash /= comminfo.get_leverage()  # dec cash with level
+            opencash = opened_value
+            if opened_value > 0:  # long position being opened
+                opencash /= commission_info.get_leverage()  # dec cash with level
 
             cash -= opencash  # original behavior
 
-            openedcomm = cinfocomp.getcommission(opened, price)
-            cash -= openedcomm
+            opened_commission = cinfocomp.get_commission_rate(opened, price)
+            cash -= opened_commission
 
             if cash < 0.0:
                 # execution is not possible - nullify
                 opened = 0
-                openedvalue = openedcomm = 0.0
+                opened_value = opened_commission = 0.0
 
             elif ago is not None:  # real execution
-                if abs(psize) > abs(opened):
+                if abs(position_size) > abs(opened):
                     # some futures were opened - adjust the cash of the
                     # previously existing futures to the operation price and
                     # use that as new adjustment base, because it already is
@@ -804,8 +800,8 @@ class BackBroker(bt.BrokerBase):
                     # adjustment to the close price will be done for all open
                     # futures from a common base price with regards to the
                     # close price
-                    adjsize = psize - opened
-                    cash += comminfo.cashadjust(adjsize,
+                    adjsize = position_size - opened
+                    cash += commission_info.cash_adjust(adjsize,
                                                 position.adjbase, price)
 
                 # record adjust price base for end of bar cash adjustment
@@ -814,7 +810,7 @@ class BackBroker(bt.BrokerBase):
                 # update system cash - checking if opened is still != 0
                 self.cash = cash
         else:
-            openedvalue = openedcomm = 0.0
+            opened_value = opened_commission = 0.0
 
         if ago is None:
             # return cash from pseudo-execution
@@ -823,24 +819,24 @@ class BackBroker(bt.BrokerBase):
         execsize = closed + opened
 
         if execsize:
-            # Confimrm the operation to the comminfo object
-            comminfo.confirmexec(execsize, price)
+            # Confimrm the operation to the commission_info object
+            commission_info.confirmed_execution(execsize, price)
 
             # do a real position update if something was executed
-            position.update(execsize, price, data.datetime.datetime())
+            position.update(execsize, price, datafeed.datetime.datetime())
 
             if closed and self.p.int2pnl:  # Assign accumulated interest data
-                closedcomm += self.d_credit.pop(data, 0.0)
+                closed_commission += self.d_credit.pop(datafeed, 0.0)
 
             # Execute and notify the order
-            order.execute(dtcoc or data.datetime[ago],
+            order.execute(dtcoc or datafeed.datetime[ago],
                           execsize, price,
-                          closed, closedvalue, closedcomm,
-                          opened, openedvalue, openedcomm,
-                          comminfo.margin, pnl,
-                          psize, pprice)
+                          closed, closed_value, closed_commission,
+                          opened, opened_value, opened_commission,
+                          commission_info.margin, profit_and_loss_amount,
+                          position_size, position_average_price)
 
-            order.addcomminfo(comminfo)
+            order.add_commission_info(commission_info)
 
             self.notify(order)
             self._ococheck(order)
@@ -859,75 +855,74 @@ class BackBroker(bt.BrokerBase):
         self._execute(order, ago=0, price=order.created.price)
 
     def _try_exec_market(self, order, popen, phigh, plow):
-        ago = 0
         if self.p.coc and order.info.get('coc', True):
             dtcoc = order.created.dt
-            exprice = order.created.pclose
+            exprice = order.created.closing_price
         else:
-            if not self.p.coo and order.data.datetime[0] <= order.created.dt:
+            if not self.p.coo and order.datafeed.datetime[0] <= order.created.dt:
                 return    # can only execute after creation time
 
             dtcoc = None
             exprice = popen
 
-        if order.isbuy():
+        if order.is_buy():
             p = self._slip_up(phigh, exprice, doslip=self.p.slip_open)
         else:
             p = self._slip_down(plow, exprice, doslip=self.p.slip_open)
 
         self._execute(order, ago=0, price=p, dtcoc=dtcoc)
 
-    def _try_exec_close(self, order, pclose):
+    def _try_exec_close(self, order, closing_price):
         # pannotated allows to keep track of the closing bar if there is no
         # information which lets us know that the current bar is the closing
         # bar (like matching end of session bar)
         # The actual matching will be done one bar afterwards but using the
         # information from the actual closing bar
 
-        dt0 = order.data.datetime[0]
+        dt0 = order.datafeed.datetime[0]
         # don't use "len" -> in replay the close can be reached with same len
         if dt0 > order.created.dt:  # can only execute after creation time
-            # or (self.p.eosbar and dt0 == order.dteos):
-            if dt0 >= order.dteos:
+            # or (self.p.eosbar and dt0 == order.eos_dt):
+            if dt0 >= order.eos_dt:
                 # past the end of session or right at it and eosbar is True
-                if order.pannotated and dt0 > order.dteos:
+                if order.pannotated and dt0 > order.eos_dt:
                     ago = -1
                     execprice = order.pannotated
                 else:
                     ago = 0
-                    execprice = pclose
+                    execprice = closing_price
 
                 self._execute(order, ago=ago, price=execprice)
                 return
 
         # If no exexcution has taken place ... annotate the closing price
-        order.pannotated = pclose
+        order.pannotated = closing_price
 
-    def _try_exec_limit(self, order, popen, phigh, plow, plimit):
-        if order.isbuy():
-            if plimit >= popen:
+    def _try_exec_limit(self, order, popen, phigh, plow, price_limit):
+        if order.is_buy():
+            if price_limit >= popen:
                 # open smaller/equal than requested - buy cheaper
-                pmax = min(phigh, plimit)
+                pmax = min(phigh, price_limit)
                 p = self._slip_up(pmax, popen, doslip=self.p.slip_open,
                                   lim=True)
                 self._execute(order, ago=0, price=p)
-            elif plimit >= plow:
+            elif price_limit >= plow:
                 # day low below req price ... match limit price
-                self._execute(order, ago=0, price=plimit)
+                self._execute(order, ago=0, price=price_limit)
 
         else:  # Sell
-            if plimit <= popen:
+            if price_limit <= popen:
                 # open greater/equal than requested - sell more expensive
-                pmin = max(plow, plimit)
+                pmin = max(plow, price_limit)
                 p = self._slip_down(pmin, popen, doslip=self.p.slip_open,
                                     lim=True)
                 self._execute(order, ago=0, price=p)
-            elif plimit <= phigh:
+            elif price_limit <= phigh:
                 # day high above req price ... match limit price
-                self._execute(order, ago=0, price=plimit)
+                self._execute(order, ago=0, price=price_limit)
 
-    def _try_exec_stop(self, order, popen, phigh, plow, pcreated, pclose):
-        if order.isbuy():
+    def _try_exec_stopmarket(self, order, popen, phigh, plow, pcreated, closing_price):
+        if order.is_buy():
             if popen >= pcreated:
                 # price penetrated with an open gap - use open
                 p = self._slip_up(phigh, popen, doslip=self.p.slip_open)
@@ -948,56 +943,56 @@ class BackBroker(bt.BrokerBase):
                 self._execute(order, ago=0, price=p)
 
         # not (completely) executed and trailing stop
-        if order.alive() and order.exectype == Order.StopTrail:
-            order.trailadjust(pclose)
+        if order.alive() and order.execution_type == Order.StopTrail:
+            order.adjust_trailing_price(closing_price)
 
     def _try_exec_stoplimit(self, order,
-                            popen, phigh, plow, pclose,
-                            pcreated, plimit):
-        if order.isbuy():
+                            popen, phigh, plow, closing_price,
+                            pcreated, price_limit):
+        if order.is_buy():
             if popen >= pcreated:
                 order.triggered = True
-                self._try_exec_limit(order, popen, phigh, plow, plimit)
+                self._try_exec_limit(order, popen, phigh, plow, price_limit)
 
             elif phigh >= pcreated:
                 # price penetrated upwards during the session
                 order.triggered = True
                 # can calculate execution for a few cases - datetime is fixed
-                if popen > pclose:
-                    if plimit >= pcreated:  # limit above stop trigger
+                if popen > closing_price:
+                    if price_limit >= pcreated:  # limit above stop trigger
                         p = self._slip_up(phigh, pcreated, lim=True)
                         self._execute(order, ago=0, price=p)
-                    elif plimit >= pclose:
-                        self._execute(order, ago=0, price=plimit)
-                else:  # popen < pclose
-                    if plimit >= pcreated:
+                    elif price_limit >= closing_price:
+                        self._execute(order, ago=0, price=price_limit)
+                else:  # popen < closing_price
+                    if price_limit >= pcreated:
                         p = self._slip_up(phigh, pcreated, lim=True)
                         self._execute(order, ago=0, price=p)
         else:  # Sell
             if popen <= pcreated:
                 # price penetrated downwards with an open gap
                 order.triggered = True
-                self._try_exec_limit(order, popen, phigh, plow, plimit)
+                self._try_exec_limit(order, popen, phigh, plow, price_limit)
 
             elif plow <= pcreated:
                 # price penetrated downwards during the session
                 order.triggered = True
                 # can calculate execution for a few cases - datetime is fixed
-                if popen <= pclose:
-                    if plimit <= pcreated:
+                if popen <= closing_price:
+                    if price_limit <= pcreated:
                         p = self._slip_down(plow, pcreated, lim=True)
                         self._execute(order, ago=0, price=p)
-                    elif plimit <= pclose:
-                        self._execute(order, ago=0, price=plimit)
+                    elif price_limit <= closing_price:
+                        self._execute(order, ago=0, price=price_limit)
                 else:
-                    # popen > pclose
-                    if plimit <= pcreated:
+                    # popen > closing_price
+                    if price_limit <= pcreated:
                         p = self._slip_down(plow, pcreated, lim=True)
                         self._execute(order, ago=0, price=p)
 
         # not (completely) executed and trailing stop
-        if order.alive() and order.exectype == Order.StopTrailLimit:
-            order.trailadjust(pclose)
+        if order.alive() and order.execution_type == Order.StopTrailLimit:
+            order.adjust_trailing_price(closing_price)
 
     def _slip_up(self, pmax, price, doslip=True, lim=False):
         if not doslip:
@@ -1046,46 +1041,46 @@ class BackBroker(bt.BrokerBase):
         return None  # no price can be returned
 
     def _try_exec(self, order):
-        data = order.data
+        datafeed = order.datafeed
 
-        popen = getattr(data, 'tick_open', None)
+        popen = getattr(datafeed, 'tick_open', None)
         if popen is None:
-            popen = data.open[0]
-        phigh = getattr(data, 'tick_high', None)
+            popen = datafeed.open[0]
+        phigh = getattr(datafeed, 'tick_high', None)
         if phigh is None:
-            phigh = data.high[0]
-        plow = getattr(data, 'tick_low', None)
+            phigh = datafeed.high[0]
+        plow = getattr(datafeed, 'tick_low', None)
         if plow is None:
-            plow = data.low[0]
-        pclose = getattr(data, 'tick_close', None)
-        if pclose is None:
-            pclose = data.close[0]
+            plow = datafeed.low[0]
+        closing_price = getattr(datafeed, 'tick_close', None)
+        if closing_price is None:
+            closing_price = datafeed.close[0]
 
         pcreated = order.created.price
-        plimit = order.created.pricelimit
+        price_limit = order.created.pricelimit
 
-        if order.exectype == Order.Market:
+        if order.execution_type == Order.Market:
             self._try_exec_market(order, popen, phigh, plow)
 
-        elif order.exectype == Order.Close:
-            self._try_exec_close(order, pclose)
+        elif order.execution_type == Order.Close:
+            self._try_exec_close(order, closing_price)
 
-        elif order.exectype == Order.Limit:
+        elif order.execution_type == Order.Limit:
             self._try_exec_limit(order, popen, phigh, plow, pcreated)
 
         elif (order.triggered and
-              order.exectype in [Order.StopLimit, Order.StopTrailLimit]):
-            self._try_exec_limit(order, popen, phigh, plow, plimit)
+              order.execution_type in [Order.StopLimit, Order.StopTrailLimit]):
+            self._try_exec_limit(order, popen, phigh, plow, price_limit)
 
-        elif order.exectype in [Order.Stop, Order.StopTrail]:
-            self._try_exec_stop(order, popen, phigh, plow, pcreated, pclose)
+        elif order.execution_type in [Order.StopMarket, Order.StopTrail]:
+            self._try_exec_stopmarket(order, popen, phigh, plow, pcreated, closing_price)
 
-        elif order.exectype in [Order.StopLimit, Order.StopTrailLimit]:
+        elif order.execution_type in [Order.StopLimit, Order.StopTrailLimit]:
             self._try_exec_stoplimit(order,
-                                     popen, phigh, plow, pclose,
-                                     pcreated, plimit)
+                                     popen, phigh, plow, closing_price,
+                                     pcreated, price_limit)
 
-        elif order.exectype == Order.Historical:
+        elif order.execution_type == Order.Historical:
             self._try_exec_historical(order)
 
     def _process_fund_history(self):
@@ -1110,7 +1105,7 @@ class BackBroker(bt.BrokerBase):
             dt = datetime.datetime(year=dt.year, month=dt.month, day=dt.day)
             f[0] = dt  # Update the value
 
-        # Synchronization with the strategy is not possible because the broker
+        # Synchronization with the strategy is not possible because the broker_or_exchange
         # is called before the strategy advances. The 2 lines below would do it
         # if possible
         # st0 = self.cerebro.runningstrats[0]
@@ -1132,13 +1127,13 @@ class BackBroker(bt.BrokerBase):
                     dataidx = None  # Field not present, use default
 
                 if dataidx is None:
-                    d = self.cerebro.datas[0]
+                    datafeed = self.cerebro.datafeeds[0]
                 elif isinstance(dataidx, integer_types):
-                    d = self.cerebro.datas[dataidx]
+                    datafeed = self.cerebro.datafeeds[dataidx]
                 else:  # assume string
-                    d = self.cerebro.datasbyname[dataidx]
+                    datafeed = self.cerebro.datafeeds_by_name[dataidx]
 
-                if not len(d):
+                if not len(datafeed):
                     break  # may start later as other data feeds
 
                 dt = uhorder[0]  # date/datetime instance
@@ -1158,23 +1153,23 @@ class BackBroker(bt.BrokerBase):
                                            day=dt.day)
                     uhorder[0] = dt
 
-                if dt > d.datetime.datetime():
+                if dt > datafeed.datetime.datetime():
                     break  # cannot execute yet 1st in queue, stop processing
 
                 size = uhorder[1]
                 price = uhorder[2]
                 owner = self.cerebro.runningstrats[0]
                 if size > 0:
-                    o = self.buy(owner=owner, data=d,
+                    o = self.buy(owner=owner, datafeed=datafeed,
                                  size=size, price=price,
-                                 exectype=Order.Historical,
+                                 execution_type=Order.Historical,
                                  histnotify=uhnotify,
                                  _checksubmit=False)
 
                 elif size < 0:
-                    o = self.sell(owner=owner, data=d,
+                    o = self.sell(owner=owner, datafeed=datafeed,
                                   size=abs(size), price=price,
-                                  exectype=Order.Historical,
+                                  execution_type=Order.Historical,
                                   histnotify=uhnotify,
                                   _checksubmit=False)
 
@@ -1190,12 +1185,12 @@ class BackBroker(bt.BrokerBase):
 
         # Discount any cash for positions hold
         credit = 0.0
-        for data, pos in self.positions.items():
+        for datafeed, pos in self.positions.items():
             if pos:
-                comminfo = self.getcommissioninfo(data)
-                dt0 = data.datetime.datetime()
-                dcredit = comminfo.get_credit_interest(data, pos, dt0)
-                self.d_credit[data] += dcredit
+                commission_info = self.get_commission_info(datafeed)
+                dt0 = datafeed.datetime.datetime()
+                dcredit = commission_info.get_credit_interest(datafeed, pos, dt0)
+                self.d_credit[datafeed] += dcredit
                 credit += dcredit
                 pos.datetime = dt0  # mark last credit operation
 
@@ -1228,15 +1223,15 @@ class BackBroker(bt.BrokerBase):
                     self._bracketize(order)
 
         # Operations have been executed ... adjust cash end of bar
-        for data, pos in self.positions.items():
+        for datafeed, pos in self.positions.items():
             # futures change cash every bar
             if pos:
-                comminfo = self.getcommissioninfo(data)
-                self.cash += comminfo.cashadjust(pos.size,
+                commission_info = self.get_commission_info(datafeed)
+                self.cash += commission_info.cash_adjust(pos.size,
                                                  pos.adjbase,
-                                                 data.close[0])
+                                                 datafeed.close[0])
                 # record the last adjustment price
-                pos.adjbase = data.close[0]
+                pos.adjbase = datafeed.close[0]
 
         self._get_value()  # update value
 

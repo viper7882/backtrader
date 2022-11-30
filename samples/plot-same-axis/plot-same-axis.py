@@ -80,10 +80,10 @@ def runstrategy():
         todate=todate)
 
     # Add the 1st data to cerebro
-    cerebro.adddata(data)
+    cerebro.add_datafeed(data)
 
     # Add the strategy
-    cerebro.addstrategy(PlotStrategy,
+    cerebro.add_strategy(PlotStrategy,
                         smasubplot=args.smasubplot,
                         nomacdplot=args.nomacdplot,
                         rsioverstoc=args.rsioverstoc,
