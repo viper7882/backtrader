@@ -223,12 +223,20 @@ class LineBuffer(LineSingle):
         try:
             self.array[self.idx + ago] = value
         except Exception as err:
-            print(err.__class__.__name__ + ':', err)
-            print("{} Line: {}: INFO: self.idx:{}, ago:{}, value:{}".format(
-                inspect.getframeinfo(inspect.currentframe()).function,
-                inspect.getframeinfo(inspect.currentframe()).lineno,
+            frameinfo=inspect.getframeinfo(inspect.currentframe())
+            msg = "{}: {} Line: {}: ".format(
+                type(self).__name__, frameinfo.function, frameinfo.lineno,
+            )
+            sub_msg = "{}: {}".format(
+                err.__class__.__name__, err
+            )
+            print(msg + sub_msg)
+
+            sub_msg = "INFO: self.idx: {}, ago: {}, value: {}".format(
                 self.idx, ago, value,
-            ))
+            )
+            print(msg + sub_msg)
+            pass
 
         for binding in self.bindings:
             binding[ago] = value

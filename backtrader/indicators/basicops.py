@@ -352,8 +352,24 @@ class Average(PeriodN):
     lines = ('av',)
 
     def next(self):
-        self.line[0] = \
-            math.fsum(self.datafeed.get(size=self.p.period)) / self.p.period
+        last_datafeed_item = self.datafeed.get(size=1)
+
+        # INFO: Check if the last array element is NaN
+        if math.isnan(last_datafeed_item[0]):
+            datafeed_items = self.datafeed.get(size=self.p.period + 1)
+
+            # INFO: Drop the last array element with NaN
+            datafeed_items = datafeed_items[:-1]
+        else:
+            datafeed_items = self.datafeed.get(size=self.p.period)
+
+        # INFO: Convert NaN with zero
+        for i in range(len(datafeed_items)):
+            if math.isnan(datafeed_items[-i]):
+                datafeed_items[-i] = 0
+
+        self.line[0] = math.fsum(datafeed_items) / self.p.period
+        pass
 
     def once(self, start, end):
         src = self.datafeed.array

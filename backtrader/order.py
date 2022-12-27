@@ -286,21 +286,21 @@ class OrderBase(with_metaclass(MetaParams, object)):
     V_None = range(1)
 
     Execution_Types = \
-        ['Market', 'Close', 'Limit', 'StopMarket', 'StopLimit', 'StopTrail', 'StopTrailLimit', 'Historical']
-    (Market, Close, Limit, StopMarket, StopLimit, StopTrail, StopTrailLimit, Historical) = range(len(Execution_Types))
+        ('Market', 'Close', 'Limit', 'StopMarket', 'StopLimit', 'StopTrail', 'StopTrailLimit', 'Historical', )
+    Market, Close, Limit, StopMarket, StopLimit, StopTrail, StopTrailLimit, Historical, = range(len(Execution_Types))
 
-    Order_Types = ['Buy', 'Sell']
-    Buy, Sell = range(len(Order_Types))
+    Order_Types = ('Buy', 'Sell', )
+    Buy, Sell, = range(len(Order_Types))
 
-    Ordering_Types = ["Active", "Conditional"]
+    Ordering_Types = ("Active", "Conditional", )
     ACTIVE_ORDERING_TYPE, CONDITIONAL_ORDERING_TYPE, = range(len(Ordering_Types))
 
-    Order_Intents = ['Entry', 'Exit']
-    Entry_Order, Exit_Order = range(len(Order_Intents))
+    Order_Intents = ('Entry', 'Exit', )
+    Entry_Order, Exit_Order, = range(len(Order_Intents))
 
     Status = \
-        ['Created', 'Submitted', 'Accepted', 'Partial', 'Completed', 'Canceled', 'Expired', 'Margin', 'Rejected']
-    Created, Submitted, Accepted, Partial, Completed, Canceled, Expired, Margin, Rejected = range(len(Status))
+        ('Created', 'Submitted', 'Accepted', 'Partial', 'Completed', 'Canceled', 'Expired', 'Margin', 'Rejected', )
+    Created, Submitted, Accepted, Partial, Completed, Canceled, Expired, Margin, Rejected, = range(len(Status))
 
     Cancelled = Canceled  # alias
 
@@ -323,6 +323,9 @@ class OrderBase(with_metaclass(MetaParams, object)):
             setattr(self.params, name, value)
         else:
             super(Order, self).__set_attribute__(name, value)
+
+    def __repr__(self):
+        return str(self)
 
     def __str__(self):
         tojoin = list()

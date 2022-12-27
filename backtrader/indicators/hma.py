@@ -48,6 +48,9 @@ class HullMovingAverage(MovingAverageBase):
 
         In the default case of ``30`` the final minimum period before the
         moving average produces a non-NAN value is ``34``
+
+        The formula to obtain the final minimum period is:
+        ``period + int(pow(period, 0.5)) - 2``
     '''
     alias = ('HMA', 'HullMA',)
     lines = ('hma',)

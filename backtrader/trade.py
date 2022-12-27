@@ -146,8 +146,8 @@ class Trade(object):
     '''
     refbasis = itertools.count(1)
 
-    status_names = ['Created', 'Open', 'Closed']
-    Created, Open, Closed = range(len(status_names))
+    status_names = ('Created', 'Open', 'Closed', )
+    Created, Open, Closed, = range(len(status_names))
 
     def __str__(self):
         toprint = (

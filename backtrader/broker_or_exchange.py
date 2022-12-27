@@ -65,8 +65,8 @@ class Broker_or_Exchange_Base(with_metaclass(MetaBroker, object)):
         ('commission', CommInfoBase(percent_abs=True)),
     )
 
-    Exchange_Net_Types = ["Mainnet", "Testnet"]
-    MAINNET, TESTNET = range(len(Exchange_Net_Types))
+    Exchange_Net_Types = ("Mainnet", "Testnet", )
+    MAINNET, TESTNET, = range(len(Exchange_Net_Types))
 
     def __init__(self):
         self.commission_info = dict()
