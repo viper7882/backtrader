@@ -39,9 +39,9 @@ class PivotPoint(Indicator):
 
     In the ``__init__`` method of the strategy:
 
-      pivotindicator = btind.PivotPoiont(self.datafeed1)  # the resampled data
+      pivotindicator = btind.PivotPoint(self.datafeed1)  # the resampled data
 
-    The indicator will try to automatically plo to the non-resampled data. To
+    The indicator will try to automatically plot to the non-resampled data. To
     disable this behavior use the following during construction:
 
       - _autoplot=False
@@ -96,7 +96,7 @@ class PivotPoint(Indicator):
         self.lines.s2 = p - (h - l)
         self.lines.r2 = p + (h - l)
 
-        super(PivotPoint, self).__init__()  # enable coopertive inheritance
+        super(PivotPoint, self).__init__()  # enable cooperative inheritance
 
         if self.p._autoplot:
             self.plotinfo.plot = False  # disable own plotting

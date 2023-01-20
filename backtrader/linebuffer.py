@@ -759,14 +759,66 @@ class LinesOperation(LineActions):
 
     def next(self):
         if self.bline:
-            self[0] = self.operation(self.a[0], self.b[0])
+            try:
+                self[0] = self.operation(self.a[0], self.b[0])
+            except Exception as err:
+                frameinfo=inspect.getframeinfo(inspect.currentframe())
+                msg = "{}: {} Line: {}: ".format(
+                    type(self).__name__, frameinfo.function, frameinfo.lineno,
+                )
+                sub_msg = "{}: {}".format(
+                    err.__class__.__name__, err,
+                )
+                sub_msg += ", a[0]: {}, b[0]: {}".format(
+                    self.a[0], self.b[0],
+                )
+                print(msg + sub_msg)
         elif not self.r:
             if not self.btime:
-                self[0] = self.operation(self.a[0], self.b)
+                try:
+                    self[0] = self.operation(self.a[0], self.b)
+                except Exception as err:
+                    frameinfo=inspect.getframeinfo(inspect.currentframe())
+                    msg = "{}: {} Line: {}: ".format(
+                        type(self).__name__, frameinfo.function, frameinfo.lineno,
+                    )
+                    sub_msg = "{}: {}".format(
+                        err.__class__.__name__, err,
+                    )
+                    sub_msg += ", a[0]: {}, b: {}".format(
+                        self.a[0], self.b,
+                    )
+                    print(msg + sub_msg)
             else:
-                self[0] = self.operation(self.a.time(), self.b)
+                try:
+                    self[0] = self.operation(self.a.time(), self.b)
+                except Exception as err:
+                    frameinfo=inspect.getframeinfo(inspect.currentframe())
+                    msg = "{}: {} Line: {}: ".format(
+                        type(self).__name__, frameinfo.function, frameinfo.lineno,
+                    )
+                    sub_msg = "{}: {}".format(
+                        err.__class__.__name__, err,
+                    )
+                    sub_msg += ", a.time(): {}, b: {}".format(
+                        self.a.time(), self.b,
+                    )
+                    print(msg + sub_msg)
         else:
-            self[0] = self.operation(self.a, self.b[0])
+            try:
+                self[0] = self.operation(self.a, self.b[0])
+            except Exception as err:
+                frameinfo = inspect.getframeinfo(inspect.currentframe())
+                msg = "{}: {} Line: {}: ".format(
+                    type(self).__name__, frameinfo.function, frameinfo.lineno,
+                )
+                sub_msg = "{}: {}".format(
+                    err.__class__.__name__, err,
+                )
+                sub_msg += ", a: {}, b[0]: {}".format(
+                    self.a, self.b[0],
+                )
+                print(msg + sub_msg)
 
     def once(self, start, end):
         if self.bline:

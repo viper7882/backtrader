@@ -21,6 +21,8 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import datetime
+
 from copy import copy
 
 class Position(object):
@@ -54,20 +56,26 @@ class Position(object):
         items.append('--- Position End')
         return '\n'.join(items)
 
-    def __init__(self, size=0, price=0.0):
+    def __init__(self, size=0, price=0.0, datetime=None):
         self.size = size
         if size:
             self.price = self.price_orig = price
+            if datetime is None:
+                self.datetime = datetime.datetime.utcnow()
+            else:
+                self.datetime = datetime
         else:
             self.price = 0.0
+            if datetime is None:
+                self.datetime = None
+            else:
+                self.datetime = datetime
 
         self.adjbase = None
 
         self.upopened = size
         self.upclosed = 0
         self.set(size, price)
-
-        self.updt = None
 
     def fix(self, size, price):
         oldsize = self.size
@@ -106,8 +114,10 @@ class Position(object):
         self.price_orig = self.price
         if size:
             self.price = price
+            self.datetime = datetime.datetime.utcnow()
         else:
             self.price = 0.0
+            self.datetime = None
 
         return self.size, self.price, self.upopened, self.upclosed
 
