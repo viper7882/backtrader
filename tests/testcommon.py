@@ -57,7 +57,7 @@ def getdata(index, fromdate=FROMDATE, todate=TODATE):
     return data
 
 
-def runtest(datas,
+def runtest(datafeeds,
             strategy,
             runonce=None,
             preload=None,
@@ -86,10 +86,10 @@ def runtest(datas,
                     print('prload {} / ronce {} exbar {}'.format(
                         prload, ronce, exbar))
 
-                if isinstance(datas, bt.LineSeries):
-                    datas = [datas]
+                if isinstance(datafeeds, bt.LineSeries):
+                    datafeeds = [datafeeds]
                 for datafeed in datafeeds:
-                    cerebro.add_datafeed(data)
+                    cerebro.add_datafeed(datafeed)
 
                 if not optimize:
                     cerebro.add_strategy(strategy, **kwargs)
@@ -136,10 +136,10 @@ class TestStrategy(bt.Strategy):
         if len(self.p.inddata):
             self.ind = chkind[0](*self.p.inddata, **self.p.chkargs)
         else:
-            self.ind = chkind[0](self.data, **self.p.chkargs)
+            self.ind = chkind[0](self.datafeed, **self.p.chkargs)
 
         for ind in chkind[1:]:
-            ind(self.data)
+            ind(self.datafeed)
 
         for data in self.datafeeds[1:]:
             chkind[0](data, **self.p.chkargs)
@@ -158,11 +158,11 @@ class TestStrategy(bt.Strategy):
         self.nextcalls += 1
 
         if self.p.main:
-            dtstr = self.data.datetime.date(0).strftime('%Y-%m-%d')
+            dtstr = self.datafeed.datetime.date(0).strftime('%Y-%m-%d')
             print('%s - %d - %f' % (dtstr, len(self), self.ind[0]))
             pstr = ', '.join(str(x) for x in
-                             [self.data.open[0], self.data.high[0],
-                              self.data.low[0], self.data.close[0]])
+                             [self.datafeed.open[0], self.datafeed.high[0],
+                              self.datafeed.low[0], self.datafeed.close[0]])
             print('%s - %d, %s' % (dtstr, len(self), pstr))
 
     def start(self):
@@ -182,7 +182,7 @@ class TestStrategy(bt.Strategy):
 
             print('chkpts are', chkpts)
             for chkpt in chkpts:
-                dtstr = self.data.datetime.date(chkpt).strftime('%Y-%m-%d')
+                dtstr = self.datafeed.datetime.date(chkpt).strftime('%Y-%m-%d')
                 print('chkpt %d -> %s' % (chkpt, dtstr))
 
             for lidx in range(self.ind.size()):

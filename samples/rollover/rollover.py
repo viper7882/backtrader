@@ -95,7 +95,7 @@ def runstrat(args=None):
     cerebro = bt.Cerebro()
 
     fcodes = ['199FESXM4', '199FESXU4', '199FESXZ4', '199FESXH5', '199FESXM5']
-    store = bt.stores.VChartFile()
+    store = bt.accounts_or_stores.VChartFile()
     ffeeds = [store.getdata(dataname=x) for x in fcodes]
 
     rollkwargs = dict()

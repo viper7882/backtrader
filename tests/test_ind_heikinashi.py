@@ -34,7 +34,7 @@ chkvals = [
 ]
 
 chkmin = 2
-chkind = bt.ind.HeikinAshi
+chkind = bt.indicators.HeikinAshi
 
 
 def test_run(main=False):

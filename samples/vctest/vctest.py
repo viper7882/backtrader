@@ -161,7 +161,7 @@ def runstrategy():
     storekwargs = dict()
 
     if not args.nostore:
-        vcstore = bt.stores.VCStore(**storekwargs)
+        vcstore = bt.accounts_or_stores.VCStore(**storekwargs)
 
     if args.broker:
         brokerargs = dict(account=args.account, **storekwargs)

@@ -30,9 +30,9 @@ repos:
     -   id: unittest
         name: unittest
         entry: python -m unittest discover
-        language: python
+        language: system
         'types': [python]
-        args: [--start-directory=./venv/Scripts, --pattern=test_*.py]
+        args: [--start-directory=./tests, --pattern=test_*.py]
         additional_dependencies: []
         pass_filenames: false
         verbose: true

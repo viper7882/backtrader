@@ -31,7 +31,7 @@ chkvals = [
 ]
 
 chkmin = 34
-chkind = bt.ind.AO
+chkind = bt.indicators.AO
 
 
 def test_run(main=False):

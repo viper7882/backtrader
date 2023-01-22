@@ -83,9 +83,9 @@ compression = 5
 
 def run(args=None):
     cerebro = bt.Cerebro(stdstats=False)
-    store = bt.stores.IBStore(port=7497,
-                              # _debug=True
-                              )
+    store = bt.accounts_or_stores.IBStore(port=7497,
+                                          # _debug=True
+                                          )
 
     data0 = store.getdata(dataname=ib_symbol,
                           timeframe=bt.TimeFrame.Ticks,

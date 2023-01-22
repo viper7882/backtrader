@@ -222,7 +222,7 @@ def runstrategy():
     )
 
     if args.usestore:
-        ibstore = bt.stores.IBStore(**storekwargs)
+        ibstore = bt.accounts_or_stores.IBStore(**storekwargs)
 
     if args.broker:
         if args.usestore:

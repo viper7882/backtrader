@@ -28,7 +28,7 @@ import datetime
 import backtrader as bt
 from backtrader.utils import flushfile  # win32 quick stdout flushing
 
-StoreCls = bt.stores.OandaStore
+StoreCls = bt.accounts_or_stores.OandaStore
 Datafeed_Cls = bt.feeds.OandaData
 # Broker_or_Exchange_Cls = bt.brokers.OandaBroker
 

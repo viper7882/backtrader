@@ -31,7 +31,7 @@ chkvals = [
 ]
 
 chkmin = 25
-chkind = bt.ind.RMI
+chkind = bt.indicators.RMI
 
 
 def test_run(main=False):

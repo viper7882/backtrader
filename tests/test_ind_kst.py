@@ -33,7 +33,7 @@ chkvals = [
 ]
 
 chkmin = 48
-chkind = bt.ind.KST
+chkind = bt.indicators.KST
 
 
 def test_run(main=False):

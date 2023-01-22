@@ -32,7 +32,7 @@ chkvals = [
 ]
 
 chkmin = 38
-chkind = bt.ind.TSI
+chkind = bt.indicators.TSI
 
 
 def test_run(main=False):

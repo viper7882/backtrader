@@ -36,7 +36,7 @@ chkvals = [
 ]
 
 chkmin = 78
-chkind = bt.ind.Ichimoku
+chkind = bt.indicators.Ichimoku
 
 
 def test_run(main=False):

@@ -31,7 +31,7 @@ chkvals = [
 ]
 
 chkmin = 38
-chkind = bt.ind.AccelerationDecelerationOscillator
+chkind = bt.indicators.AccelerationDecelerationOscillator
 
 
 def test_run(main=False):

@@ -46,8 +46,8 @@ class SlipTestStrategy(bt.SignalStrategy):
             print("---------- %s" % (txt))
 
     def __init__(self):
-        self.ma = bt.ind.EMA(period=10)
-        self.cross = bt.ind.CrossOver(self.datafeeds[0].close, self.ma)
+        self.ma = bt.indicators.EMA(period=10)
+        self.cross = bt.indicators.CrossOver(self.datafeeds[0].close, self.ma)
         # Single logic
         self.lg = bt.Log(self.datafeeds[0].close)
         self.cl = bt.Ceiling(self.datafeeds[0].close)
