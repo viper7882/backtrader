@@ -62,6 +62,7 @@
 
 from ..utils.py3 import zip
 
+
 class Widget(object):
     """
     Abstract base class for GUI neutral widgets
@@ -121,6 +122,7 @@ class MultiCursor(Widget):
         show()
 
     """
+
     def __init__(self, canvas, axes, useblit=True,
                  horizOn=False, vertOn=True,
                  horizMulti=False, vertMulti=True,
@@ -237,6 +239,7 @@ class MultiCursor(Widget):
         else:
             self.canvas.draw_idle()
 
+
 class MultiCursor2(Widget):
     """
     Provide a vertical (default) and/or horizontal line cursor shared between
@@ -258,6 +261,7 @@ class MultiCursor2(Widget):
                             horizOn=False, vertOn=True)
         show()
     """
+
     def __init__(self, canvas, axes, useblit=True, horizOn=False, vertOn=True,
                  **lineprops):
 

@@ -91,7 +91,8 @@ class SlipTestStrategy(bt.SignalStrategy):
 
         # Test values
         # max
-        assert self.mx[0] == max(self.datafeeds[0].close[0], self.datafeeds[0].open[0])
+        assert self.mx[0] == max(
+            self.datafeeds[0].close[0], self.datafeeds[0].open[0])
         # Log
         assert self.lg[0] == math.log10(self.datafeeds[0].close[0])
         # ceiling

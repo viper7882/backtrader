@@ -57,6 +57,7 @@ class OperationN(PeriodN):
     Formula:
       - line = func(data, period)
     '''
+
     def next(self):
         self.line[0] = self.func(self.datafeed.get(size=self.p.period))
 
@@ -410,7 +411,8 @@ class ExponentialSmoothing(Average):
         super(ExponentialSmoothing, self).next()
 
     def next(self):
-        self.line[0] = self.line[-1] * self.alpha1 + self.datafeed[0] * self.alpha
+        self.line[0] = self.line[-1] * self.alpha1 + \
+            self.datafeed[0] * self.alpha
 
     def oncestart(self, start, end):
         # Fetch the seed value from the base class calculation

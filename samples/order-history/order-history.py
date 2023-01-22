@@ -134,7 +134,8 @@ def runstrat(args=None):
         cerebro.add_strategy(St, **eval('dict(' + args.strat + ')'))
         cerebro.add_order_history(ORDER_HISTORY, notify=True)
 
-    cerebro.add_analyzer(bt.analyzers.TimeReturn, timeframe=bt.TimeFrame.Months)
+    cerebro.add_analyzer(bt.analyzers.TimeReturn,
+                         timeframe=bt.TimeFrame.Months)
     cerebro.add_analyzer(bt.analyzers.TimeReturn, timeframe=bt.TimeFrame.Years)
     cerebro.add_analyzer(bt.analyzers.TradeAnalyzer)
 

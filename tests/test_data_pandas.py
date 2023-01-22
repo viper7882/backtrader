@@ -79,6 +79,7 @@ def getdata(index, noheaders=True):
         data = btfeeds.PandasData(dataname=dataframe, nocase=True)
     return data
 
+
 def test_run(main=False):
     # Create list with bool possibilitys for:
     # PandasData and PandasOptix,

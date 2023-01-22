@@ -111,9 +111,9 @@ class OandaBroker(with_metaclass(MetaOandaBroker, Broker_or_Exchange_Base)):
 
         if pos.size < 0:
             order = Sell_Order(datafeed=datafeed,
-                              size=pos.size, price=pos.price,
-                              execution_type=Order.Market,
-                              simulated=True)
+                               size=pos.size, price=pos.price,
+                               execution_type=Order.Market,
+                               simulated=True)
 
             order.add_commission_info(self.get_commission_info(datafeed))
             order.execute(0, pos.size, pos.price,
@@ -127,9 +127,9 @@ class OandaBroker(with_metaclass(MetaOandaBroker, Broker_or_Exchange_Base)):
 
         elif pos.size > 0:
             order = Buy_Order(datafeed=datafeed,
-                             size=pos.size, price=pos.price,
-                             execution_type=Order.Market,
-                             simulated=True)
+                              size=pos.size, price=pos.price,
+                              execution_type=Order.Market,
+                              simulated=True)
 
             order.add_commission_info(self.get_commission_info(datafeed))
             order.execute(0, pos.size, pos.price,
@@ -255,7 +255,8 @@ class OandaBroker(with_metaclass(MetaOandaBroker, Broker_or_Exchange_Base)):
 
         datafeed = order.datafeed
         pos = self.get_position(datafeed, clone=False)
-        position_size, position_average_price, opened, closed = pos.update(size, price)
+        position_size, position_average_price, opened, closed = pos.update(
+            size, price)
 
         commission_info = self.get_commission_info(datafeed)
 
@@ -310,10 +311,10 @@ class OandaBroker(with_metaclass(MetaOandaBroker, Broker_or_Exchange_Base)):
             **kwargs):
 
         order = Buy_Order(owner=owner, datafeed=datafeed,
-                         size=size, price=price, pricelimit=price_limit,
-                         execution_type=execution_type, valid=valid, tradeid=tradeid,
-                         trailing_amount=trailing_amount, trailing_percent=trailing_percent,
-                         parent=parent, transmit=transmit)
+                          size=size, price=price, pricelimit=price_limit,
+                          execution_type=execution_type, valid=valid, tradeid=tradeid,
+                          trailing_amount=trailing_amount, trailing_percent=trailing_percent,
+                          parent=parent, transmit=transmit)
 
         order.add_info(**kwargs)
         order.add_commission_info(self.get_commission_info(datafeed))
@@ -327,10 +328,10 @@ class OandaBroker(with_metaclass(MetaOandaBroker, Broker_or_Exchange_Base)):
              **kwargs):
 
         order = Sell_Order(owner=owner, datafeed=datafeed,
-                          size=size, price=price, pricelimit=price_limit,
-                          execution_type=execution_type, valid=valid, tradeid=tradeid,
-                          trailing_amount=trailing_amount, trailing_percent=trailing_percent,
-                          parent=parent, transmit=transmit)
+                           size=size, price=price, pricelimit=price_limit,
+                           execution_type=execution_type, valid=valid, tradeid=tradeid,
+                           trailing_amount=trailing_amount, trailing_percent=trailing_percent,
+                           parent=parent, transmit=transmit)
 
         order.add_info(**kwargs)
         order.add_commission_info(self.get_commission_info(datafeed))

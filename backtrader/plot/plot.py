@@ -198,7 +198,8 @@ class Plot_OldSync(with_metaclass(MetaParams, object)):
                     continue
 
                 self.pinf.xdata = self.pinf.x
-                xd = datafeed.datetime.plotrange(self.pinf.xstart, self.pinf.xend)
+                xd = datafeed.datetime.plotrange(
+                    self.pinf.xstart, self.pinf.xend)
                 if len(xd) < self.pinf.xlen:
                     self.pinf.xdata = xdata = []
                     xreal = self.pinf.xreal
@@ -693,7 +694,8 @@ class Plot_OldSync(with_metaclass(MetaParams, object)):
 
         if hasattr(datafeed, '_compression') and \
            hasattr(datafeed, '_timeframe'):
-            tfname = TimeFrame.getname(datafeed._timeframe, datafeed._compression)
+            tfname = TimeFrame.getname(
+                datafeed._timeframe, datafeed._compression)
             datalabel += ' (%d %s)' % (datafeed._compression, tfname)
 
         plinevalues = getattr(datafeed.plotinfo, 'plotlinevalues', True)
@@ -760,7 +762,8 @@ class Plot_OldSync(with_metaclass(MetaParams, object)):
                     ax.set_ylim(axbot, axtop)
 
         for ind in indicators:
-            self.plotind(datafeed, ind, subinds=self.dplotsover[ind], masterax=ax)
+            self.plotind(
+                datafeed, ind, subinds=self.dplotsover[ind], masterax=ax)
 
         handles, labels = ax.get_legend_handles_labels()
         a = axdatamaster or ax

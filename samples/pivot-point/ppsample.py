@@ -57,8 +57,8 @@ def runstrat():
     cerebro.resample_datafeed(data, timeframe=bt.TimeFrame.Months)
 
     cerebro.add_strategy(St,
-                        usepp1=args.usepp1,
-                        plot_on_daily=args.plot_on_daily)
+                         usepp1=args.usepp1,
+                         plot_on_daily=args.plot_on_daily)
     cerebro.run(runonce=False)
     if args.plot:
         cerebro.plot(style='bar')

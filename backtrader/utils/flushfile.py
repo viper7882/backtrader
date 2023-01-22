@@ -36,6 +36,7 @@ class flushfile(object):
     def flush(self):
         self.f.flush()
 
+
 if sys.platform == 'win32':
     sys.stdout = flushfile(sys.stdout)
     sys.stderr = flushfile(sys.stderr)

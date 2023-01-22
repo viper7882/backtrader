@@ -126,9 +126,11 @@ class VWR(TimeFrameAnalyzerBase):
             self._fundmode = self.p.fund
 
         if not self._fundmode:
-            self._pis = [self.strategy.broker_or_exchange.get_value()]  # keep initial value
+            # keep initial value
+            self._pis = [self.strategy.broker_or_exchange.get_value()]
         else:
-            self._pis = [self.strategy.broker_or_exchange.fundvalue]  # keep initial value
+            # keep initial value
+            self._pis = [self.strategy.broker_or_exchange.fundvalue]
 
         self._pns = [None]  # keep final prices (value)
 

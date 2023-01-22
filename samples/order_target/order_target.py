@@ -130,9 +130,9 @@ def runstrat(args=None):
 
     # strategy
     cerebro.add_strategy(TheStrategy,
-                        use_target_size=args.target_size,
-                        use_target_value=args.target_value,
-                        use_target_percent=args.target_percent)
+                         use_target_size=args.target_size,
+                         use_target_value=args.target_value,
+                         use_target_percent=args.target_percent)
 
     cerebro.run()
 

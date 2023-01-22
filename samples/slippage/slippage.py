@@ -81,15 +81,15 @@ def runstrat(args=None):
 
     if args.slip_perc is not None:
         cerebro.broker_or_exchange.set_slippage_perc(args.slip_perc,
-                                         slip_open=args.slip_open,
-                                         slip_match=not args.no_slip_match,
-                                         slip_out=args.slip_out)
+                                                     slip_open=args.slip_open,
+                                                     slip_match=not args.no_slip_match,
+                                                     slip_out=args.slip_out)
 
     elif args.slip_fixed is not None:
         cerebro.broker_or_exchange.set_slippage_fixed(args.slip_fixed,
-                                          slip_open=args.slip_open,
-                                          slip_match=not args.no_slip_match,
-                                          slip_out=args.slip_out)
+                                                      slip_open=args.slip_open,
+                                                      slip_match=not args.no_slip_match,
+                                                      slip_out=args.slip_out)
 
     cerebro.run()
     if args.plot:

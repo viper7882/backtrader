@@ -125,6 +125,7 @@ class SimpleFilterWrapper(object):
     The wrapper takes the return value and executes the bar removal
     if needed be
     '''
+
     def __init__(self, datafeed, ffilter, *args, **kwargs):
         if inspect.isclass(ffilter):
             ffilter = ffilter(datafeed, *args, **kwargs)

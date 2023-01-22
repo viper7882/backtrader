@@ -74,7 +74,8 @@ class SessionFiller(with_metaclass(metabase.MetaParams, object)):
     def __init__(self, datafeed):
         # Calculate and save timedelta for timeframe
         self._tdframe = self._tdeltas[datafeed._timeframe]
-        self._tdunit = self._tdeltas[datafeed._timeframe] * datafeed._compression
+        self._tdunit = self._tdeltas[datafeed._timeframe] * \
+            datafeed._compression
 
         self.seenbar = False  # control if at least one bar has been seen
         self.sessend = self.MAXDATE  # maxdate is the control for session bar
@@ -122,7 +123,8 @@ class SessionFiller(with_metaclass(metabase.MetaParams, object)):
             # No bar seen yet or one went over previous session limit
             ddate = dtime_cur.date()
             sessstart = datetime.combine(ddate, datafeed.p.sessionstart)
-            self.sessend = sessend = datetime.combine(ddate, datafeed.p.session_end)
+            self.sessend = sessend = datetime.combine(
+                ddate, datafeed.p.session_end)
 
             if sessstart <= dtime_cur <= sessend:
                 # 1st bar from session in the session - fill from session start
@@ -199,6 +201,7 @@ class SessionFilterSimple(with_metaclass(metabase.MetaParams, object)):
     Bar Management will be done by the SimpleFilterWrapper class made which is
     added durint the DataBase.addfilter_simple call
     '''
+
     def __init__(self, datafeed):
         pass
 
@@ -225,6 +228,7 @@ class SessionFilter(with_metaclass(metabase.MetaParams, object)):
 
     It needs no "last" method because it has nothing to deliver
     '''
+
     def __init__(self, datafeed):
         pass
 

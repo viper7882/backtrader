@@ -35,6 +35,7 @@ class HeikinAshi(object):
       - http://stockcharts.com/school/doku.php?id=chart_school:chart_analysis:heikin_ashi
 
     '''
+
     def __init__(self, datafeed):
         pass
 
@@ -44,7 +45,8 @@ class HeikinAshi(object):
         datafeed.close[0] = ha_close0 = (o + h + l + c) / 4.0
 
         if len(datafeed) > 1:
-            datafeed.open[0] = ha_open0 = (datafeed.open[-1] + datafeed.close[-1]) / 2.0
+            datafeed.open[0] = ha_open0 = (
+                datafeed.open[-1] + datafeed.close[-1]) / 2.0
             datafeed.high[0] = max(ha_open0, ha_close0, h)
             datafeed.low[0] = min(ha_open0, ha_close0, l)
 

@@ -84,12 +84,12 @@ def runstrategy():
 
     # Add the strategy
     cerebro.add_strategy(PlotStrategy,
-                        smasubplot=args.smasubplot,
-                        nomacdplot=args.nomacdplot,
-                        rsioverstoc=args.rsioverstoc,
-                        rsioversma=args.rsioversma,
-                        stocrsi=args.stocrsi,
-                        stocrsilabels=args.stocrsilabels)
+                         smasubplot=args.smasubplot,
+                         nomacdplot=args.nomacdplot,
+                         rsioverstoc=args.rsioverstoc,
+                         rsioversma=args.rsioversma,
+                         stocrsi=args.stocrsi,
+                         stocrsilabels=args.stocrsilabels)
 
     # And run it
     cerebro.run(stdstats=args.stdstats)

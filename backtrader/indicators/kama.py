@@ -65,7 +65,8 @@ class AdaptiveMovingAverage(MovingAverageBase):
         # Before super to ensure mixins (right-hand side in subclassing)
         # can see the assignment operation and operate on the line
         direction = self.datafeed - self.datafeed(-self.p.period)
-        volatility = SumN(abs(self.datafeed - self.datafeed(-1)), period=self.p.period)
+        volatility = SumN(
+            abs(self.datafeed - self.datafeed(-1)), period=self.p.period)
 
         er = abs(direction / volatility)  # efficiency ratio
 

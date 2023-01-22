@@ -247,16 +247,16 @@ def runstrategy():
 
     # Add the strategy
     cerebro.add_strategy(TestStrategy,
-                        smaperiod=args.smaperiod,
-                        trade=args.trade,
-                        exectype=bt.Order.ExecType(args.exectype),
-                        stake=args.stake,
-                        stopafter=args.stopafter,
-                        valid=valid,
-                        cancel=args.cancel,
-                        donotsell=args.donotsell,
-                        price=args.price,
-                        pstoplimit=args.pstoplimit)
+                         smaperiod=args.smaperiod,
+                         trade=args.trade,
+                         exectype=bt.Order.ExecType(args.exectype),
+                         stake=args.stake,
+                         stopafter=args.stopafter,
+                         valid=valid,
+                         cancel=args.cancel,
+                         donotsell=args.donotsell,
+                         price=args.price,
+                         pstoplimit=args.pstoplimit)
 
     # Live data ... avoid long data accumulation by switching to "exactbars"
     cerebro.run(exactbars=args.exactbars)

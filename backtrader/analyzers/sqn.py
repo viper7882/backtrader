@@ -75,7 +75,8 @@ class SQN(Analyzer):
             pnl_av = average(self.profit_and_loss_amount)
             pnl_stddev = standarddev(self.profit_and_loss_amount)
             try:
-                sqn = math.sqrt(len(self.profit_and_loss_amount)) * pnl_av / pnl_stddev
+                sqn = math.sqrt(len(self.profit_and_loss_amount)
+                                ) * pnl_av / pnl_stddev
             except ZeroDivisionError:
                 sqn = None
         else:

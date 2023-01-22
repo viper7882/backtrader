@@ -51,6 +51,7 @@ class DivByZero(Logic):
       - zero (def: 0.0): value to apply if division by zero would be raised
 
     '''
+
     def __init__(self, a, b, zero=0.0):
         super(DivByZero, self).__init__(a, b)
         self.a = a
@@ -85,6 +86,7 @@ class DivZeroByZero(Logic):
       - single (def: +inf): value to apply if division is x / 0
       - dual (def: 0.0): value to apply if division is 0 / 0
     '''
+
     def __init__(self, a, b, single=float('inf'), dual=0.0):
         super(DivZeroByZero, self).__init__(a, b)
         self.a = a
@@ -203,6 +205,7 @@ class MultiLogic(Logic):
         for i in range(start, end):
             dst[i] = flogic([arr[i] for arr in arrays])
 
+
 class SingleLogic(Logic):
     def next(self):
         self[0] = self.flogic(self.args[0])
@@ -230,8 +233,6 @@ class Reduce(MultiLogicReduce):
     def __init__(self, flogic, *args, **kwargs):
         self.flogic = flogic
         super(Reduce, self).__init__(*args, **kwargs)
-
-
 
 
 # The _xxxlogic functions are defined at module scope to make them

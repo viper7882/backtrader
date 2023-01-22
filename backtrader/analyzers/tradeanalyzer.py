@@ -65,6 +65,7 @@ class TradeAnalyzer(Analyzer):
         - dictname['total']['total'] which will have a value of 0 (the field is
           also reachable with dot notation dictname.total.total
     '''
+
     def create_analysis(self):
         self.rets = AutoOrderedDict()
         self.rets.total.total = 0
@@ -134,7 +135,8 @@ class TradeAnalyzer(Analyzer):
 
                 trls.total += ls  # long.total / short.total
                 trls.profit_and_loss_amount.total += trade.pnlcomm * ls
-                trls.profit_and_loss_amount.average = trls.profit_and_loss_amount.total / (trls.total or 1.0)
+                trls.profit_and_loss_amount.average = trls.profit_and_loss_amount.total / \
+                    (trls.total or 1.0)
 
                 for wlname in ['won', 'lost']:
                     wl = res[wlname]
@@ -144,7 +146,8 @@ class TradeAnalyzer(Analyzer):
 
                     trls.profit_and_loss_amount[wlname].total += pnlcomm
                     trls.profit_and_loss_amount[wlname].average = \
-                        trls.profit_and_loss_amount[wlname].total / (trls[wlname] or 1.0)
+                        trls.profit_and_loss_amount[wlname].total / \
+                        (trls[wlname] or 1.0)
 
                     wm = trls.profit_and_loss_amount[wlname].max or 0.0
                     func = max if wlname == 'won' else min

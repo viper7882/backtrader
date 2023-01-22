@@ -704,7 +704,8 @@ class Cerebro(with_metaclass(MetaParams, object)):
             for notif in store.get_notifications():
                 msg, args, kwargs = notif
 
-                self._notify_account_or_store_with_callback(msg, *args, **kwargs)
+                self._notify_account_or_store_with_callback(
+                    msg, *args, **kwargs)
                 for strat in self.runningstrats:
                     strat.notify_account_or_store(msg, *args, **kwargs)
 
@@ -727,9 +728,11 @@ class Cerebro(with_metaclass(MetaParams, object)):
         for datafeed in self.datafeeds:
             for notif in datafeed.get_notifications():
                 status, args, kwargs = notif
-                self._datafeed_callback_notification(datafeed, status, *args, **kwargs)
+                self._datafeed_callback_notification(
+                    datafeed, status, *args, **kwargs)
                 for strat in self.runningstrats:
-                    strat.datafeed_notification(datafeed, status, *args, **kwargs)
+                    strat.datafeed_notification(
+                        datafeed, status, *args, **kwargs)
 
     def _datafeed_callback_notification(self, datafeed, status, *args, **kwargs):
         for callback in self.datacbs:
@@ -759,7 +762,8 @@ class Cerebro(with_metaclass(MetaParams, object)):
         if name is not None:
             datafeed._name = name
         else:
-            print("WARNING: No name has been assigned for add_datafeed datafeed in cerebro")
+            print(
+                "WARNING: No name has been assigned for add_datafeed datafeed in cerebro")
 
         datafeed._id = next(self._datafeed_id)
         datafeed.setenvironment(self)
@@ -942,7 +946,8 @@ class Cerebro(with_metaclass(MetaParams, object)):
         '''
         return self._broker_or_exchange
 
-    broker_or_exchange = property(get_broker_or_exchange, set_broker_or_exchange)
+    broker_or_exchange = property(
+        get_broker_or_exchange, set_broker_or_exchange)
 
     def plot(self, plotter=None, numfigs=1, iplot=True, start=None, end=None,
              width=16, height=9, dpi=300, tight=True, backend=None, **kwargs):
@@ -1026,7 +1031,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
 
         rv = vars(self).copy()
         if 'runstrats' in rv:
-            del(rv['runstrats'])
+            del (rv['runstrats'])
         return rv
 
     def stop_running(self):
@@ -1074,7 +1079,8 @@ class Cerebro(with_metaclass(MetaParams, object)):
             self._dorunonce = False  # something is saving memory, no runonce
             self._dopreload = self._dopreload and self._exactbars < 1
 
-        self._do_replay = self._do_replay or any(x.replaying for x in self.datafeeds)
+        self._do_replay = self._do_replay or any(
+            x.replaying for x in self.datafeeds)
         if self._do_replay:
             # preloading is not supported with replay. full timeframe bars
             # are constructed in realtime
@@ -1122,11 +1128,11 @@ class Cerebro(with_metaclass(MetaParams, object)):
 
             # Add the signal strategy
             self.add_strategy(signalst,
-                             _accumulate=self._signal_accumulate,
-                             _concurrent=self._signal_concurrent,
-                             signals=self.signals,
-                             *sargs,
-                             **skwargs)
+                              _accumulate=self._signal_accumulate,
+                              _concurrent=self._signal_concurrent,
+                              signals=self.signals,
+                              *sargs,
+                              **skwargs)
 
         if not self.strategies:  # Datas are present, add a strategy
             self.add_strategy(Strategy)
@@ -1256,7 +1262,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
                         strat._add_observer(True, observers.Buy_and_Sell)
                     else:
                         strat._add_observer(True, observers.Buy_and_Sell,
-                                           barplot=True)
+                                            barplot=True)
 
                     if self.p.oldtrades or len(self.datafeeds) == 1:
                         strat._add_observer(False, observers.Trades)
@@ -1341,7 +1347,8 @@ class Cerebro(with_metaclass(MetaParams, object)):
                         if attrname.startswith('datafeed'):
                             setattr(a, attrname, None)
 
-                oreturn = OptReturn(strat.params, analyzers=strat.analyzers, strategycls=type(strat))
+                oreturn = OptReturn(
+                    strat.params, analyzers=strat.analyzers, strategycls=type(strat))
                 results.append(oreturn)
 
             return results
@@ -1407,7 +1414,8 @@ class Cerebro(with_metaclass(MetaParams, object)):
             if d0ret:
                 for datafeed in self.datafeeds[1:]:
                     if not datafeed.next(datamaster=datafeed0):  # no delivery
-                        datafeed._check(forcedata=datafeed0)  # check forcing output
+                        # check forcing output
+                        datafeed._check(forcedata=datafeed0)
                         datafeed.next(datamaster=datafeed0)  # retry
 
             elif d0ret is None:
@@ -1673,7 +1681,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
         # were homed before calling once, Hence no "need" to do it
         # here again, because pointers are at 0
         datafeeds = sorted(self.datafeeds,
-                       key=lambda x: (x._timeframe, x._compression))
+                           key=lambda x: (x._timeframe, x._compression))
 
         while True:
             # Check next incoming date in the datafeeds

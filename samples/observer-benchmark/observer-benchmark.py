@@ -79,7 +79,7 @@ class St(bt.Strategy):
                 self.buy(size=self.p.stake)
                 if self.p.printout:
                     print('BUY   {} @%{}'.format(self.p.stake,
-                                                self.data.close[0]))
+                                                 self.data.close[0]))
 
 
 TIMEFRAMES = {
@@ -111,23 +111,24 @@ def runstrat(args=None):
     cerebro.add_datafeed(data0, name='Data0')
 
     cerebro.add_strategy(St,
-                        period=args.period,
-                        stake=args.stake,
-                        printout=args.printout)
+                         period=args.period,
+                         stake=args.stake,
+                         printout=args.printout)
 
     if args.timereturn:
         cerebro.add_system_wide_observer(bt.observers.TimeReturn,
-                            timeframe=TIMEFRAMES[args.timeframe])
+                                         timeframe=TIMEFRAMES[args.timeframe])
     else:
         benchdata = data0
         if args.benchdata1:
-            data1 = bt.feeds.YahooFinanceCSVData(dataname=args.data1, **dkwargs)
+            data1 = bt.feeds.YahooFinanceCSVData(
+                dataname=args.data1, **dkwargs)
             cerebro.add_datafeed(data1, name='Data1')
             benchdata = data1
 
         cerebro.add_system_wide_observer(bt.observers.Benchmark,
-                            data=benchdata,
-                            timeframe=TIMEFRAMES[args.timeframe])
+                                         data=benchdata,
+                                         timeframe=TIMEFRAMES[args.timeframe])
 
     cerebro.run()
 

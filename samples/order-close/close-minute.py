@@ -37,7 +37,8 @@ class St(bt.Strategy):
     def notify_order(self, order):
         curdtstr = self.data.datetime.datetime().strftime('%a %Y-%m-%d %H:%M:%S')
         if order.status in [order.Completed]:
-            dtstr = bt.num2date(order.executed.dt).strftime('%a %Y-%m-%d %H:%M:%S')
+            dtstr = bt.num2date(order.executed.dt).strftime(
+                '%a %Y-%m-%d %H:%M:%S')
             if order.isbuy():
                 print('%s: BUY  EXECUTED, on:' % curdtstr, dtstr)
                 self.order = None

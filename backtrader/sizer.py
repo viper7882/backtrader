@@ -27,6 +27,7 @@ from .metabase import MetaParams
 
 import inspect
 
+
 class Sizer(with_metaclass(MetaParams, object)):
     '''This is the base class for *Sizers*. Any *sizer* should subclass this
     and override the ``_getsizing`` method
@@ -49,7 +50,8 @@ class Sizer(with_metaclass(MetaParams, object)):
     broker_or_exchange = None
 
     def getsizing(self, datafeeds, is_buy):
-        commission_info = self.broker_or_exchange.get_commission_info(datafeeds)
+        commission_info = self.broker_or_exchange.get_commission_info(
+            datafeeds)
         cash = self.broker_or_exchange.get_cash(force=True)
         return self._getsizing(commission_info, cash, datafeeds, is_buy)
 

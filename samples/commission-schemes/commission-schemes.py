@@ -112,11 +112,11 @@ def runstrategy():
 
     # Add the commission - only stocks like a for each operation
     cerebro.broker_or_exchange.set_commission(commission=args.comm,
-                                 mult=args.mult,
-                                 margin=args.margin,
-                                 percabs=not args.percrel,
-                                 commtype=commtypes[args.commtype],
-                                 stocklike=args.stocklike)
+                                              mult=args.mult,
+                                              margin=args.margin,
+                                              percabs=not args.percrel,
+                                              commtype=commtypes[args.commtype],
+                                              stocklike=args.stocklike)
 
     # And run it
     cerebro.run()

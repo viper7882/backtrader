@@ -510,7 +510,8 @@ class IBData(with_metaclass(MetaIBData, DataBase)):
                         self.reqdata()  # resubscribe
                     continue
 
-                elif msg == -10225:  # Bust event occurred, current subscription is deactivated.
+                # Bust event occurred, current subscription is deactivated.
+                elif msg == -10225:
                     self._subcription_valid = False
                     if not self._statelivereconn:
                         self._statelivereconn = self.p.backfill

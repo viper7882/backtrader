@@ -216,7 +216,8 @@ class _BaseResampler(with_metaclass(metabase.MetaParams, object)):
 
     def _barover_weeks(self, datafeeds):
         if self.datafeeds._calendar is None:
-            year, week, _ = datafeeds.num2date(self.bar.datetime).date().isocalendar()
+            year, week, _ = datafeeds.num2date(
+                self.bar.datetime).date().isocalendar()
             yearweek = year * 100 + week
 
             baryear, barweek, _ = datafeeds.datetime.date().isocalendar()
@@ -317,11 +318,14 @@ class _BaseResampler(with_metaclass(metabase.MetaParams, object)):
             tframe = self.p.timeframe
             ret = False
             if tframe == TimeFrame.Weeks:  # Ticks is already the lowest
-                ret = datafeeds._calendar.last_weekday(datafeeds.datetime.date())
+                ret = datafeeds._calendar.last_weekday(
+                    datafeeds.datetime.date())
             elif tframe == TimeFrame.Months:
-                ret = datafeeds._calendar.last_monthday(datafeeds.datetime.date())
+                ret = datafeeds._calendar.last_monthday(
+                    datafeeds.datetime.date())
             elif tframe == TimeFrame.Years:
-                ret = datafeeds._calendar.last_yearday(datafeeds.datetime.date())
+                ret = datafeeds._calendar.last_yearday(
+                    datafeeds.datetime.date())
 
             if ret:
                 # Data must be consumed but compression may not be met yet
@@ -520,7 +524,8 @@ class Resampler(_BaseResampler):
                 consumed = True
 
             else:
-                onedge, docheckover = self._dataonedge(datafeeds)  # for subdays
+                onedge, docheckover = self._dataonedge(
+                    datafeeds)  # for subdays
                 consumed = onedge
 
         if consumed:
@@ -636,7 +641,8 @@ class Replayer(_BaseResampler):
                 consumed = True
 
             else:
-                onedge, docheckover = self._dataonedge(datafeeds)  # for subdays
+                onedge, docheckover = self._dataonedge(
+                    datafeeds)  # for subdays
                 consumed = onedge
 
             datafeeds._tick_fill(force=True)  # update
@@ -657,7 +663,8 @@ class Replayer(_BaseResampler):
                 if adjusted:
                     ago = 0 if (consumed or fromcheck) else -1
                     # Update to the point right before the new data
-                    datafeeds._updatebar(self.bar.lvalues(), forward=False, ago=ago)
+                    datafeeds._updatebar(
+                        self.bar.lvalues(), forward=False, ago=ago)
 
                 if not fromcheck:
                     if not consumed:
@@ -687,7 +694,8 @@ class Replayer(_BaseResampler):
                     # from stream, update existing data, reopen bar
                     if not self._firstbar:  # only discard data if not firstbar
                         datafeeds.backwards(force=True)
-                    datafeeds._updatebar(self.bar.lvalues(), forward=False, ago=0)
+                    datafeeds._updatebar(
+                        self.bar.lvalues(), forward=False, ago=0)
                     self.bar.bstart(maxdate=True)
                     self._firstbar = True  # make sure next tick moves forward
 

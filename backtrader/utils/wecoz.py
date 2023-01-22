@@ -5,11 +5,14 @@ from time import time as timer
 # Refer to https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes
 DEFAULT_DATE_FORMAT = "%Y-%m-%d"
 TIME_FORMAT_WITH_MS_PRECISION = "%H:%M:%S.%f"
-DATE_TIME_FORMAT_WITH_MS_PRECISION = DEFAULT_DATE_FORMAT + " " + TIME_FORMAT_WITH_MS_PRECISION
+DATE_TIME_FORMAT_WITH_MS_PRECISION = DEFAULT_DATE_FORMAT + \
+    " " + TIME_FORMAT_WITH_MS_PRECISION
+
 
 def print_timestamp_checkpoint(function, lineno, comment="Checkpoint timestamp", start=None):
     # Convert datetime to string
-    timestamp_str = get_strftime(datetime.datetime.now(), DATE_TIME_FORMAT_WITH_MS_PRECISION)
+    timestamp_str = get_strftime(
+        datetime.datetime.now(), DATE_TIME_FORMAT_WITH_MS_PRECISION)
     if start:
         minutes, seconds, milliseconds = get_ms_time_diff(start)
         print("{} Line: {}: {}: {}, Delta: {}m:{}s.{}ms".format(

@@ -70,7 +70,8 @@ class OLS_TransformationN(PeriodN):
     def __init__(self):
         slint = OLS_Slope_InterceptN(*self.datafeeds)
 
-        spread = self.datafeed0 - (slint.slope * self.datafeed1 + slint.intercept)
+        spread = self.datafeed0 - \
+            (slint.slope * self.datafeed1 + slint.intercept)
         self.l.spread = spread
 
         self.l.spread_mean = bt.indicators.SMA(spread, period=self.p.period)
@@ -96,10 +97,11 @@ class OLS_BetaN(PeriodN):
 
     def next(self):
         y, x = (pd.Series(d.get(size=self.p.period)) for d in self.datafeeds)
-        x = smapi.add_constant(x, prepend = True)
-        x.columns=('const', 'x')
-        r_beta = smapi.OLS(y,x).fit()
+        x = smapi.add_constant(x, prepend=True)
+        x.columns = ('const', 'x')
+        r_beta = smapi.OLS(y, x).fit()
         self.lines.beta[0] = r_beta.params['x']
+
 
 class CointN(PeriodN):
     '''

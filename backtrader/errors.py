@@ -39,6 +39,7 @@ class StrategySkipError(BacktraderError):
 class ModuleImportError(BacktraderError):
     '''Raised if a class requests a module to be present to work and it cannot
     be imported'''
+
     def __init__(self, message, *args):
         super(ModuleImportError, self).__init__(message)
         self.args = args
@@ -47,5 +48,6 @@ class ModuleImportError(BacktraderError):
 class FromModuleImportError(ModuleImportError):
     '''Raised if a class requests a module to be present to work and it cannot
     be imported'''
+
     def __init__(self, message, *args):
         super(FromModuleImportError, self).__init__(message, *args)

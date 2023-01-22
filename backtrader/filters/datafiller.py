@@ -56,7 +56,7 @@ class DataFiller(AbstractDataBase):
         ('fill_price', None),
         ('fill_vol', float('NaN')),
         ('fill_oi', float('NaN')),
-        )
+    )
 
     def start(self):
         super(DataFiller, self).start()

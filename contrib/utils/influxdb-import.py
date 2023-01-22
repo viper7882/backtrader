@@ -11,7 +11,6 @@ from influxdb import DataFrameClient as dfclient
 from influxdb.exceptions import InfluxDBClientError
 
 
-
 class InfluxDBTool(object):
     def __init__(self):
         self._host = args.host if args.host else 'localhost'

@@ -115,12 +115,14 @@ class TimeReturn(TimeFrameAnalyzerBase):
             if self.p.datafeed is None:
                 self._value = value  # the portofolio value if tracking no data
             else:
-                self._value = self.p.datafeed[0]  # the data value if tracking data
+                # the data value if tracking data
+                self._value = self.p.datafeed[0]
         else:
             if self.p.datafeed is None:
                 self._value = fundvalue  # the fund value if tracking no data
             else:
-                self._value = self.p.datafeed[0]  # the data value if tracking data
+                # the data value if tracking data
+                self._value = self.p.datafeed[0]
 
     def on_dt_over(self):
         # next is called in a new timeframe period

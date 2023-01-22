@@ -71,7 +71,7 @@ class St(bt.Strategy):
             print(','.join(
                 map(str, [self.datetime.date(), self.data.close[0],
                           self.order.created.price, tcheck])
-                )
+            )
             )
             print('-' * 10)
         else:
@@ -82,7 +82,7 @@ class St(bt.Strategy):
             print(','.join(
                 map(str, [self.datetime.date(), self.data.close[0],
                           self.order.created.price, tcheck])
-                )
+            )
             )
 
 

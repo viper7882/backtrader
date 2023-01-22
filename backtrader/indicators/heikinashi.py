@@ -71,4 +71,5 @@ class HeikinAshi(bt.Indicator):
 
     def prenext(self):
         # seed recursive value
-        self.lines.ha_open[0] = (self.datafeed.open[0] + self.datafeed.close[0]) / 2.0
+        self.lines.ha_open[0] = (
+            self.datafeed.open[0] + self.datafeed.close[0]) / 2.0

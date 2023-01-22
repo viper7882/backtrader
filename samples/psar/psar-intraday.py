@@ -77,7 +77,8 @@ def runstrat(args=None):
     data0 = bt.feeds.BacktraderCSVData(dataname=args.data0, **kwargs)
     cerebro.add_datafeed(data0)
 
-    cerebro.resample_datafeed(data0, timeframe=bt.TimeFrame.Minutes, compression=15)
+    cerebro.resample_datafeed(
+        data0, timeframe=bt.TimeFrame.Minutes, compression=15)
 
     # Broker
     cerebro.broker = bt.brokers.BackBroker(**eval('dict(' + args.broker + ')'))

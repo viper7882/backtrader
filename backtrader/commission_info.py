@@ -185,7 +185,6 @@ class CommInfoBase(with_metaclass(MetaParams)):
         return price * self.p.automargin  # int/float expected
 
     def get_leverage(self):
-
         '''Returns the level of leverage allowed for this comission scheme'''
         return self.p.leverage
 

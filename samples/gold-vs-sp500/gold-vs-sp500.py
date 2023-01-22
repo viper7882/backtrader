@@ -102,8 +102,8 @@ def runstrat(args=None):
         cerebro.add_strategy(MACrossOver, **kwargs)
 
     cerebro.add_system_wide_observer(bt.observers.LogReturns2,
-                        timeframe=bt.TimeFrame.Weeks,
-                        compression=20)
+                                     timeframe=bt.TimeFrame.Weeks,
+                                     compression=20)
 
     # Execute
     cerebro.run(**(eval('dict(' + args.cerebro + ')')))

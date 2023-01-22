@@ -142,7 +142,8 @@ class Returns(TimeFrameAnalyzerBase):
         # Annualized normalized return
         tann = self.p.tann or self._TANN.get(self.timeframe, None)
         if tann is None:
-            tann = self._TANN.get(self.datafeed._timeframe, 1.0)  # assign default
+            tann = self._TANN.get(
+                self.datafeed._timeframe, 1.0)  # assign default
 
         if ravg > float('-inf'):
             self.rets['rnorm'] = rnorm = math.expm1(ravg * tann)

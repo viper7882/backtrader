@@ -74,8 +74,10 @@ def runstrat(args=None):
 
     cerebro.add_strategy(St)  # sample strategy
 
-    cerebro.add_system_wide_observer(bt.obs.Broker)  # removed below with stdstats=False
-    cerebro.add_system_wide_observer(bt.obs.Trades)  # removed below with stdstats=False
+    # removed below with stdstats=False
+    cerebro.add_system_wide_observer(bt.obs.Broker)
+    # removed below with stdstats=False
+    cerebro.add_system_wide_observer(bt.obs.Trades)
 
     cerebro.broker_or_exchange.set_coc(True)
     cerebro.run(stdstats=False)  # execute

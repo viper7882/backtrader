@@ -138,18 +138,18 @@ def runstrategy():
 
     # Add the strategy
     cerebro.add_strategy(LongShortStrategy,
-                        period=args.period,
-                        onlylong=args.onlylong,
-                        csvcross=args.csvcross,
-                        stake=args.stake)
+                         period=args.period,
+                         onlylong=args.onlylong,
+                         csvcross=args.csvcross,
+                         stake=args.stake)
 
     # Add the commission - only stocks like a for each operation
     cerebro.broker_or_exchange.setcash(args.cash)
 
     # Add the commission - only stocks like a for each operation
     cerebro.broker_or_exchange.set_commission(commission=args.comm,
-                                 mult=args.mult,
-                                 margin=args.margin)
+                                              mult=args.mult,
+                                              margin=args.margin)
 
     tframes = dict(
         days=bt.TimeFrame.Days,

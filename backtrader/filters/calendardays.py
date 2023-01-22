@@ -99,7 +99,8 @@ class CalendarDays(with_metaclass(metabase.MetaParams, object)):
             # Prepare an array of the needed size
             bar = [float('Nan')] * datafeed.size()
             # Fill the datetime
-            bar[datafeed.DateTime] = datafeed.date2num(datetime.combine(lastdt, tm))
+            bar[datafeed.DateTime] = datafeed.date2num(
+                datetime.combine(lastdt, tm))
 
             # Fill price fields
             for pricetype in [datafeed.Open, datafeed.High, datafeed.Low, datafeed.Close]:

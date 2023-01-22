@@ -82,7 +82,8 @@ class WilliamsAD(Indicator):
         downday = DownDay(self.datafeed.close)
 
         adup = If(upday, self.datafeed.close - TrueLow(self.datafeed), 0.0)
-        addown = If(downday, self.datafeed.close - TrueHigh(self.datafeed), 0.0)
+        addown = If(downday, self.datafeed.close -
+                    TrueHigh(self.datafeed), 0.0)
 
         self.lines.ad = Accum(adup + addown)
 

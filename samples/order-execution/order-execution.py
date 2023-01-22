@@ -102,7 +102,7 @@ class OrderExecutionStrategy(bt.Strategy):
         elif self.buysell > 0:
             if self.p.valid:
                 valid = self.data.datetime.date(0) + \
-                        datetime.timedelta(days=self.p.valid)
+                    datetime.timedelta(days=self.p.valid)
             else:
                 valid = None
 
@@ -134,7 +134,8 @@ class OrderExecutionStrategy(bt.Strategy):
             elif self.p.exectype == 'Stop':
                 price = self.data.close * (1.0 + self.p.perc1 / 100.0)
 
-                self.buy(exectype=bt.Order.StopMarket, price=price, valid=valid)
+                self.buy(exectype=bt.Order.StopMarket,
+                         price=price, valid=valid)
 
                 if self.p.valid:
                     txt = 'BUY CREATE, exectype Stop, price %.2f, valid: %s'

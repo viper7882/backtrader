@@ -80,6 +80,7 @@ class St(bt.Strategy):
 ib_symbol = 'EUR.USD-CASH-IDEALPRO'
 compression = 5
 
+
 def run(args=None):
     cerebro = bt.Cerebro(stdstats=False)
     store = bt.stores.IBStore(port=7497,
@@ -90,18 +91,18 @@ def run(args=None):
                           timeframe=bt.TimeFrame.Ticks,
                           )
     cerebro.resample_datafeed(data0,
-                         timeframe=bt.TimeFrame.Seconds,
-                         compression=compression
-                         )
+                              timeframe=bt.TimeFrame.Seconds,
+                              compression=compression
+                              )
 
     data1 = store.getdata(dataname=ib_symbol,
                           timeframe=bt.TimeFrame.Ticks,
                           what='ASK'
                           )
     cerebro.resample_datafeed(data1,
-                         timeframe=bt.TimeFrame.Seconds,
-                         compression=compression
-                         )
+                              timeframe=bt.TimeFrame.Seconds,
+                              compression=compression
+                              )
 
     cerebro.broker = store.get_broker_or_exchange()
     cerebro.add_strategy(St)

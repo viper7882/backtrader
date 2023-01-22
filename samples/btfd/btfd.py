@@ -165,13 +165,15 @@ def runstrat(args=None):
     cerebro.broker = bt.brokers.BackBroker(**eval('dict(' + args.broker + ')'))
 
     # Add a commission
-    cerebro.broker_or_exchange.set_commission(**eval('dict(' + args.comm_info + ')'))
+    cerebro.broker_or_exchange.set_commission(
+        **eval('dict(' + args.comm_info + ')'))
 
     # Strategy
     cerebro.add_strategy(St, **eval('dict(' + args.strat + ')'))
 
     # Add specific observer
-    cerebro.add_system_wide_observer(ValueUnlever, **eval('dict(' + args.valobserver + ')'))
+    cerebro.add_system_wide_observer(
+        ValueUnlever, **eval('dict(' + args.valobserver + ')'))
 
     # Execute
     cerebro.run(**eval('dict(' + args.cerebro + ')'))
@@ -188,7 +190,7 @@ def parse_args(pargs=None):
             'http://dark-bid.com/BTFD-only-strategy-that-matters.html',
             ('https://www.reddit.com/r/algotrading/comments/5jez2b/'
              'can_anyone_replicate_this_strategy/')]))
-        )
+    )
 
     parser.add_argument('--offline', required=False, action='store_true',
                         help='Use offline file with ticker name')

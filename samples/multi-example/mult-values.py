@@ -80,11 +80,13 @@ class St(bt.Strategy):
             pos = self.get_position(datafeed).size
             print('{} {} Position {}'.format(dt, dn, pos))
 
-            if not pos and not self.o.get(datafeed, None):  # no market / no orders
+            # no market / no orders
+            if not pos and not self.o.get(datafeed, None):
                 if dt.weekday() == self.p.enter[i]:
                     if not self.p.usebracket:
                         self.o[datafeed] = [self.buy(datafeed=datafeed)]
-                        print('{} {} Buy {}'.format(dt, dn, self.o[datafeed][0].ref))
+                        print('{} {} Buy {}'.format(
+                            dt, dn, self.o[datafeed][0].ref))
 
                     else:
                         p = datafeed.close[0] * (1.0 - self.p.pentry)
@@ -120,11 +122,13 @@ class St(bt.Strategy):
                 self.holding[datafeed] += 1
                 if self.holding[datafeed] >= self.p.hold[i]:
                     o = self.close(datafeed=datafeed)
-                    self.o[datafeed].append(o)  # manual order to list of orders
+                    # manual order to list of orders
+                    self.o[datafeed].append(o)
                     print('{} {} Manual Close {}'.format(dt, dn, o.ref))
                     if self.p.usebracket:
                         self.cancel(self.o[datafeed][1])  # cancel stop side
-                        print('{} {} Cancel {}'.format(dt, dn, self.o[datafeed][1]))
+                        print('{} {} Cancel {}'.format(
+                            dt, dn, self.o[datafeed][1]))
 
 
 def runstrat(args=None):

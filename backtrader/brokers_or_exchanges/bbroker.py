@@ -437,10 +437,11 @@ class BackBroker(bt.Broker_or_Exchange_Base):
             if not self.p.shortcash:
                 dvalue = commission_info.get_value(position, datafeed.close[0])
             else:
-                dvalue = commission_info.get_value_size(position.size, datafeed.close[0])
+                dvalue = commission_info.get_value_size(
+                    position.size, datafeed.close[0])
 
             dunrealized = commission_info.profit_and_loss(position.size, position.price,
-                                                 datafeed.close[0])
+                                                          datafeed.close[0])
             if datafeeds and len(datafeeds) == 1:
                 if lever and dvalue > 0:
                     dvalue -= dunrealized
@@ -657,11 +658,11 @@ class BackBroker(bt.Broker_or_Exchange_Base):
             **kwargs):
 
         order = Buy_Order(owner=owner, datafeed=datafeed,
-                         size=size, price=price, pricelimit=price_limit,
-                         execution_type=execution_type, valid=valid, tradeid=tradeid,
-                         trailing_amount=trailing_amount, trailing_percent=trailing_percent,
-                         parent=parent, transmit=transmit,
-                         histnotify=histnotify)
+                          size=size, price=price, pricelimit=price_limit,
+                          execution_type=execution_type, valid=valid, tradeid=tradeid,
+                          trailing_amount=trailing_amount, trailing_percent=trailing_percent,
+                          parent=parent, transmit=transmit,
+                          histnotify=histnotify)
 
         order.add_info(**kwargs)
         self._ocoize(order, oco)
@@ -677,11 +678,11 @@ class BackBroker(bt.Broker_or_Exchange_Base):
              **kwargs):
 
         order = Sell_Order(owner=owner, datafeed=datafeed,
-                          size=size, price=price, pricelimit=price_limit,
-                          execution_type=execution_type, valid=valid, tradeid=tradeid,
-                          trailing_amount=trailing_amount, trailing_percent=trailing_percent,
-                          parent=parent, transmit=transmit,
-                          histnotify=histnotify)
+                           size=size, price=price, pricelimit=price_limit,
+                           execution_type=execution_type, valid=valid, tradeid=tradeid,
+                           trailing_amount=trailing_amount, trailing_percent=trailing_percent,
+                           parent=parent, transmit=transmit,
+                           histnotify=histnotify)
 
         order.add_info(**kwargs)
         self._ocoize(order, oco)
@@ -709,7 +710,8 @@ class BackBroker(bt.Broker_or_Exchange_Base):
         # Check if something has to be compensated
         if order.datafeed._compensate is not None:
             datafeed = order.datafeed._compensate
-            cinfocomp = self.get_commission_info(datafeed)  # for actual commission
+            cinfocomp = self.get_commission_info(
+                datafeed)  # for actual commission
         else:
             datafeed = order.datafeed
             cinfocomp = commission_info
@@ -720,11 +722,13 @@ class BackBroker(bt.Broker_or_Exchange_Base):
             position = self.positions[datafeed]
             pprice_orig = position.price
 
-            position_size, position_average_price, opened, closed = position.pseudoupdate(size, price)
+            position_size, position_average_price, opened, closed = position.pseudoupdate(
+                size, price)
 
             # if part/all of a position has been closed, then there has been
             # a profitandloss ... record it
-            profit_and_loss_amount = commission_info.profit_and_loss(-closed, pprice_orig, price)
+            profit_and_loss_amount = commission_info.profit_and_loss(
+                -closed, pprice_orig, price)
             cash = self.cash
         else:
             profit_and_loss_amount = 0
@@ -739,15 +743,18 @@ class BackBroker(bt.Broker_or_Exchange_Base):
                 else:
                     price = pprice_orig = order.created.price
 
-            position_size, position_average_price, opened, closed = position.update(size, price)
+            position_size, position_average_price, opened, closed = position.update(
+                size, price)
 
         # "Closing" totally or partially is possible. Cash may be re-injected
         if closed:
             # Adjust to returned value for closed items & acquired opened items
             if self.p.shortcash:
-                closed_value = commission_info.get_value_size(-closed, pprice_orig)
+                closed_value = commission_info.get_value_size(
+                    -closed, pprice_orig)
             else:
-                closed_value = commission_info.get_operating_cost(closed, pprice_orig)
+                closed_value = commission_info.get_operating_cost(
+                    closed, pprice_orig)
 
             closecash = closed_value
             if closed_value > 0:  # long position closed
@@ -755,15 +762,16 @@ class BackBroker(bt.Broker_or_Exchange_Base):
 
             cash += closecash + profit_and_loss_amount * commission_info.stock_like
             # Calculate and substract commission
-            closed_commission = commission_info.get_commission_rate(closed, price)
+            closed_commission = commission_info.get_commission_rate(
+                closed, price)
             cash -= closed_commission
 
             if ago is not None:
                 # Cashadjust closed contracts: prev close vs exec price
                 # The operation can inject or take cash out
                 cash += commission_info.cash_adjust(-closed,
-                                            position.adjbase,
-                                            price)
+                                                    position.adjbase,
+                                                    price)
 
                 # Update system cash
                 self.cash = cash
@@ -775,7 +783,8 @@ class BackBroker(bt.Broker_or_Exchange_Base):
             if self.p.shortcash:
                 opened_value = commission_info.get_value_size(opened, price)
             else:
-                opened_value = commission_info.get_operating_cost(opened, price)
+                opened_value = commission_info.get_operating_cost(
+                    opened, price)
 
             opencash = opened_value
             if opened_value > 0:  # long position being opened
@@ -802,7 +811,7 @@ class BackBroker(bt.Broker_or_Exchange_Base):
                     # close price
                     adjsize = position_size - opened
                     cash += commission_info.cash_adjust(adjsize,
-                                                position.adjbase, price)
+                                                        position.adjbase, price)
 
                 # record adjust price base for end of bar cash adjustment
                 position.adjbase = price
@@ -1073,7 +1082,8 @@ class BackBroker(bt.Broker_or_Exchange_Base):
             self._try_exec_limit(order, popen, phigh, plow, price_limit)
 
         elif order.execution_type in [Order.StopMarket, Order.StopTrail]:
-            self._try_exec_stopmarket(order, popen, phigh, plow, pcreated, closing_price)
+            self._try_exec_stopmarket(
+                order, popen, phigh, plow, pcreated, closing_price)
 
         elif order.execution_type in [Order.StopLimit, Order.StopTrailLimit]:
             self._try_exec_stoplimit(order,
@@ -1189,7 +1199,8 @@ class BackBroker(bt.Broker_or_Exchange_Base):
             if pos:
                 commission_info = self.get_commission_info(datafeed)
                 dt0 = datafeed.datetime.datetime()
-                dcredit = commission_info.get_credit_interest(datafeed, pos, dt0)
+                dcredit = commission_info.get_credit_interest(
+                    datafeed, pos, dt0)
                 self.d_credit[datafeed] += dcredit
                 credit += dcredit
                 pos.datetime = dt0  # mark last credit operation
@@ -1228,8 +1239,8 @@ class BackBroker(bt.Broker_or_Exchange_Base):
             if pos:
                 commission_info = self.get_commission_info(datafeed)
                 self.cash += commission_info.cash_adjust(pos.size,
-                                                 pos.adjbase,
-                                                 datafeed.close[0])
+                                                         pos.adjbase,
+                                                         datafeed.close[0])
                 # record the last adjustment price
                 pos.adjbase = datafeed.close[0]
 

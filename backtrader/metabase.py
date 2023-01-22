@@ -304,6 +304,7 @@ class ItemCollection(object):
       - Index
       - Name (if set in the append operation)
     '''
+
     def __init__(self):
         self._items = list()
         self._names = list()

@@ -59,7 +59,7 @@ def runstrat(pargs=None):
 
     # Add the Analyzers
     cerebro.add_analyzer(bt.analyzers.TimeReturn,
-                        timeframe=tframes[args.tframe])
+                         timeframe=tframes[args.tframe])
 
     shkwargs = dict()
     if args.annualize:
@@ -78,8 +78,8 @@ def runstrat(pargs=None):
         shkwargs['convertrate'] = False
 
     cerebro.add_analyzer(bt.analyzers.SharpeRatio,
-                        timeframe=tframes[args.tframe],
-                        **shkwargs)
+                         timeframe=tframes[args.tframe],
+                         **shkwargs)
 
     # Add a writer to get output
     cerebro.add_writer(bt.WriterFile, csv=args.writercsv, rounding=4)

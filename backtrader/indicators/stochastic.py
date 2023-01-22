@@ -78,6 +78,7 @@ class StochasticFast(_StochasticBase):
     See:
       - http://en.wikipedia.org/wiki/Stochastic_oscillator
     '''
+
     def __init__(self):
         super(StochasticFast, self).__init__()
         self.lines.percK = self.k

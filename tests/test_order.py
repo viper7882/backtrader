@@ -44,6 +44,7 @@ class FakeData(object):
     Minimal interface to avoid errors when trade tries to get information from
     the data during the test
     '''
+
     def __len__(self):
         return 0
 
@@ -93,9 +94,9 @@ def test_run(main=False):
                         simulated=True)
     order.addcomminfo(comm_info)
 
-    ### Test that partially updating order will maintain correct iterpending sequence
-    ### (Orders are cloned for each notification. The pending bits should be reported
-    ###  related to the previous notification (clone))
+    # Test that partially updating order will maintain correct iterpending sequence
+    # (Orders are cloned for each notification. The pending bits should be reported
+    # related to the previous notification (clone))
 
     # Add two bits and validate we have two pending bits
     _execute(position, order, 10, 1.0, True)
@@ -120,6 +121,7 @@ def test_run(main=False):
     assert pending[0].price == 1.2
     assert pending[1].size == 40
     assert pending[1].price == 1.3
+
 
 if __name__ == '__main__':
     test_run(main=True)

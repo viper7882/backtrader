@@ -98,7 +98,7 @@ def runstrat(args=None):
     cerebro.add_datafeed(data0)
 
     d1 = cerebro.resample_datafeed(data0,
-                              timeframe=getattr(bt.TimeFrame, args.timeframe))
+                                   timeframe=getattr(bt.TimeFrame, args.timeframe))
     d1.plotinfo.plotmaster = data0
     d1.plotinfo.sameaxis = True
 

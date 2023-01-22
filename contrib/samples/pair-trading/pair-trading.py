@@ -103,16 +103,22 @@ class PairTradingStrategy(bt.Strategy):
 
             # Calculating the number of shares for each stock
             value = 0.5 * self.portfolio_value  # Divide the cash equally
-            x = int(value / (self.data0.close))  # Find the number of shares for Stock1
-            y = int(value / (self.data1.close))  # Find the number of shares for Stock2
+            # Find the number of shares for Stock1
+            x = int(value / (self.data0.close))
+            # Find the number of shares for Stock2
+            y = int(value / (self.data1.close))
             print('x + self.qty1 is', x + self.qty1)
             print('y + self.qty2 is', y + self.qty2)
 
             # Placing the order
-            self.log('SELL CREATE %s, price = %.2f, qty = %d' % ("PEP", self.data0.close[0], x + self.qty1))
-            self.sell(data=self.data0, size=(x + self.qty1))  # Place an order for buying y + qty2 shares
-            self.log('BUY CREATE %s, price = %.2f, qty = %d' % ("KO", self.data1.close[0], y + self.qty2))
-            self.buy(data=self.data1, size=(y + self.qty2))  # Place an order for selling x + qty1 shares
+            self.log('SELL CREATE %s, price = %.2f, qty = %d' %
+                     ("PEP", self.data0.close[0], x + self.qty1))
+            # Place an order for buying y + qty2 shares
+            self.sell(data=self.data0, size=(x + self.qty1))
+            self.log('BUY CREATE %s, price = %.2f, qty = %d' %
+                     ("KO", self.data1.close[0], y + self.qty2))
+            # Place an order for selling x + qty1 shares
+            self.buy(data=self.data1, size=(y + self.qty2))
 
             # Updating the counters with new value
             self.qty1 = x  # The new open position quantity for Stock1 is x shares
@@ -126,22 +132,27 @@ class PairTradingStrategy(bt.Strategy):
 
             # Calculating the number of shares for each stock
             value = 0.5 * self.portfolio_value  # Divide the cash equally
-            x = int(value / (self.data0.close))  # Find the number of shares for Stock1
-            y = int(value / (self.data1.close))  # Find the number of shares for Stock2
+            # Find the number of shares for Stock1
+            x = int(value / (self.data0.close))
+            # Find the number of shares for Stock2
+            y = int(value / (self.data1.close))
             print('x + self.qty1 is', x + self.qty1)
             print('y + self.qty2 is', y + self.qty2)
 
             # Place the order
-            self.log('BUY CREATE %s, price = %.2f, qty = %d' % ("PEP", self.data0.close[0], x + self.qty1))
-            self.buy(data=self.data0, size=(x + self.qty1))  # Place an order for buying x + qty1 shares
-            self.log('SELL CREATE %s, price = %.2f, qty = %d' % ("KO", self.data1.close[0], y + self.qty2))
-            self.sell(data=self.data1, size=(y + self.qty2))  # Place an order for selling y + qty2 shares
+            self.log('BUY CREATE %s, price = %.2f, qty = %d' %
+                     ("PEP", self.data0.close[0], x + self.qty1))
+            # Place an order for buying x + qty1 shares
+            self.buy(data=self.data0, size=(x + self.qty1))
+            self.log('SELL CREATE %s, price = %.2f, qty = %d' %
+                     ("KO", self.data1.close[0], y + self.qty2))
+            # Place an order for selling y + qty2 shares
+            self.sell(data=self.data1, size=(y + self.qty2))
 
             # Updating the counters with new value
             self.qty1 = x  # The new open position quantity for Stock1 is x shares
             self.qty2 = y  # The new open position quantity for Stock2 is y shares
             self.status = 2  # The current status is "long the spread"
-
 
             # Step 4: Check conditions for No Trade
             # If the z-score is within the two bounds, close all
@@ -190,8 +201,8 @@ def runstrategy():
 
     # Add the strategy
     cerebro.add_strategy(PairTradingStrategy,
-                        period=args.period,
-                        stake=args.stake)
+                         period=args.period,
+                         stake=args.stake)
 
     # Add the commission - only stocks like a for each operation
     cerebro.broker_or_exchange.setcash(args.cash)

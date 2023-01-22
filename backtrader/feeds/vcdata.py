@@ -315,7 +315,8 @@ class VCData(with_metaclass(MetaVCData, DataBase)):
             self._tf, self._comp = self._timeframe, self._compression,
 
         self._ticking = self.account_or_store._ticking(self._tf)
-        self._syminfo = syminfo = self.account_or_store._symboldata(self._dataname)
+        self._syminfo = syminfo = self.account_or_store._symboldata(
+            self._dataname)
 
         # For most markets:
         # mktoffset == mktoff1 and substracting this value from reported times
@@ -525,7 +526,8 @@ class VCData(with_metaclass(MetaVCData, DataBase)):
             self.lastconn = p2  # keep new notification code
 
             # p2 should be 0 (disconn), 1 (conn)
-            self.account_or_store._vcrt_connection(self.account_or_store._RT_BASEMSG - p2)
+            self.account_or_store._vcrt_connection(
+                self.account_or_store._RT_BASEMSG - p2)
 
     def OnNewTicks(self, ArrayTicks):
         # Process the COM Event for New Ticks. This is only used temporarily
@@ -552,7 +554,8 @@ class VCData(with_metaclass(MetaVCData, DataBase)):
         if self.account_or_store.vcrtmod.Field_Description in ticks:
             if self._newticks:
                 self._newticks = False
-                hasdate = bool(ticks.get(self.account_or_store.vcrtmod.Field_Date, False))
+                hasdate = bool(
+                    ticks.get(self.account_or_store.vcrtmod.Field_Date, False))
                 self.qrt.put(hasdate)
                 return
 
@@ -583,7 +586,8 @@ class VCData(with_metaclass(MetaVCData, DataBase)):
         for tick in ticks:
             print('-' * 40)
             print('tick.SymbolCode', tick.SymbolCode.encode('ascii', 'ignore'))
-            fname = self.account_or_store.vcrtfields.get(tick.Field, tick.Field)
+            fname = self.account_or_store.vcrtfields.get(
+                tick.Field, tick.Field)
             print('  tick.Field   : {} ({})'.format(fname, tick.Field))
             print('  tick.FieldEx :', tick.FieldEx)
             tdate = tick.Date

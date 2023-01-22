@@ -46,7 +46,7 @@ def runstrategy():
         dataname=args.data,
         fromdate=fromdate,
         todate=todate,
-        )
+    )
 
     # Add the 1st data to cerebro
     cerebro.add_datafeed(data)
@@ -61,7 +61,7 @@ def runstrategy():
 
     # Add the Relative volume indicator
     cerebro.add_indicator(RelativeVolumeByBar,
-                         prestart=prestart, start=start, end=end)
+                          prestart=prestart, start=start, end=end)
 
     # Add a writer with CSV
     if args.writer:

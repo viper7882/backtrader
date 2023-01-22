@@ -96,8 +96,10 @@ class SlipTestStrategy(bt.SignalStrategy):
         tused = time_clock() - self.tstart
         if self.p.printdata:
             self.log("Time used: %s" % str(tused))
-            self.log("Final portfolio value: %.2f" % self.broker_or_exchange.getvalue())
-            self.log("Final cash value: %.2f" % self.broker_or_exchange.get_cash())
+            self.log("Final portfolio value: %.2f" %
+                     self.broker_or_exchange.getvalue())
+            self.log("Final cash value: %.2f" %
+                     self.broker_or_exchange.get_cash())
             self.log("-------------------------")
         else:
             pass
@@ -165,7 +167,8 @@ def test_run(main=False):
         if main:
             print(
                 "Slippage {}, Sell Executed {:.2f}, Expected price {:.2f}".format(
-                    expected_result[0], float(strat[0].sellexec[0]), expected_result[1]
+                    expected_result[0], float(
+                        strat[0].sellexec[0]), expected_result[1]
                 )
             )
 

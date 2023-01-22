@@ -36,6 +36,7 @@ class BarReplayer_Open(object):
 
     The split simulates a replay without the need to use the *replay* filter.
     '''
+
     def __init__(self, datafeed):
         self.pendingbar = None
         datafeed.resampling = 1
@@ -63,7 +64,8 @@ class BarReplayer_Open(object):
             ret = False
 
         self.pendingbar = newbar  # update the pending bar to the new bar
-        datafeed._add2stack(openbar)  # Add the openbar to the stack for processing
+        # Add the openbar to the stack for processing
+        datafeed._add2stack(openbar)
 
         return ret  # the length of the stream was not changed
 

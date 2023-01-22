@@ -270,12 +270,13 @@ def runstrat():
                                             compression=1,
                                             **dkwargs)
         data.addfilter(DayStepsReplayFilter)
-        cerebro.replay_datafeed(data, timeframe=bt.TimeFrame.Days, compression=1)
+        cerebro.replay_datafeed(
+            data, timeframe=bt.TimeFrame.Days, compression=1)
 
     cerebro.add_strategy(St,
-                        sellafter=args.sellafter,
-                        highperiod=args.highperiod,
-                        market=args.market)
+                         sellafter=args.sellafter,
+                         highperiod=args.highperiod,
+                         market=args.market)
 
     cerebro.run(runonce=False, preload=False, oldbuysell=args.oldbuysell)
     if args.plot:

@@ -144,8 +144,8 @@ def runstrategy():
 
     # Add the strategy
     cerebro.add_strategy(MultiDataStrategy,
-                        period=args.period,
-                        stake=args.stake)
+                         period=args.period,
+                         stake=args.stake)
 
     # Add the commission - only stocks like a for each operation
     cerebro.broker_or_exchange.setcash(args.cash)

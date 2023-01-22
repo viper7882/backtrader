@@ -47,6 +47,7 @@ class _SymInfo(object):
         for f in self._fields:
             setattr(self, f, getattr(syminfo, f))
 
+
 # This type is used inside 'PumpEvents', but if we create the type
 # afresh each time 'PumpEvents' is called we end up creating cyclic
 # garbage for each call.  So we define it here instead.
@@ -155,7 +156,8 @@ class RTEventSink(object):
         pass
 
     def OnServerShutDown(self):
-        self.account_or_store._vcrt_connection(self.account_or_store._RT_SHUTDOWN)
+        self.account_or_store._vcrt_connection(
+            self.account_or_store._RT_SHUTDOWN)
 
     def OnInternalEvent(self, p1, p2, p3):
         if p1 != 1:  # Apparently "Connection Event"
@@ -167,7 +169,8 @@ class RTEventSink(object):
         self.lastconn = p2  # keep new notification code
 
         # p2 should be 0 (disconn), 1 (conn)
-        self.account_or_store._vcrt_connection(self.account_or_store._RT_BASEMSG - p2)
+        self.account_or_store._vcrt_connection(
+            self.account_or_store._RT_BASEMSG - p2)
 
 
 class MetaSingleton(MetaParams):
@@ -389,7 +392,8 @@ class VCStore(with_metaclass(MetaSingleton, object)):
             t.start()
 
         if broker_or_exchange is not None:
-            t = threading.Thread(target=self._t_broker, args=(broker_or_exchange,))
+            t = threading.Thread(target=self._t_broker,
+                                 args=(broker_or_exchange,))
             t.daemon = True
             t.start()
 
@@ -523,7 +527,8 @@ class VCStore(with_metaclass(MetaSingleton, object)):
             q.put(None)        # Signal end of transmission
             dsconn = None
         else:
-            dsconn = self.GetEvents(vcds, datafeed)  # finally connect the events
+            # finally connect the events
+            dsconn = self.GetEvents(vcds, datafeed)
             pass
 
         # pump events in this thread - call ping

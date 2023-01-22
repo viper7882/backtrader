@@ -32,7 +32,8 @@ class OrderObserver(bt.observer.Observer):
     plotinfo = dict(plot=True, subplot=True, plotlinelabels=True)
 
     plotlines = dict(
-        created=dict(marker='*', markersize=8.0, color='lime', fillstyle='full'),
+        created=dict(marker='*', markersize=8.0,
+                     color='lime', fillstyle='full'),
         expired=dict(marker='s', markersize=8.0, color='red', fillstyle='full')
     )
 

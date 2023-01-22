@@ -295,7 +295,8 @@ class Trade(object):
 
         else:  # abs(self.size) < abs(oldsize)
             # position reduced/closed
-            profit_and_loss_amount = commission_info.profit_and_loss(-size, self.price, price)
+            profit_and_loss_amount = commission_info.profit_and_loss(
+                -size, self.price, price)
 
         self.profit_and_loss_amount += profit_and_loss_amount
         self.pnlcomm = self.profit_and_loss_amount - self.commission_amount

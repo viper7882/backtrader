@@ -223,7 +223,7 @@ class LineBuffer(LineSingle):
         try:
             self.array[self.idx + ago] = value
         except Exception as err:
-            frameinfo=inspect.getframeinfo(inspect.currentframe())
+            frameinfo = inspect.getframeinfo(inspect.currentframe())
             msg = "{}: {} Line: {}: ".format(
                 type(self).__name__, frameinfo.function, frameinfo.lineno,
             )
@@ -564,7 +564,8 @@ class MetaLineActions(LineBuffer.__class__):
         _obj._datafeeds = [x for x in args if isinstance(x, LineRoot)]
 
         # Do not produce anything until the operation lines produce something
-        _min_periods = [x._min_period for x in args if isinstance(x, LineSingle)]
+        _min_periods = [
+            x._min_period for x in args if isinstance(x, LineSingle)]
 
         mlines = [x.lines[0] for x in args if isinstance(x, LineMultiple)]
         _min_periods += [x._min_period for x in mlines]
@@ -667,6 +668,7 @@ class _LineDelay(LineActions):
     Takes a LineBuffer (or derived) object and stores the value from
     "ago" periods effectively delaying the delivery of data
     '''
+
     def __init__(self, a, ago):
         super(_LineDelay, self).__init__()
         self.a = a
@@ -695,6 +697,7 @@ class _LineForward(LineActions):
     Takes a LineBuffer (or derived) object and stores the value from
     "ago" periods from the future
     '''
+
     def __init__(self, a, ago):
         super(_LineForward, self).__init__()
         self.a = a
@@ -762,7 +765,7 @@ class LinesOperation(LineActions):
             try:
                 self[0] = self.operation(self.a[0], self.b[0])
             except Exception as err:
-                frameinfo=inspect.getframeinfo(inspect.currentframe())
+                frameinfo = inspect.getframeinfo(inspect.currentframe())
                 msg = "{}: {} Line: {}: ".format(
                     type(self).__name__, frameinfo.function, frameinfo.lineno,
                 )
@@ -778,7 +781,7 @@ class LinesOperation(LineActions):
                 try:
                     self[0] = self.operation(self.a[0], self.b)
                 except Exception as err:
-                    frameinfo=inspect.getframeinfo(inspect.currentframe())
+                    frameinfo = inspect.getframeinfo(inspect.currentframe())
                     msg = "{}: {} Line: {}: ".format(
                         type(self).__name__, frameinfo.function, frameinfo.lineno,
                     )
@@ -793,7 +796,7 @@ class LinesOperation(LineActions):
                 try:
                     self[0] = self.operation(self.a.time(), self.b)
                 except Exception as err:
-                    frameinfo=inspect.getframeinfo(inspect.currentframe())
+                    frameinfo = inspect.getframeinfo(inspect.currentframe())
                     msg = "{}: {} Line: {}: ".format(
                         type(self).__name__, frameinfo.function, frameinfo.lineno,
                     )
@@ -880,6 +883,7 @@ class LineOwnOperation(LineActions):
     It will "next"/traverse the array applying the operation and storing
     the result in self
     '''
+
     def __init__(self, a, operation):
         super(LineOwnOperation, self).__init__()
 

@@ -143,7 +143,7 @@ def runstrat(args=None):
     cerebro = bt.Cerebro()
     cerebro.broker_or_exchange.set_cash(args.cash)
     comm_info = bt.commissions.CommInfo_Stocks_Perc(commission=args.commperc,
-                                                   percabs=True)
+                                                    percabs=True)
 
     cerebro.broker_or_exchange.add_commission_info(comm_info)
 
@@ -162,31 +162,32 @@ def runstrat(args=None):
     cerebro.add_datafeed(datafeed0)
 
     cerebro.add_strategy(TheStrategy,
-                        macd1=args.macd1, macd2=args.macd2,
-                        macdsig=args.macdsig,
-                        atrperiod=args.atrperiod,
-                        atrdist=args.atrdist,
-                        smaperiod=args.smaperiod,
-                        dirperiod=args.dirperiod)
+                         macd1=args.macd1, macd2=args.macd2,
+                         macdsig=args.macdsig,
+                         atrperiod=args.atrperiod,
+                         atrdist=args.atrdist,
+                         smaperiod=args.smaperiod,
+                         dirperiod=args.dirperiod)
 
     cerebro.add_sizer(FixedPerc, perc=args.cashalloc)
 
     # Add TimeReturn Analyzers for self and the benchmark data
     cerebro.add_analyzer(bt.analyzers.TimeReturn, _name='alltime_roi',
-                        timeframe=bt.TimeFrame.NoTimeFrame)
+                         timeframe=bt.TimeFrame.NoTimeFrame)
 
     cerebro.add_analyzer(bt.analyzers.TimeReturn, data=data0, _name='benchmark',
-                        timeframe=bt.TimeFrame.NoTimeFrame)
+                         timeframe=bt.TimeFrame.NoTimeFrame)
 
     # Add TimeReturn Analyzers fot the annuyl returns
     cerebro.add_analyzer(bt.analyzers.TimeReturn, timeframe=bt.TimeFrame.Years)
     # Add a SharpeRatio
     cerebro.add_analyzer(bt.analyzers.SharpeRatio, timeframe=bt.TimeFrame.Years,
-                        riskfreerate=args.riskfreerate)
+                         riskfreerate=args.riskfreerate)
 
     # Add SQN to qualify the trades
     cerebro.add_analyzer(bt.analyzers.SQN)
-    cerebro.add_system_wide_observer(bt.observers.DrawDown)  # visualize the drawdown evol
+    cerebro.add_system_wide_observer(
+        bt.observers.DrawDown)  # visualize the drawdown evol
 
     results = cerebro.run()
     st0 = results[0]

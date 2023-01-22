@@ -25,6 +25,7 @@ import datetime
 
 from copy import copy
 
+
 class Position(object):
     '''
     Keeps and updates the size and price of a position. The object has no
@@ -38,11 +39,14 @@ class Position(object):
     is not null
     '''
     Position_Types = ("Long", "Short", "Long or Short", )
-    LONG_POSITION, SHORT_POSITION, LONG_OR_SHORT_POSITION, = range(len(Position_Types))
+    LONG_POSITION, SHORT_POSITION, LONG_OR_SHORT_POSITION, = range(
+        len(Position_Types))
 
     # INFO: Crypto currency specific types
-    USDT_Perpetual__Position_Types = (Position_Types[LONG_POSITION], Position_Types[SHORT_POSITION], )
-    USDC_Perpetual__Position_Types = (Position_Types[LONG_POSITION], Position_Types[SHORT_POSITION], )
+    USDT_Perpetual__Position_Types = (
+        Position_Types[LONG_POSITION], Position_Types[SHORT_POSITION], )
+    USDC_Perpetual__Position_Types = (
+        Position_Types[LONG_POSITION], Position_Types[SHORT_POSITION], )
 
     def __str__(self):
         items = list()

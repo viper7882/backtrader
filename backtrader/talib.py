@@ -212,7 +212,8 @@ else:
         def next(self):
             # prepare the data arrays - single shot
             size = self._lookback or len(self)
-            narrays = [np.array(x.lines[0].get(size=size)) for x in self.datafeeds]
+            narrays = [np.array(x.lines[0].get(size=size))
+                       for x in self.datafeeds]
 
             out = self._tafunc(*narrays, **self.p._getkwargs())
 

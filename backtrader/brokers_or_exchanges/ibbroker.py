@@ -334,7 +334,8 @@ class IBBroker(with_metaclass(MetaIBBroker, Broker_or_Exchange_Base)):
             order.m_ocaGroup = self.orderbyid[order.oco.m_orderId].m_ocaGroup
 
         self.orderbyid[order.m_orderId] = order
-        self.ib.placeOrder(order.m_orderId, order.datafeed.tradecontract, order)
+        self.ib.placeOrder(
+            order.m_orderId, order.datafeed.tradecontract, order)
         self.notify(order)
 
         return order
@@ -489,7 +490,8 @@ class IBBroker(with_metaclass(MetaIBBroker, Broker_or_Exchange_Base)):
             size = ex.m_shares if ex.m_side[0] == 'B' else -ex.m_shares
             price = ex.m_price
             # use pseudoupdate and let the updateportfolio do the real update?
-            position_size, position_average_price, opened, closed = position.update(size, price)
+            position_size, position_average_price, opened, closed = position.update(
+                size, price)
 
             # split commission between closed and opened
             commission = cr.m_commission
@@ -497,7 +499,8 @@ class IBBroker(with_metaclass(MetaIBBroker, Broker_or_Exchange_Base)):
             opened_commission = commission - closed_commission
 
             commission_info = order.commission_info
-            closed_value = commission_info.get_operating_cost(closed, pprice_orig)
+            closed_value = commission_info.get_operating_cost(
+                closed, pprice_orig)
             opened_value = commission_info.get_operating_cost(opened, price)
 
             # default in m_pnl is MAXFLOAT

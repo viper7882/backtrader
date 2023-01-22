@@ -43,7 +43,8 @@ class UpDay(Indicator):
     params = (('period', 1),)
 
     def __init__(self):
-        self.lines.upday = Max(self.datafeed - self.datafeed(-self.p.period), 0.0)
+        self.lines.upday = Max(
+            self.datafeed - self.datafeed(-self.p.period), 0.0)
         super(UpDay, self).__init__()
 
 
@@ -65,7 +66,8 @@ class DownDay(Indicator):
     params = (('period', 1),)
 
     def __init__(self):
-        self.lines.downday = Max(self.datafeed(-self.p.period) - self.datafeed, 0.0)
+        self.lines.downday = Max(
+            self.datafeed(-self.p.period) - self.datafeed, 0.0)
         super(DownDay, self).__init__()
 
 

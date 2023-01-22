@@ -60,6 +60,7 @@ class MetaBroker(MetaParams):
             if not hasattr(cls, attr):
                 setattr(cls, name, getattr(cls, trans))
 
+
 class Broker_or_Exchange_Base(with_metaclass(MetaBroker, object)):
     params = (
         ('commission', CommInfoBase(percent_abs=True)),
@@ -105,7 +106,6 @@ class Broker_or_Exchange_Base(with_metaclass(MetaBroker, object)):
                        interest=0.0, interest_long=False, leverage=1.0,
                        automargin=False,
                        name=None):
-
         '''This method sets a `` CommissionInfo`` object for assets managed in
         the broker_or_exchange with the parameters. Consult the reference for
         ``CommInfoBase``
@@ -115,10 +115,10 @@ class Broker_or_Exchange_Base(with_metaclass(MetaBroker, object)):
         '''
 
         commission = CommInfoBase(commission=commission, margin=margin, mult=mult,
-                            commission_type=commission_type, stock_like=stock_like,
-                            percent_abs=percent_abs,
-                            interest=interest, interest_long=interest_long,
-                            leverage=leverage, automargin=automargin)
+                                  commission_type=commission_type, stock_like=stock_like,
+                                  percent_abs=percent_abs,
+                                  interest=interest, interest_long=interest_long,
+                                  leverage=leverage, automargin=automargin)
         self.commission_info[name] = commission
 
     def add_commission_info(self, commission_info, name=None):

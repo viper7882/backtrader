@@ -48,7 +48,8 @@ class DV2(Indicator):
     lines = ('dv2',)
 
     def __init__(self):
-        chl = self.datafeed.close / ((self.datafeed.high + self.datafeed.low) / 2.0)
+        chl = self.datafeed.close / \
+            ((self.datafeed.high + self.datafeed.low) / 2.0)
         dvu = self.p._movav(chl, period=self.p.maperiod)
         self.lines.dv2 = PercentRank(dvu, period=self.p.period) * 100
         super(DV2, self).__init__()

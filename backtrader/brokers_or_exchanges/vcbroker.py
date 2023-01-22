@@ -313,8 +313,8 @@ class VCBroker(with_metaclass(MetaVCBroker, Broker_or_Exchange_Base)):
             **kwargs):
 
         order = Buy_Order(owner=owner, datafeed=datafeed,
-                         size=size, price=price, pricelimit=price_limit,
-                         execution_type=execution_type, valid=valid, tradeid=tradeid)
+                          size=size, price=price, pricelimit=price_limit,
+                          execution_type=execution_type, valid=valid, tradeid=tradeid)
 
         order.add_info(**kwargs)
 
@@ -330,8 +330,8 @@ class VCBroker(with_metaclass(MetaVCBroker, Broker_or_Exchange_Base)):
              **kwargs):
 
         order = Sell_Order(owner=owner, datafeed=datafeed,
-                          size=size, price=price, pricelimit=price_limit,
-                          execution_type=execution_type, valid=valid, tradeid=tradeid)
+                           size=size, price=price, pricelimit=price_limit,
+                           execution_type=execution_type, valid=valid, tradeid=tradeid)
 
         order.add_info(**kwargs)
 
@@ -405,7 +405,8 @@ class VCBroker(with_metaclass(MetaVCBroker, Broker_or_Exchange_Base)):
         # Find position and do a real update - accounting happens here
         position = self.get_position(border.datafeed, clone=False)
         pprice_orig = position.price
-        position_size, position_average_price, opened, closed = position.update(size, price)
+        position_size, position_average_price, opened, closed = position.update(
+            size, price)
 
         commission_info = border.commission_info
         closed_value = commission_info.get_operating_cost(closed, pprice_orig)
@@ -414,7 +415,8 @@ class VCBroker(with_metaclass(MetaVCBroker, Broker_or_Exchange_Base)):
         opened_value = commission_info.get_operating_cost(opened, price)
         opened_commission = commission_info.get_commission_rate(opened, price)
 
-        profit_and_loss_amount = commission_info.profit_and_loss(-closed, pprice_orig, price)
+        profit_and_loss_amount = commission_info.profit_and_loss(
+            -closed, pprice_orig, price)
         margin = commission_info.get_value_size(size, price)
 
         # NOTE: No commission information available in the Trader interface

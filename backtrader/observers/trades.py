@@ -112,7 +112,8 @@ class MetaDataTrades(Observer.__class__):
         if _obj.params.usenames:
             lnames = tuple(x._name for x in _obj.datafeeds)
         else:
-            lnames = tuple('datafeed{}'.format(x) for x in range(len(_obj.datafeeds)))
+            lnames = tuple('datafeed{}'.format(x)
+                           for x in range(len(_obj.datafeeds)))
 
         # Generate a new lines class
         linescls = cls.lines._derive(uuid.uuid4().hex, lnames, 0, ())
@@ -159,4 +160,5 @@ class DataTrades(with_metaclass(MetaDataTrades, Observer)):
             if not trade.isclosed:
                 continue
 
-            self.lines[trade.datafeed._id - 1][0] = trade.profit_and_loss_amount
+            self.lines[trade.datafeed._id -
+                       1][0] = trade.profit_and_loss_amount

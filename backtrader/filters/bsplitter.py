@@ -78,7 +78,8 @@ class DaySplitter_Close(bt.with_metaclass(bt.MetaParams, object)):
         closebar = ohlbar[:]  # Make a copy for the close
 
         # replace close price with o-h-l average
-        ohlprice = ohlbar[datafeed.Open] + ohlbar[datafeed.High] + ohlbar[datafeed.Low]
+        ohlprice = ohlbar[datafeed.Open] + \
+            ohlbar[datafeed.High] + ohlbar[datafeed.Low]
         ohlbar[datafeed.Close] = ohlprice / 3.0
 
         vol = ohlbar[datafeed.Volume]  # adjust volume

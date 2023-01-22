@@ -316,21 +316,21 @@ def runstrategy():
         valid = datetime.timedelta(seconds=args.valid)
     # Add the strategy
     cerebro.add_strategy(TestStrategy,
-                        smaperiod=args.smaperiod,
-                        trade=args.trade,
-                        exectype=bt.Order.ExecType(args.exectype),
-                        stake=args.stake,
-                        stopafter=args.stopafter,
-                        valid=valid,
-                        cancel=args.cancel,
-                        donotsell=args.donotsell,
-                        stoptrail=args.stoptrail,
-                        stoptraillimit=args.traillimit,
-                        trailamount=args.trailamount,
-                        trailpercent=args.trailpercent,
-                        limitoffset=args.limitoffset,
-                        oca=args.oca,
-                        bracket=args.bracket)
+                         smaperiod=args.smaperiod,
+                         trade=args.trade,
+                         exectype=bt.Order.ExecType(args.exectype),
+                         stake=args.stake,
+                         stopafter=args.stopafter,
+                         valid=valid,
+                         cancel=args.cancel,
+                         donotsell=args.donotsell,
+                         stoptrail=args.stoptrail,
+                         stoptraillimit=args.traillimit,
+                         trailamount=args.trailamount,
+                         trailpercent=args.trailpercent,
+                         limitoffset=args.limitoffset,
+                         oca=args.oca,
+                         bracket=args.bracket)
 
     # Live data ... avoid long data accumulation by switching to "exactbars"
     cerebro.run(exactbars=args.exactbars)

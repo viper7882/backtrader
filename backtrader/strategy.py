@@ -212,7 +212,8 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
                     dlminperiods += _dminperiods[l]  # found, add it
 
             # keep the reference to the line if any was found
-            _dminperiods[datafeed] = [max(dlminperiods)] if dlminperiods else []
+            _dminperiods[datafeed] = [
+                max(dlminperiods)] if dlminperiods else []
 
             dminperiod = max(_dminperiods[datafeed] or [datafeed._min_period])
             self._min_periods.append(dminperiod)
@@ -935,7 +936,8 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
             datafeed = self.get_datafeed_by_name(datafeed)
 
         datafeed = datafeed if datafeed is not None else self.datafeeds[0]
-        size = size if size is not None else self.getsizing(datafeed, is_buy=True)
+        size = size if size is not None else self.getsizing(
+            datafeed, is_buy=True)
 
         if size:
             return self.broker_or_exchange.buy(
@@ -965,7 +967,8 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
             datafeed = self.get_datafeed_by_name(datafeed)
 
         datafeed = datafeed if datafeed is not None else self.datafeeds[0]
-        size = size if size is not None else self.getsizing(datafeed, is_buy=False)
+        size = size if size is not None else self.getsizing(
+            datafeed, is_buy=False)
 
         if size:
             return self.broker_or_exchange.sell(
@@ -1320,7 +1323,8 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
 
         else:
             value = self.broker_or_exchange.get_value(datafeed=[datafeed])
-            commission_info = self.broker_or_exchange.get_commission_info(datafeed)
+            commission_info = self.broker_or_exchange.get_commission_info(
+                datafeed)
 
             # Make sure a price is there
             price = price if price is not None else datafeed.close[0]
@@ -1405,7 +1409,8 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
 
         A property ``positionbyname`` is also available
         '''
-        datafeed = self.datafeeds[0] if not name else self.get_datafeed_by_name(name)
+        datafeed = self.datafeeds[0] if not name else self.get_datafeed_by_name(
+            name)
         broker_or_exchange = broker_or_exchange or self.broker_or_exchange
         return broker_or_exchange.get_position(datafeed)
 

@@ -140,19 +140,19 @@ def runstrategy():
 
     # Add the strategy
     cerebro.add_strategy(MultiTradeStrategy,
-                        period=args.period,
-                        onlylong=args.onlylong,
-                        stake=args.stake,
-                        printout=args.printout,
-                        mtrade=args.mtrade)
+                         period=args.period,
+                         onlylong=args.onlylong,
+                         stake=args.stake,
+                         printout=args.printout,
+                         mtrade=args.mtrade)
 
     # Add the commission - only stocks like a for each operation
     cerebro.broker_or_exchange.setcash(args.cash)
 
     # Add the commission - only stocks like a for each operation
     cerebro.broker_or_exchange.set_commission(commission=args.comm,
-                                 mult=args.mult,
-                                 margin=args.margin)
+                                              mult=args.mult,
+                                              margin=args.margin)
 
     # Add the MultiTradeObserver
     cerebro.add_system_wide_observer(mtradeobserver.MTradeObserver)

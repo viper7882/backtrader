@@ -161,7 +161,7 @@ def runstrat(args=None):
         st0kwargs.update(tmpdict)
 
     cerebro.add_strategy(TheStrategy,
-                        myname='St1', dtarget='MyData0', **st0kwargs)
+                         myname='St1', dtarget='MyData0', **st0kwargs)
 
     if args.copydata:
         datafeed1 = datafeed0.copyas('MyData1')
@@ -177,7 +177,7 @@ def runstrat(args=None):
         st1kwargs.update(tmpdict)
 
     cerebro.add_strategy(TheStrategy2,
-                        myname='St2', dtarget=dtarget, **st1kwargs)
+                         myname='St2', dtarget=dtarget, **st1kwargs)
 
     results = cerebro.run()
 

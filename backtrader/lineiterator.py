@@ -41,23 +41,28 @@ from . import metabase
 # Refer to https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes
 DEFAULT_DATE_FORMAT = "%Y-%m-%d"
 TIME_FORMAT_WITH_MS_PRECISION = "%H:%M:%S.%f"
-DATE_TIME_FORMAT_WITH_MS_PRECISION = DEFAULT_DATE_FORMAT + " " + TIME_FORMAT_WITH_MS_PRECISION
+DATE_TIME_FORMAT_WITH_MS_PRECISION = DEFAULT_DATE_FORMAT + \
+    " " + TIME_FORMAT_WITH_MS_PRECISION
 MONTHLY_DATE_FORMAT = "%Y-%m"
 TIME_FORMAT_WITH_S_PRECISION = "%H:%M:%S"
-DATE_TIME_FORMAT_WITH_S_PRECISION = DEFAULT_DATE_FORMAT + " " + TIME_FORMAT_WITH_S_PRECISION
+DATE_TIME_FORMAT_WITH_S_PRECISION = DEFAULT_DATE_FORMAT + \
+    " " + TIME_FORMAT_WITH_S_PRECISION
+
 
 def dump_datas(function, lineno, datafeeds, data_source_name, filtered_data_by_name=None, ohlcv=False):
     datetime_format = DATE_TIME_FORMAT_WITH_S_PRECISION
 
     print("{} Line: {}: DEBUG: len of {}.datafeeds: {}".format(
-            function, lineno, data_source_name, len(datafeeds),
-        ))
+        function, lineno, data_source_name, len(datafeeds),
+    ))
 
-    subscribed_keys = ['_opstage', 'close[0]', 'datetime.datetime(0)', 'lines.datetime.idx', ]
+    subscribed_keys = ['_opstage', 'close[0]',
+                       'datetime.datetime(0)', 'lines.datetime.idx', ]
     if ohlcv:
         subscribed_keys.remove('datetime.datetime(0)')
         subscribed_keys.remove('close[0]')
-        subscribed_keys += ['datetime.datetime(0)', 'open[0]', 'high[0]', 'low[0]', 'close[0]', 'volume[0]', ]
+        subscribed_keys += ['datetime.datetime(0)', 'open[0]',
+                            'high[0]', 'low[0]', 'close[0]', 'volume[0]', ]
 
     for datafeed in datafeeds:
         if filtered_data_by_name is not None:
@@ -81,9 +86,11 @@ def dump_datas(function, lineno, datafeeds, data_source_name, filtered_data_by_n
                 else:
                     msg += "{}: {}, ".format(subscribed_key, NA)
             elif subscribed_key == 'lines.datetime._min_period':
-                msg += "{}: {}, ".format(subscribed_key, datafeed.lines.datetime._min_period)
+                msg += "{}: {}, ".format(subscribed_key,
+                                         datafeed.lines.datetime._min_period)
             elif subscribed_key == 'lines.datetime.idx':
-                msg += "{}: {}, ".format(subscribed_key, datafeed.lines.datetime.idx)
+                msg += "{}: {}, ".format(subscribed_key,
+                                         datafeed.lines.datetime.idx)
             elif subscribed_key == 'close[0]':
                 if datafeed.close.idx >= 0:
                     msg += "{}: {}, ".format(subscribed_key, datafeed.close[0])
@@ -106,12 +113,14 @@ def dump_datas(function, lineno, datafeeds, data_source_name, filtered_data_by_n
                     msg += "{}: {}, ".format(subscribed_key, NA)
             elif subscribed_key == 'volume[0]':
                 if datafeed.close.idx >= 0:
-                    msg += "{}: {}, ".format(subscribed_key, datafeed.volume[0])
+                    msg += "{}: {}, ".format(subscribed_key,
+                                             datafeed.volume[0])
                 else:
                     msg += "{}: {}, ".format(subscribed_key, NA)
 
             if subscribed_key in dir(datafeed):
-                msg += "{}: {}, ".format(subscribed_key, getattr(datafeed, subscribed_key))
+                msg += "{}: {}, ".format(subscribed_key,
+                                         getattr(datafeed, subscribed_key))
 
         # INFO: Strip ", " from the string
         print(msg[:-2])
@@ -200,7 +209,8 @@ class MetaLineIterator(LineSeries.__class__):
         # A data could be an indicator and it could take x bars until
         # something is produced
         _obj._min_period = \
-            max([x._min_period for x in _obj.datafeeds if x is not None] or [_obj._min_period])
+            max([x._min_period for x in _obj.datafeeds if x is not None]
+                or [_obj._min_period])
 
         # The lines carry at least the same min period as
         # that provided by the datafeeds

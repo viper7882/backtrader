@@ -40,6 +40,7 @@ class FakeData(object):
     Minimal interface to avoid errors when trade tries to get information from
     the data during the test
     '''
+
     def __len__(self):
         return 0
 

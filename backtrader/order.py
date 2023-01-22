@@ -286,21 +286,26 @@ class OrderBase(with_metaclass(MetaParams, object)):
     V_None = range(1)
 
     Execution_Types = \
-        ('Market', 'Close', 'Limit', 'StopMarket', 'StopLimit', 'StopTrail', 'StopTrailLimit', 'Historical', )
-    Market, Close, Limit, StopMarket, StopLimit, StopTrail, StopTrailLimit, Historical, = range(len(Execution_Types))
+        ('Market', 'Close', 'Limit', 'StopMarket', 'StopLimit',
+         'StopTrail', 'StopTrailLimit', 'Historical', )
+    Market, Close, Limit, StopMarket, StopLimit, StopTrail, StopTrailLimit, Historical, = range(
+        len(Execution_Types))
 
     Order_Types = ('Buy', 'Sell', )
     Buy, Sell, = range(len(Order_Types))
 
     Ordering_Types = ("Active", "Conditional", )
-    ACTIVE_ORDERING_TYPE, CONDITIONAL_ORDERING_TYPE, = range(len(Ordering_Types))
+    ACTIVE_ORDERING_TYPE, CONDITIONAL_ORDERING_TYPE, = range(
+        len(Ordering_Types))
 
     Order_Intents = ('Entry', 'Exit', )
     Entry_Order, Exit_Order, = range(len(Order_Intents))
 
     Status = \
-        ('Created', 'Submitted', 'Accepted', 'Partial', 'Completed', 'Canceled', 'Expired', 'Margin', 'Rejected', )
-    Created, Submitted, Accepted, Partial, Completed, Canceled, Expired, Margin, Rejected, = range(len(Status))
+        ('Created', 'Submitted', 'Accepted', 'Partial',
+         'Completed', 'Canceled', 'Expired', 'Margin', 'Rejected', )
+    Created, Submitted, Accepted, Partial, Completed, Canceled, Expired, Margin, Rejected, = range(
+        len(Status))
 
     Cancelled = Canceled  # alias
 
@@ -334,7 +339,8 @@ class OrderBase(with_metaclass(MetaParams, object)):
         tojoin.append('Order Type: {}'.format(self.order_type))
         tojoin.append('Order Type Name: {}'.format(self.order_type_name()))
         tojoin.append('Ordering Type: {}'.format(self.p.ordering_type))
-        tojoin.append('Ordering Type Name: {}'.format(self.ordering_type_name()))
+        tojoin.append('Ordering Type Name: {}'.format(
+            self.ordering_type_name()))
         tojoin.append('Order Intent: {}'.format(self.p.order_intent))
         tojoin.append('Order Intent Name: {}'.format(self.order_intent_name()))
         tojoin.append('Status: {}'.format(self.status))
@@ -346,7 +352,8 @@ class OrderBase(with_metaclass(MetaParams, object)):
         tojoin.append('Trailing Amount: {}'.format(self.trailing_amount))
         tojoin.append('Trailing Percent: {}'.format(self.trailing_percent))
         tojoin.append('Execution Type: {}'.format(self.execution_type))
-        tojoin.append('Execution Type Name: {}'.format(self.execution_type_name()))
+        tojoin.append('Execution Type Name: {}'.format(
+            self.execution_type_name()))
         tojoin.append('Spread in Ticks: {}'.format(self.p.spread_in_ticks))
         tojoin.append('Commission Info: {}'.format(self.commission_info))
         tojoin.append('End of Session: {}'.format(self.eos_dt))
@@ -372,7 +379,8 @@ class OrderBase(with_metaclass(MetaParams, object)):
 
         # Legality Check
         if self.p.spread_in_ticks is not None:
-            assert isinstance(self.p.spread_in_ticks, int) or isinstance(self.p.spread_in_ticks, float)
+            assert isinstance(self.p.spread_in_ticks, int) or isinstance(
+                self.p.spread_in_ticks, float)
             assert self.p.spread_in_ticks >= 0.0
 
         self.price_limit = self.p.pricelimit  # alias via property
@@ -440,8 +448,8 @@ class OrderBase(with_metaclass(MetaParams, object)):
             dtime = self.datafeed.datetime.datetime(0)
             session = self.datafeed.p.session_end
             eos_dt = dtime.replace(hour=session.hour, minute=session.minute,
-                                  second=session.second,
-                                  microsecond=session.microsecond)
+                                   second=session.second,
+                                   microsecond=session.microsecond)
 
             if eos_dt < dtime:
                 # eos before current time ... no ... must be at least next day
@@ -623,7 +631,6 @@ class OrderBase(with_metaclass(MetaParams, object)):
                 opened, opened_value, opened_commission,
                 margin, profit_and_loss_amount, spread_in_ticks,
                 position_size, position_average_price):
-
         '''Receives data execution input and stores it'''
         if not size:
             return

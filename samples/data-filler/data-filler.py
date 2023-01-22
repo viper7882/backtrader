@@ -74,8 +74,8 @@ def runstrategy():
         # + 1 to include last moment of the interval dstart <-> dtend
         td = ((dtend - dtstart).seconds // 60) + 1
         cerebro.add_indicator(RelativeVolume,
-                             period=td,
-                             volisnan=math.isnan(args.fvol))
+                              period=td,
+                              volisnan=math.isnan(args.fvol))
 
     # Add an empty strategy
     cerebro.add_strategy(bt.Strategy)

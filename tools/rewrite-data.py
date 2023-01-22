@@ -124,8 +124,8 @@ def runstrat(pargs=None):
     cerebro.add_datafeed(data)
 
     cerebro.add_strategy(RewriteStrategy,
-                        separator=args.separator,
-                        outfile=args.outfile)
+                         separator=args.separator,
+                         outfile=args.outfile)
 
     cerebro.run(stdstats=False)
 

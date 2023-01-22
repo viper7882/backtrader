@@ -80,7 +80,8 @@ class TestStrategy(bt.Strategy):
         self.cross = btind.CrossOver(self.data.close, self.sma, plot=True)
 
     def start(self):
-        self.broker_or_exchange.set_commission(commission=2.0, mult=10.0, margin=1000.0)
+        self.broker_or_exchange.set_commission(
+            commission=2.0, mult=10.0, margin=1000.0)
         self.tstart = time_clock()
         self.buy_create_idx = itertools.count()
 

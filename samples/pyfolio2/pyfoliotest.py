@@ -121,12 +121,13 @@ def runstrat(args=None):
 
     # Own analyzerset
     cerebro.add_analyzer(bt.analyzers.TimeReturn, timeframe=bt.TimeFrame.Years)
-    cerebro.add_analyzer(bt.analyzers.SharpeRatio, timeframe=bt.TimeFrame.Years)
+    cerebro.add_analyzer(bt.analyzers.SharpeRatio,
+                         timeframe=bt.TimeFrame.Years)
     cerebro.add_analyzer(bt.analyzers.SQN,)
 
     if args.pyfolio:
         cerebro.add_analyzer(bt.analyzers.PyFolio, _name='pyfolio',
-                            timeframe=_TFRAMES[args.pftimeframe])
+                             timeframe=_TFRAMES[args.pftimeframe])
 
     if args.printout:
         print('Start run')

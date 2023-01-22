@@ -297,6 +297,7 @@ class LineMultiple(LineRoot):
     '''
     Base class for LineXXX instances that hold more than one line
     '''
+
     def reset(self):
         self._stage1()
         self.lines.reset()
@@ -346,6 +347,7 @@ class LineSingle(LineRoot):
     '''
     Base class for LineXXX instances that hold a single line
     '''
+
     def add_min_period(self, minperiod):
         '''
         Add the minperiod (substracting the overlapping 1 minimum period)

@@ -132,9 +132,9 @@ class CandlestickPlotHandler(object):
                       **kwargs):
 
         # Prepack different zips of the series values
-        oc = lambda: zip(opens, closes)  # NOQA: E731
-        xoc = lambda: zip(xs, opens, closes)  # NOQA: E731
-        iohlc = lambda: zip(xs, opens, highs, lows, closes)  # NOQA: E731
+        def oc(): return zip(opens, closes)  # NOQA: E731
+        def xoc(): return zip(xs, opens, closes)  # NOQA: E731
+        def iohlc(): return zip(xs, opens, highs, lows, closes)  # NOQA: E731
 
         colorup = self.colorup if fillup else 'None'
         colordown = self.colordown if filldown else 'None'
@@ -311,7 +311,7 @@ class VolumePlotHandler(object):
                       **kwargs):
 
         # Prepare the data
-        openclose = lambda: zip(opens, closes)  # NOQA: E731
+        def openclose(): return zip(opens, closes)  # NOQA: E731
 
         # Calculate bars colors
         colord = {True: self.colorup, False: self.colordown}
@@ -435,10 +435,10 @@ class OHLCPlotHandler(object):
                       **kwargs):
 
         # Prepack different zips of the series values
-        ihighlow = lambda: zip(xs, highs, lows)  # NOQA: E731
-        iopen = lambda: zip(xs, opens)  # NOQA: E731
-        iclose = lambda: zip(xs, closes)  # NOQA: E731
-        openclose = lambda: zip(opens, closes)  # NOQA: E731
+        def ihighlow(): return zip(xs, highs, lows)  # NOQA: E731
+        def iopen(): return zip(xs, opens)  # NOQA: E731
+        def iclose(): return zip(xs, closes)  # NOQA: E731
+        def openclose(): return zip(opens, closes)  # NOQA: E731
 
         colord = {True: self.colorup, False: self.colordown}
         colors = [colord[open < close] for open, close in openclose()]

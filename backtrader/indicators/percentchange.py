@@ -42,5 +42,6 @@ class PercentChange(Indicator):
     params = (('period', 30),)
 
     def __init__(self):
-        self.lines.pctchange = self.datafeed / self.datafeed(-self.p.period) - 1.0
+        self.lines.pctchange = self.datafeed / \
+            self.datafeed(-self.p.period) - 1.0
         super(PercentChange, self).__init__()

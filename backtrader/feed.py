@@ -967,7 +967,7 @@ class CSVFeedBase(FeedBase):
 
     def _getdata(self, dataname, **kwargs):
         return self.Datafeed_Cls(dataname=self.p.basepath + dataname,
-                            **self.p._getkwargs())
+                                 **self.p._getkwargs())
 
 
 class DataClone(AbstractDataBase):

@@ -84,9 +84,9 @@ def runstrat(pargs=None):
     cerebro.add_analyzer(bt.analyzers.VWR, **vwrkwargs)  # VWR Analyzer
     # Sample time return analyzers
     cerebro.add_analyzer(bt.analyzers.TimeReturn,
-                        timeframe=bt.TimeFrame.Months)
+                         timeframe=bt.TimeFrame.Months)
     cerebro.add_analyzer(bt.analyzers.TimeReturn,
-                        timeframe=bt.TimeFrame.Years)
+                         timeframe=bt.TimeFrame.Years)
 
     # Add a writer to get output
     cerebro.add_writer(bt.WriterFile, csv=args.writercsv, rounding=4)
