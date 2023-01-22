@@ -367,7 +367,7 @@ class BackBroker(bt.Broker_or_Exchange_Base):
         '''Sets the cash parameter'''
         self.p.cash = cash
         self.cash = self.p.cash
-        self.starting_cash = self.cash  
+        self.starting_cash = self.cash
         self._value = cash
 
     def add_cash(self, cash):

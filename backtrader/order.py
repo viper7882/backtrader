@@ -22,14 +22,14 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import collections
-from copy import copy
 import datetime
+import inspect
 import itertools
 
-from .utils.py3 import range, with_metaclass, iteritems
-
+from copy import copy
 from .metabase import MetaParams
 from .utils import AutoOrderedDict
+from .utils.py3 import range, with_metaclass, iteritems
 
 
 class OrderExecutionBit(object):
@@ -213,7 +213,7 @@ class OrderData(object):
         self.add_execution_bit(
             OrderExecutionBit(dt, size, price,
                               closed=closed, closed_value=closed_value, closed_commission=closed_commission,
-                              opened=opened, opened_value=opened_value, opened_commission=opened_commission, 
+                              opened=opened, opened_value=opened_value, opened_commission=opened_commission,
                               profit_and_loss_amount=profit_and_loss_amount, spread_in_ticks=spread_in_ticks,
                               position_size=position_size, position_average_price=position_average_price))
 
@@ -365,6 +365,7 @@ class OrderBase(with_metaclass(MetaParams, object)):
 
         self._active = self.parent is None
         self.status = Order.Created
+        self.status_name = Order.Status[self.status]
 
         # INFO: Marks an order as partially filled earlier
         self.partially_filled_earlier = False
@@ -529,8 +530,7 @@ class OrderBase(with_metaclass(MetaParams, object)):
         '''Returns True if the order is in a status in which it can still be
         executed
         '''
-        return self.status in [Order.Created, Order.Submitted,
-                               Order.Partial, Order.Accepted]
+        return self.status in [Order.Created, Order.Submitted, Order.Partial, Order.Accepted]
 
     def add_commission_info(self, commission_info):
         '''Stores a CommInfo scheme associated with the asset'''
@@ -565,12 +565,14 @@ class OrderBase(with_metaclass(MetaParams, object)):
         '''Marks an order as submitted and stores the broker_or_exchange to which it was
         submitted'''
         self.status = Order.Submitted
+        self.status_name = Order.Status[self.status]
         self.broker_or_exchange = broker_or_exchange
         self.plen = len(self.datafeed)
 
     def accept(self, broker_or_exchange=None):
         '''Marks an order as accepted'''
         self.status = Order.Accepted
+        self.status_name = Order.Status[self.status]
         self.broker_or_exchange = broker_or_exchange
 
     def get_broker_or_exchange_status(self):
@@ -588,6 +590,7 @@ class OrderBase(with_metaclass(MetaParams, object)):
             return False
 
         self.status = Order.Rejected
+        self.status_name = Order.Status[self.status]
         self.executed.dt = self.datafeed.datetime[0]
         self.broker_or_exchange = broker_or_exchange
         return True
@@ -595,20 +598,24 @@ class OrderBase(with_metaclass(MetaParams, object)):
     def cancel(self):
         '''Marks an order as cancelled'''
         self.status = Order.Canceled
+        self.status_name = Order.Status[self.status]
         self.executed.dt = self.datafeed.datetime[0]
 
     def margin(self):
         '''Marks an order as having met a margin call'''
         self.status = Order.Margin
+        self.status_name = Order.Status[self.status]
         self.executed.dt = self.datafeed.datetime[0]
 
     def completed(self):
         '''Marks an order as completely filled'''
         self.status = self.Completed
+        self.status_name = Order.Status[self.status]
 
     def partial(self):
         '''Marks an order as partially filled'''
         self.status = self.Partial
+        self.status_name = Order.Status[self.status]
         self.partially_filled_earlier = True
 
     def execute(self, dt, size, price,
@@ -632,6 +639,7 @@ class OrderBase(with_metaclass(MetaParams, object)):
     def expire(self):
         '''Marks an order as expired. Returns True if it worked'''
         self.status = self.Expired
+        self.status_name = Order.Status[self.status]
         return True
 
     def adjust_trailing_price(self, price):
@@ -692,6 +700,7 @@ class Order(OrderBase):
             self.status = Order.Partial
         else:
             self.status = Order.Completed
+        self.status_name = Order.Status[self.status]
 
         # self.commission_info = None
 
@@ -701,6 +710,7 @@ class Order(OrderBase):
 
         if self.valid and self.datafeed.datetime[0] > self.valid:
             self.status = Order.Expired
+            self.status_name = Order.Status[self.status]
             self.executed.dt = self.datafeed.datetime[0]
             return True
 

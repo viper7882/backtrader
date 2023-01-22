@@ -18,8 +18,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ###############################################################################
-import os.path
 import codecs  # To use a consistent encoding
+import os.path
+
 import setuptools
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -47,7 +48,7 @@ setuptools.setup(
     # Versions should comply with PEP440. For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version="2022.12.27",
+    version="2023.01.22",
 
     description='BackTesting Engine',
     long_description=long_description,
@@ -110,7 +111,7 @@ setuptools.setup(
     # project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    # install_requires=['six'],
+    install_requires=['matplotlib', 'pre-commit'],
 
     # List additional groups of dependencies here
     # (e.g. development dependencies).

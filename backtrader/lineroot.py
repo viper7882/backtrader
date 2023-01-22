@@ -31,11 +31,11 @@ to define interfaces and hierarchy for the real operational classes
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+import inspect
 import operator
 
-from .utils.py3 import range, with_metaclass
-
 from . import metabase
+from .utils.py3 import range, with_metaclass
 
 
 class MetaLineRoot(metabase.MetaParams):

@@ -114,7 +114,7 @@ class IBData(with_metaclass(MetaIBData, DataBase)):
           - 'TRADES' for any other
 
         Use 'ASK' for the Ask quote of cash assets
-        
+
         Check the IB API docs if another value is wished
 
       - ``rtbar`` (default: ``False``)
