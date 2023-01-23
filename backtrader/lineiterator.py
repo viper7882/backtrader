@@ -318,7 +318,7 @@ class LineIterator(with_metaclass(MetaLineIterator, LineSeries)):
 
         if isinstance(owner, string_types):
             owner = [owner]
-        elif not isinstance(owner, collections.Iterable):
+        elif not isinstance(owner, collections.abc.Iterable):
             owner = [owner]
 
         if not own:
@@ -326,7 +326,7 @@ class LineIterator(with_metaclass(MetaLineIterator, LineSeries)):
 
         if isinstance(own, string_types):
             own = [own]
-        elif not isinstance(own, collections.Iterable):
+        elif not isinstance(own, collections.abc.Iterable):
             own = [own]
 
         for lineowner, lineown in zip(owner, own):

@@ -22,6 +22,6 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 
-__version__ = '2022.10.16'
+__version__ = '2023.01.23'
 
 __btversion__ = tuple(int(x) for x in __version__.split('.'))

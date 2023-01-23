@@ -293,7 +293,7 @@ class IBBroker(with_metaclass(MetaIBBroker, Broker_or_Exchange_Base)):
         super(IBBroker, self).stop()
         self.ib.stop()
 
-    def get_cash(self):
+    def get_cash(self, force=False):
         # This call cannot block if no answer is available from ib
         self.cash = self.ib.get_acc_cash()
         return self.cash

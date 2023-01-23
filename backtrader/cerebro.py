@@ -332,7 +332,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
         for elem in iterable:
             if isinstance(elem, string_types):
                 elem = (elem,)
-            elif not isinstance(elem, collections.Iterable):
+            elif not isinstance(elem, collections.abc.Iterable):
                 elem = (elem,)
 
             niterable.append(elem)
@@ -1499,7 +1499,7 @@ class Cerebro(with_metaclass(MetaParams, object)):
             wvalues = list()
             for datafeed in self.datafeeds:
                 if datafeed.csv:
-                    wvalues.extend(data.getwritervalues())
+                    wvalues.extend(datafeed.getwritervalues())
 
             for strat in runstrats:
                 wvalues.extend(strat.getwritervalues())

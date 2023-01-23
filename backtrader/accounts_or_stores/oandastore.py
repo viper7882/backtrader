@@ -406,7 +406,7 @@ class OandaStore(with_metaclass(MetaSingleton, object)):
 
         streamer.rates(self.p.account, instruments=dataname)
 
-    def get_cash(self):
+    def get_cash(self, force=False):
         return self._cash
 
     def get_value(self):

@@ -145,7 +145,7 @@ class OandaBroker(with_metaclass(MetaOandaBroker, Broker_or_Exchange_Base)):
         super(OandaBroker, self).stop()
         self.o.stop()
 
-    def get_cash(self):
+    def get_cash(self, force=False):
         # This call cannot block if no answer is available from oanda
         self.cash = cash = self.o.get_cash()
         return cash

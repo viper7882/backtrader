@@ -60,20 +60,20 @@ class Position(object):
         items.append('--- Position End')
         return '\n'.join(items)
 
-    def __init__(self, size=0, price=0.0, datetime=None):
+    def __init__(self, size=0, price=0.0, date_and_time=None):
         self.size = size
         if size:
             self.price = self.price_orig = price
-            if datetime is None:
+            if date_and_time is None:
                 self.datetime = datetime.datetime.utcnow()
             else:
-                self.datetime = datetime
+                self.datetime = date_and_time
         else:
             self.price = 0.0
-            if datetime is None:
+            if date_and_time is None:
                 self.datetime = None
             else:
-                self.datetime = datetime
+                self.datetime = date_and_time
 
         self.adjbase = None
 

@@ -359,7 +359,7 @@ class BackBroker(bt.Broker_or_Exchange_Base):
 
     seteosbar = set_eosbar
 
-    def get_cash(self):
+    def get_cash(self, force=False):
         '''Returns the current cash'''
         return self.cash
 
@@ -691,6 +691,8 @@ class BackBroker(bt.Broker_or_Exchange_Base):
 
     def _execute(self, order, ago=None, price=None, cash=None, position=None,
                  dtcoc=None):
+        spread_in_ticks = 1
+
         # ago = None is used a flag for pseudo execution
         if ago is not None and price is None:
             return  # no psuedo exec no price - no execution
@@ -842,7 +844,7 @@ class BackBroker(bt.Broker_or_Exchange_Base):
                           execsize, price,
                           closed, closed_value, closed_commission,
                           opened, opened_value, opened_commission,
-                          commission_info.margin, profit_and_loss_amount,
+                          commission_info.margin, profit_and_loss_amount, spread_in_ticks,
                           position_size, position_average_price)
 
             order.add_commission_info(commission_info)

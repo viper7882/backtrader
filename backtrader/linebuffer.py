@@ -35,14 +35,14 @@ import array
 import collections
 import datetime
 import inspect
-from itertools import islice
 import math
 
-from .utils.py3 import range, with_metaclass, string_types
+from itertools import islice
 
-from .lineroot import LineRoot, LineSingle, LineMultiple
 from . import metabase
+from .lineroot import LineRoot, LineSingle, LineMultiple
 from .utils import num2date, time2num
+from .utils.py3 import range, with_metaclass, string_types
 
 
 NAN = float('NaN')

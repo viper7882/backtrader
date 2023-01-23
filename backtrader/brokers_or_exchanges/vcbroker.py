@@ -187,7 +187,7 @@ class VCBroker(with_metaclass(MetaVCBroker, Broker_or_Exchange_Base)):
         super(VCBroker, self).stop()
         self.account_or_store.stop()
 
-    def get_cash(self):
+    def get_cash(self, force=False):
         # This call cannot block if no answer is available from ib
         return self.cash
 

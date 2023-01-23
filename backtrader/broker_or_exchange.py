@@ -126,7 +126,7 @@ class Broker_or_Exchange_Base(with_metaclass(MetaBroker, object)):
         ``name`` is ``None``'''
         self.commission_info[name] = commission_info
 
-    def get_cash(self):
+    def get_cash(self, force=False):
         raise NotImplementedError
 
     def get_value(self, datas=None):

@@ -140,5 +140,6 @@ class TimeReturn(TimeFrameAnalyzerBase):
     def next(self):
         # Calculate the return
         super(TimeReturn, self).next()
-        self.rets[self.dtkey] = (self._value / self._value_start) - 1.0
+        self.rets[self.dtkey] = (
+            self._value / (self._value_start or 1.0)) - 1.0
         self._lastvalue = self._value  # keep last value
