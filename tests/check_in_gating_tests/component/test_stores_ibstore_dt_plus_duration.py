@@ -1,5 +1,6 @@
 import backtrader as bt
 import datetime as dt
+import inspect
 
 
 def test_run():
@@ -31,4 +32,10 @@ if __name__ == '__main__':
     # INFO: For unknown reason IBStore() and OandaStore() cannot be imported successfully, disabling the unit test
     #       for now to un-gate pre-commit checks
     # test_run()
+    frameinfo = inspect.getframeinfo(inspect.currentframe())
+    msg = "{} Line: {}: WARNING: ".format(
+        frameinfo.function, frameinfo.lineno,
+    )
+    sub_msg = "IBStore() has been disabled due to ImportError"
+    print(msg + sub_msg)
     pass

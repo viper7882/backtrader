@@ -28,7 +28,7 @@ import itertools
 
 from copy import copy
 from .metabase import MetaParams
-from .utils import AutoOrderedDict
+from .utils import AutoOrderedDict, date2num
 from .utils.py3 import range, with_metaclass, iteritems
 
 
@@ -389,7 +389,7 @@ class OrderBase(with_metaclass(MetaParams, object)):
             self.execution_type = Order.Market
 
         if not self.is_buy():
-            self.size = -self.size
+            self.size = -abs(self.size)
 
         # Set a reference price if price is not set using
         # the close price
@@ -575,7 +575,8 @@ class OrderBase(with_metaclass(MetaParams, object)):
         self.status = Order.Submitted
         self.status_name = Order.Status[self.status]
         self.broker_or_exchange = broker_or_exchange
-        self.plen = len(self.datafeed)
+        if self.datafeed is not None:
+            self.plen = len(self.datafeed)
 
     def accept(self, broker_or_exchange=None):
         '''Marks an order as accepted'''
@@ -599,7 +600,9 @@ class OrderBase(with_metaclass(MetaParams, object)):
 
         self.status = Order.Rejected
         self.status_name = Order.Status[self.status]
-        self.executed.dt = self.datafeed.datetime[0]
+        self.executed.dt = \
+            self.datafeed.datetime[0] if self.datafeed is not None else date2num(
+                datetime.datetime.utcnow())
         self.broker_or_exchange = broker_or_exchange
         return True
 
@@ -607,13 +610,17 @@ class OrderBase(with_metaclass(MetaParams, object)):
         '''Marks an order as cancelled'''
         self.status = Order.Canceled
         self.status_name = Order.Status[self.status]
-        self.executed.dt = self.datafeed.datetime[0]
+        self.executed.dt = \
+            self.datafeed.datetime[0] if self.datafeed is not None else date2num(
+                datetime.datetime.utcnow())
 
     def margin(self):
         '''Marks an order as having met a margin call'''
         self.status = Order.Margin
         self.status_name = Order.Status[self.status]
-        self.executed.dt = self.datafeed.datetime[0]
+        self.executed.dt = \
+            self.datafeed.datetime[0] if self.datafeed is not None else date2num(
+                datetime.datetime.utcnow())
 
     def completed(self):
         '''Marks an order as completely filled'''

@@ -32,7 +32,7 @@ repos:
         entry: python -m unittest discover
         language: system
         'types': [python]
-        args: [--start-directory=./tests, --pattern=test_*.py]
+        args: [-v, --start-directory=./tests, --pattern=test_*.py]
         additional_dependencies: []
         pass_filenames: false
         verbose: true

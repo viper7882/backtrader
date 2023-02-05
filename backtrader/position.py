@@ -60,7 +60,7 @@ class Position(object):
         items.append('--- Position End')
         return '\n'.join(items)
 
-    def __init__(self, size=0, price=0.0, date_and_time=None):
+    def __init__(self, size=0.0, price=0.0, date_and_time=None):
         self.size = size
         if size:
             self.price = self.price_orig = price
@@ -78,7 +78,7 @@ class Position(object):
         self.adjbase = None
 
         self.upopened = size
-        self.upclosed = 0
+        self.upclosed = 0.0
         self.set(size, price)
 
     def fix(self, size, price):
@@ -88,10 +88,10 @@ class Position(object):
         return self.size == oldsize
 
     def set(self, size, price):
-        if self.size > 0:
+        if self.size > 0.0:
             if size > self.size:
                 self.upopened = size - self.size  # new 10 - old 5 -> 5
-                self.upclosed = 0
+                self.upclosed = 0.0
             else:
                 # same side min(0, 3) -> 0 / reversal min(0, -3) -> -3
                 self.upopened = min(0, size)
@@ -99,20 +99,20 @@ class Position(object):
                 # reversal min(10, 10 - -5) -> min(10, 15) -> 10
                 self.upclosed = min(self.size, self.size - size)
 
-        elif self.size < 0:
+        elif self.size < 0.0:
             if size < self.size:
                 self.upopened = size - self.size  # ex: -5 - -3 -> -2
-                self.upclosed = 0
+                self.upclosed = 0.0
             else:
-                # same side max(0, -5) -> 0 / reversal max(0, 5) -> 5
-                self.upopened = max(0, size)
+                # same side max(0.0, -5.0) -> 0.0 / reversal max(0.0, 5.0) -> 5
+                self.upopened = max(0.0, size)
                 # same side max(-10, -10 - -5) -> max(-10, -5) -> -5
                 # reversal max(-10, -10 - 5) -> max(-10, -15) -> -10
                 self.upclosed = max(self.size, self.size - size)
 
-        else:  # self.size == 0
+        else:  # self.size == 0.0
             self.upopened = self.size
-            self.upclosed = 0
+            self.upclosed = 0.0
 
         self.size = size
         self.price_orig = self.price
@@ -129,7 +129,7 @@ class Position(object):
         return abs(self.size)
 
     def __bool__(self):
-        return bool(self.size != 0)
+        return bool(self.size != 0.0)
 
     __nonzero__ = __bool__
 
@@ -146,8 +146,8 @@ class Position(object):
 
         Args:
             size (int): amount to update the position size
-                size < 0: A sell operation has taken place
-                size > 0: A buy operation has taken place
+                size < 0.0: A sell operation has taken place
+                size > 0.0: A buy operation has taken place
 
             price (float):
                 Must always be positive to ensure consistency
@@ -166,7 +166,7 @@ class Position(object):
                    argument
                opened - amount of contracts from argument "size" that were used
                    to open/increase a position.
-                   A position can be opened from 0 or can be a reversal.
+                   A position can be opened from 0.0 or can be a reversal.
                    If a reversal is performed then opened is less than "size",
                    because part of "size" will have been used to close the
                    existing position
@@ -184,37 +184,37 @@ class Position(object):
 
         if not self.size:
             # Update closed existing position
-            opened, closed = 0, size
+            opened, closed = 0.0, size
             self.price = 0.0
         elif not oldsize:
             # Update opened a position from 0
-            opened, closed = size, 0
+            opened, closed = size, 0.0
             self.price = price
-        elif oldsize > 0:  # existing "long" position updated
+        elif oldsize > 0.0:  # existing "long" position updated
 
-            if size > 0:  # increased position
-                opened, closed = size, 0
+            if size > 0.0:  # increased position
+                opened, closed = size, 0.0
                 self.price = (self.price * oldsize + size * price) / self.size
 
-            elif self.size > 0:  # reduced position
-                opened, closed = 0, size
+            elif self.size > 0.0:  # reduced position
+                opened, closed = 0.0, size
                 # self.price = self.price
 
             else:  # self.size < 0 # reversed position form plus to minus
                 opened, closed = self.size, -oldsize
                 self.price = price
 
-        else:  # oldsize < 0 - existing short position updated
+        else:  # oldsize < 0.0 - existing short position updated
 
-            if size < 0:  # increased position
-                opened, closed = size, 0
+            if size < 0.0:  # increased position
+                opened, closed = size, 0.0
                 self.price = (self.price * oldsize + size * price) / self.size
 
-            elif self.size < 0:  # reduced position
-                opened, closed = 0, size
+            elif self.size < 0.0:  # reduced position
+                opened, closed = 0.0, size
                 # self.price = self.price
 
-            else:  # self.size > 0 - reversed position from minus to plus
+            else:  # self.size > 0.0 - reversed position from minus to plus
                 opened, closed = self.size, -oldsize
                 self.price = price
 
