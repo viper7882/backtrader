@@ -352,8 +352,8 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
         else:
             self.prenext_open()
 
-    def _next(self, debug=False):
-        super(Strategy, self)._next(debug=debug)
+    def _next(self, account_or_store, instrument, debug=False):
+        super(Strategy, self)._next(account_or_store, instrument, debug=debug)
 
         min_per_status = self._get_min_per_status()
         self._next_analyzers(min_per_status)
@@ -385,7 +385,10 @@ class Strategy(with_metaclass(MetaStrategy, StrategyBase)):
                 elif len(observer):
                     observer.prenext()
             else:
-                observer._next()
+                try:
+                    observer._next(None, None)
+                except TypeError:
+                    observer._next()
 
     def _next_analyzers(self, min_per_status, once=False):
         for analyzer in self.analyzers:

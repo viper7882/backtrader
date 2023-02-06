@@ -348,7 +348,7 @@ class LineIterator(with_metaclass(MetaLineIterator, LineSeries)):
     bind2lines = bindlines
     bind2line = bind2lines
 
-    def _next(self, debug=False):
+    def _next(self, account_or_store, instrument, debug=False):
         clock_len = self._clk_update()
 
         for indicator in self._lineiterators[LineIterator.IndType]:
@@ -369,7 +369,10 @@ class LineIterator(with_metaclass(MetaLineIterator, LineSeries)):
             #     )
             #     pass
 
-            indicator._next()
+            try:
+                indicator._next(account_or_store, instrument)
+            except TypeError:
+                indicator._next()
 
             # if type(indicator).__name__ == 'ATR_Percent':
             # if type(indicator).__name__ == 'ATR_EMA':
@@ -388,7 +391,11 @@ class LineIterator(with_metaclass(MetaLineIterator, LineSeries)):
             #     )
             #     pass
 
-        self._notify()
+        try:
+            self._notify(account_or_store, instrument)
+        except TypeError:
+            # Legacy BackBroker
+            self._notify()
 
         if self._ltype == LineIterator.StratType:
             # supporting datafeeds with different lengths

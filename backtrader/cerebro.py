@@ -1651,7 +1651,10 @@ class Cerebro(with_metaclass(MetaParams, object)):
             if d0ret or lastret:  # bars produced by data or filters
                 self._check_timers(runstrats, dt0, cheat=False)
                 for strat in runstrats:
-                    strat._next()
+                    try:
+                        strat._next(None, None)
+                    except TypeError:
+                        strat._next()
                     if self._event_stop:  # stop if requested
                         return
 
