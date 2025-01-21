@@ -59,9 +59,9 @@ class RTVolume(object):
     '''
     _fields = [
         ('price', float),
-        ('size', int),
+        ('size', float),
         ('datetime', _ts2dt),
-        ('volume', int),
+        ('volume', float),
         ('vwap', float),
         ('single', bool)
     ]
@@ -749,7 +749,9 @@ class IBStore(with_metaclass(MetaSingleton, object)):
         self.conn.reqHistoricalData(
             tickerId,
             contract,
-            bytes(intdate.strftime('%Y%m%d %H:%M:%S') + ' GMT'),
+            # Modification of datetime format in IB API + now implicit time zone is UTC if no timezone specified.
+            # bytes(intdate.strftime('%Y%m%d %H:%M:%S') + ' GMT'),
+            bytes(intdate.strftime('%Y%m%d-%H:%M:%S')),
             bytes(duration),
             bytes(barsize),
             bytes(what),
@@ -783,7 +785,8 @@ class IBStore(with_metaclass(MetaSingleton, object)):
         self.conn.reqHistoricalData(
             tickerId,
             contract,
-            bytes(enddate.strftime('%Y%m%d %H:%M:%S') + ' GMT'),
+            # Modification of datetime format in IB API + now implicit time zone is UTC if no timezone specified.
+            bytes(enddate.strftime('%Y%m%d-%H:%M:%S')),
             bytes(duration),
             bytes(barsize),
             bytes(what),
@@ -850,7 +853,8 @@ class IBStore(with_metaclass(MetaSingleton, object)):
         '''
         # get a ticker/queue for identification/data delivery
         tickerId, q = self.getTickerQueue()
-        ticks = '233'  # request RTVOLUME tick delivered over tickString
+        #ticks = '233'  # request RTVOLUME tick delivered over tickString
+        ticks = '375'  # request RTVOLUME tick delivered over tickString
 
         if contract.m_secType in ['CASH', 'CFD']:
             self.iscash[tickerId] = True
@@ -879,10 +883,21 @@ class IBStore(with_metaclass(MetaSingleton, object)):
     @ibregister
     def tickString(self, msg):
         # Receive and process a tickString message
+        if msg.tickType == 77: #RT Trade Volume
+            #print(msg.tickType)
+            #print(msg)
+            try:
+                rtvol = RTVolume(msg.value)
+            except ValueError as err:  # price not in message ...
+                pass
+            else:
+                # Don't need to adjust the time, because it is in "timestamp"
+                # form in the message
+                self.qs[msg.tickerId].put(rtvol)
         if msg.tickType == 48:  # RTVolume
             try:
                 rtvol = RTVolume(msg.value)
-            except ValueError:  # price not in message ...
+            except ValueError as err:  # price not in message ...
                 pass
             else:
                 # Don't need to adjust the time, because it is in "timestamp"
@@ -1115,8 +1130,8 @@ class IBStore(with_metaclass(MetaSingleton, object)):
         'secs': (TimeFrame.Seconds, 1),
         'min': (TimeFrame.Minutes, 1),
         'mins': (TimeFrame.Minutes, 1),
-        'hour': (TimeFrame.Hours, 1),
-        'hours': (TimeFrame.Hours, 1),
+        'hour': (TimeFrame.Minutes, 60),
+        'hours': (TimeFrame.Minutes, 60),
         'day': (TimeFrame.Days, 1),
         'W': (TimeFrame.Weeks, 1),
         'M': (TimeFrame.Months, 1),
