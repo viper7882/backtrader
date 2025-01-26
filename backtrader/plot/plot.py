@@ -823,6 +823,8 @@ class Plot_OldSync(with_metaclass(MetaParams, object)):
             a.set_yscale('log')
 
     def show(self):
+        if not hasattr(self, 'mpyplot'):
+            raise AttributeError("mpyplot attribute is not set. Ensure that the plot method is called before show.")
         self.mpyplot.show()
 
     def savefig(self, fig, filename, width=16, height=9, dpi=300, tight=True):
