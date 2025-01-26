@@ -304,7 +304,7 @@ class IBStore(with_metaclass(MetaSingleton, object)):
         if datafeed is not None:
             self._env = datafeed._env
             # For datas simulate a queue with None to kickstart co
-            self.datafeed.append(datafeed)
+            self.datafeeds.append(datafeed)
 
             # if connection fails, get a fake registration that will force the
             # datas to try to reconnect or else bail out
