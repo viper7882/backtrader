@@ -120,6 +120,7 @@ class Plot_OldSync(with_metaclass(MetaParams, object)):
             return
 
         if not len(strategy):
+            print(f"WARNING: {str(strategy)} strategy has no data")
             return
 
         if iplot:
